@@ -1,0 +1,1496 @@
+{
+    "info": {
+        "name": "Clouding.co API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "API documentation for Clouding.co \u2013 manage Hosts, SSH Credentials, Host Groups, Blueprints, Deployment Plans & Runs"
+    },
+    "item": [
+        {
+            "name": "SSH Credentials",
+            "item": [
+                {
+                    "name": "Get SSH Credential",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/credentials/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "credentials",
+                                ":id"
+                            ]
+                        },
+                        "description": "Fetch an SSH credential by ID."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/credentials/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "credentials",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Fetch an SSH credential by ID."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"id\": \"cred-uuid\",\n  \"username\": \"ubuntu\",\n  \"privateKeyPath\": \"s3://bucket/keys/cred-uuid.pem\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create SSH Credential",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/credentials",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "credentials"
+                            ]
+                        },
+                        "description": "Add a new SSH credential. The private key will be uploaded to object storage.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"ubuntu\",\n  \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/credentials",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "credentials"
+                                    ]
+                                },
+                                "description": "Add a new SSH credential. The private key will be uploaded to object storage.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"username\": \"ubuntu\",\n  \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"id\": \"cred-uuid\",\n  \"username\": \"ubuntu\",\n  \"privateKeyPath\": \"s3://bucket/keys/cred-uuid.pem\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete SSH Credential",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/credentials/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "credentials",
+                                ":id"
+                            ]
+                        },
+                        "description": "Delete an SSH credential by ID."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/credentials/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "credentials",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Delete an SSH credential by ID."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"id\": \"cred-uuid\",\n  \"username\": \"ubuntu\",\n  \"privateKeyPath\": \"s3://bucket/keys/cred-uuid.pem\"\n}"
+                        }
+                    ]
+                }
+            ],
+            "description": "Endpoints related to managing SSH credentials used to connect to VMs."
+        },
+        {
+            "name": "Hosts",
+            "item": [
+                {
+                    "name": "Get Host by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/host/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "host",
+                                ":id"
+                            ]
+                        },
+                        "description": "Retrieve host details by ID."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/host/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "host",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Retrieve host details by ID."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"id\": \"host-uuid\",\n  \"userId\": \"user-uuid\",\n  \"name\": \"Ubuntu VM\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.10\",\n  \"metaData\": {\n    \"env\": \"production\"\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Hosts",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/host",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "host"
+                            ]
+                        },
+                        "description": "List all hosts owned by the authenticated user."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/host",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "host"
+                                    ]
+                                },
+                                "description": "List all hosts owned by the authenticated user."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"host-uuid\",\n    \"userId\": \"user-uuid\",\n    \"name\": \"Ubuntu VM\",\n    \"os\": \"Ubuntu\",\n    \"ip\": \"192.168.1.10\",\n    \"metaData\": {}\n  }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create Host",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/host",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "host"
+                            ]
+                        },
+                        "description": "Register a new host.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"userId\": \"user-uuid\",\n  \"name\": \"VM1\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.1\",\n  \"metaData\": {}\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/host",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "host"
+                                    ]
+                                },
+                                "description": "Register a new host.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"userId\": \"user-uuid\",\n  \"name\": \"VM1\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.1\",\n  \"metaData\": {}\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"host-uuid\",\n    \"userId\": \"user-uuid\",\n    \"name\": \"Ubuntu VM\",\n    \"os\": \"Ubuntu\",\n    \"ip\": \"192.168.1.10\",\n    \"metaData\": {}\n  }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update Host",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/hosts/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hosts",
+                                ":id"
+                            ]
+                        },
+                        "description": "Update an existing host.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"UpdatedVM\",\n  \"ip\": \"192.168.1.2\"\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/hosts/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "hosts",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Update an existing host.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"UpdatedVM\",\n  \"ip\": \"192.168.1.2\"\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"message\": \"Host updated successfully\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete Host",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/hosts/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hosts",
+                                ":id"
+                            ]
+                        },
+                        "description": "Delete a host by ID."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/hosts/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "hosts",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Delete a host by ID."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"message\": \"Host updated successfully\"\n}"
+                        }
+                    ]
+                }
+            ],
+            "description": "Endpoints for registering, updating, and managing virtual machines (hosts)."
+        },
+        {
+            "name": "Host Groups",
+            "item": [
+                {
+                    "name": "Get Host Group by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostGroup/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hostGroup",
+                                ":id"
+                            ]
+                        },
+                        "description": "Get host group details by ID."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/hostGroup/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "hostGroup",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Get host group details by ID."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"id\": \"group-uuid\",\n  \"name\": \"My Host Group\",\n  \"userId\": \"user-uuid\",\n  \"hostIds\": [\n    \"host-uuid-1\",\n    \"host-uuid-2\"\n  ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Host Groups",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostGroup",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hostGroup"
+                            ]
+                        },
+                        "description": "Get all host groups for the user."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/hostGroup",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "hostGroup"
+                                    ]
+                                },
+                                "description": "Get all host groups for the user."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"group-uuid\",\n    \"name\": \"My Host Group\",\n    \"userId\": \"user-uuid\",\n    \"hostIds\": [\n      \"host-uuid-1\"\n    ]\n  }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create Host Group",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostGroup",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hostGroup"
+                            ]
+                        },
+                        "description": "Create a new host group.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"userId\": \"user-uuid\",\n  \"name\": \"MyGroup\",\n  \"hostIds\": [\n    \"host-uuid\"\n  ]\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/hostGroup",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "hostGroup"
+                                    ]
+                                },
+                                "description": "Create a new host group.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"userId\": \"user-uuid\",\n  \"name\": \"MyGroup\",\n  \"hostIds\": [\n    \"host-uuid\"\n  ]\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"group-uuid\",\n    \"name\": \"My Host Group\",\n    \"userId\": \"user-uuid\",\n    \"hostIds\": [\n      \"host-uuid-1\"\n    ]\n  }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update Host Group",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostGroup",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hostGroup"
+                            ]
+                        },
+                        "description": "Update an existing host group.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"userId\": \"user-uuid\",\n  \"name\": \"Updated Group\",\n  \"hosts\": [\n    \"host1\",\n    \"host2\"\n  ]\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/hostGroup",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "hostGroup"
+                                    ]
+                                },
+                                "description": "Update an existing host group.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"userId\": \"user-uuid\",\n  \"name\": \"Updated Group\",\n  \"hosts\": [\n    \"host1\",\n    \"host2\"\n  ]\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"group-uuid\",\n    \"name\": \"My Host Group\",\n    \"userId\": \"user-uuid\",\n    \"hostIds\": [\n      \"host-uuid-1\"\n    ]\n  }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Add Hosts to Group",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostGroup/:id/hosts",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hostGroup",
+                                ":id",
+                                "hosts"
+                            ]
+                        },
+                        "description": "Add hosts to a host group.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"hostIds\": [\n    \"host1\",\n    \"host2\"\n  ]\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "body": "{\n  \"message\": \"Hosts added\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Remove Host from Group",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostGroup/:id/hosts/:hostId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hostGroup",
+                                ":id",
+                                "hosts",
+                                ":hostId"
+                            ]
+                        },
+                        "description": "Remove a host from a group."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "body": "{\n  \"message\": \"Host removed\"\n}"
+                        }
+                    ]
+                }
+            ],
+            "description": "APIs to group hosts together for bulk operations or categorization."
+        },
+        {
+            "name": "Components",
+            "item": [
+                {
+                    "name": "Get Component by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/components/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "components",
+                                ":id"
+                            ]
+                        },
+                        "description": "Get component details."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/components/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "components",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Get component details."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"id\": \"component-uuid\",\n  \"name\": \"nginx\",\n  \"metaData\": {\n    \"version\": \"1.22\"\n  },\n  \"ansibleRoleId\": \"geerlingguy.nginx\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "List Components",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/components",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "components"
+                            ]
+                        },
+                        "description": "List all available components."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/components",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "components"
+                                    ]
+                                },
+                                "description": "List all available components."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"component-uuid\",\n    \"name\": \"nginx\",\n    \"metaData\": {},\n    \"ansibleRoleId\": \"geerlingguy.nginx\"\n  }\n]"
+                        }
+                    ]
+                }
+            ],
+            "description": "List of installable components like NGINX, Java, Go, etc."
+        },
+        {
+            "name": "Blueprints",
+            "item": [
+                {
+                    "name": "Get Blueprint by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/blueprint/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "blueprint",
+                                ":id"
+                            ]
+                        },
+                        "description": "Get blueprint details."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/blueprint/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "blueprint",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Get blueprint details."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"id\": \"blueprint-uuid\",\n  \"description\": \"Initial setup with Go and NGINX\",\n  \"plan\": [\n    \"component-id-1\",\n    \"component-id-2\"\n  ],\n  \"createdby\": \"user-uuid\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "List Blueprints",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/blueprint",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "blueprint"
+                            ]
+                        },
+                        "description": "List all blueprints for current user."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/blueprint",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "blueprint"
+                                    ]
+                                },
+                                "description": "List all blueprints for current user."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"blueprint-uuid\",\n    \"description\": \"Initial setup with Go and NGINX\",\n    \"plan\": [\n      \"component-id-1\",\n      \"component-id-2\"\n    ],\n    \"createdby\": \"user-uuid\"\n  }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create Blueprint",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/blueprint",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "blueprint"
+                            ]
+                        },
+                        "description": "Create a new blueprint.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"plan\": [\n    \"component1\",\n    \"component2\"\n  ],\n  \"description\": \"My setup\",\n  \"userId\": \"user-uuid\"\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/blueprint",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "blueprint"
+                                    ]
+                                },
+                                "description": "Create a new blueprint.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"plan\": [\n    \"component1\",\n    \"component2\"\n  ],\n  \"description\": \"My setup\",\n  \"userId\": \"user-uuid\"\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"blueprint-uuid\",\n    \"description\": \"Initial setup with Go and NGINX\",\n    \"plan\": [\n      \"component-id-1\",\n      \"component-id-2\"\n    ],\n    \"createdby\": \"user-uuid\"\n  }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update Blueprint",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/blueprint",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "blueprint"
+                            ]
+                        },
+                        "description": "Update a blueprint.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"plan\": [\n    \"component3\"\n  ],\n  \"description\": \"Updated plan\"\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/blueprint",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "blueprint"
+                                    ]
+                                },
+                                "description": "Update a blueprint.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"plan\": [\n    \"component3\"\n  ],\n  \"description\": \"Updated plan\"\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"blueprint-uuid\",\n    \"description\": \"Initial setup with Go and NGINX\",\n    \"plan\": [\n      \"component-id-1\",\n      \"component-id-2\"\n    ],\n    \"createdby\": \"user-uuid\"\n  }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete Blueprint",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/blueprint/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "blueprint",
+                                ":id"
+                            ]
+                        },
+                        "description": "Delete a blueprint."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/blueprint/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "blueprint",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Delete a blueprint."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"id\": \"blueprint-uuid\",\n  \"description\": \"Initial setup with Go and NGINX\",\n  \"plan\": [\n    \"component-id-1\",\n    \"component-id-2\"\n  ],\n  \"createdby\": \"user-uuid\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Clone Blueprint",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/blueprint/:id/clone",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "blueprint",
+                                ":id",
+                                "clone"
+                            ]
+                        },
+                        "description": "Clone a blueprint."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "body": "{\n  \"message\": \"Blueprint cloned\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Deployment Plans by Blueprint",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/blueprints/:blueprintId/deploymentPlans",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "blueprints",
+                                ":blueprintId",
+                                "deploymentPlans"
+                            ]
+                        },
+                        "description": "List deployment plans for a blueprint."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/blueprints/:blueprintId/deploymentPlans",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "blueprints",
+                                        ":blueprintId",
+                                        "deploymentPlans"
+                                    ]
+                                },
+                                "description": "List deployment plans for a blueprint."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"plan-uuid\",\n    \"hostId\": \"host-uuid\",\n    \"blueprintId\": \"blueprint-uuid\",\n    \"state\": \"success\",\n    \"actualPlan\": [],\n    \"createdby\": \"user-uuid\"\n  }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Deployment Runs by Blueprint",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/blueprints/:blueprintId/deploymentRuns",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "blueprints",
+                                ":blueprintId",
+                                "deploymentRuns"
+                            ]
+                        },
+                        "description": "List deployment runs for a blueprint."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/blueprints/:blueprintId/deploymentRuns",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "blueprints",
+                                        ":blueprintId",
+                                        "deploymentRuns"
+                                    ]
+                                },
+                                "description": "List deployment runs for a blueprint."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "[\n  {\n    \"id\": \"run-uuid\",\n    \"deploymentPlanId\": \"plan-uuid\",\n    \"state\": \"success\",\n    \"createdby\": \"user-uuid\"\n  }\n]"
+                        }
+                    ]
+                }
+            ],
+            "description": "APIs for managing reusable configuration templates (blueprints)."
+        },
+        {
+            "name": "Deployment Plans",
+            "item": [
+                {
+                    "name": "Create Deployment Plan (SSE)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/deploymentPlan",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "deploymentPlan"
+                            ]
+                        },
+                        "description": "Create a deployment plan and return progress via SSE.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"id\": \"uuid-from-client\",\n  \"hostid\": \"host-uuid\",\n  \"blueprintId\": \"bp-uuid\"\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/deploymentPlan",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "deploymentPlan"
+                                    ]
+                                },
+                                "description": "Create a deployment plan and return progress via SSE.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"id\": \"uuid-from-client\",\n  \"hostid\": \"host-uuid\",\n  \"blueprintId\": \"bp-uuid\"\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"status\": \"running\",\n  \"logs\": []\n}"
+                        }
+                    ]
+                }
+            ],
+            "description": "Create and track deployment plans that link a blueprint to a specific host."
+        },
+        {
+            "name": "Deployment Runs",
+            "item": [
+                {
+                    "name": "Create Deployment Run (SSE)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/deploymentRun",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "deploymentRun"
+                            ]
+                        },
+                        "description": "Trigger apply on a deployment plan and return progress via SSE.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"id\": \"uuid-from-client\",\n  \"deploymentPlanId\": \"plan-uuid\"\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/deploymentRun",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "deploymentRun"
+                                    ]
+                                },
+                                "description": "Trigger apply on a deployment plan and return progress via SSE.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"id\": \"uuid-from-client\",\n  \"deploymentPlanId\": \"plan-uuid\"\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"status\": \"running\",\n  \"logs\": []\n}"
+                        }
+                    ]
+                }
+            ],
+            "description": "Trigger and monitor execution runs for deployment plans."
+        }
+    ]
+}
