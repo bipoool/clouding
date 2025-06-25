@@ -286,6 +286,86 @@
     animation: gradient-border-fast 2s ease-in-out infinite;
   }
 
+  /* === GRADIENT BORDER CARDS === */
+  .gradient-border-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: none;
+    border-radius: 16px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  .gradient-border-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      #06b6d4,
+      #8b5cf6,
+      #f59e0b,
+      #ef4444,
+      #10b981,
+      #06b6d4
+    );
+    background-size: 400% 400%;
+    border-radius: inherit;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+    animation: gradient-border-card-slow 12s ease-in-out infinite;
+    opacity: 0.6;
+  }
+
+  .gradient-border-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 
+      0 25px 50px -12px rgba(0, 0, 0, 0.25),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .gradient-border-card:hover::before {
+    animation: gradient-border-card-fast 3s ease-in-out infinite;
+    opacity: 1;
+  }
+
+  @keyframes gradient-border-card-slow {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    25% {
+      background-position: 100% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    75% {
+      background-position: 0% 100%;
+    }
+  }
+
+  @keyframes gradient-border-card-fast {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    25% {
+      background-position: 100% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    75% {
+      background-position: 0% 100%;
+    }
+  }
+
   /* === BACKGROUND EFFECTS === */
   .noise-overlay::before {
     content: '';
