@@ -1,0 +1,3 @@
+DELETE FROM hosts
+WHERE id = $1
+RETURNING id;
