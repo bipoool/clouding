@@ -15,7 +15,7 @@ import (
 // HostRepository defines data access for hosts
 type HostRepository interface {
 	GetHost(ctx context.Context, id int) (*host.Host, error)
-	GetAllHosts(ctx context.Context) ([]*host.Host, error)
+	GetAllHosts(ctx context.Context, userId int) ([]*host.Host, error)
 	CreateHost(ctx context.Context, h *host.Host) error
 	UpdateHost(ctx context.Context, h *host.Host) error
 	DeleteHost(ctx context.Context, id int) error
@@ -25,6 +25,9 @@ type HostRepository interface {
 
 //go:embed sql/host/getHostById.sql
 var getHostByIdQuery string
+
+//go:embed sql/host/getHostsByUserId.sql
+var getHostsByUserId string
 
 //go:embed sql/host/createHost.sql
 var createHostQuery string
@@ -54,8 +57,19 @@ func (r *hostRepository) GetHost(ctx context.Context, id int) (*host.Host, error
 	return &host, nil
 }
 
-func (r *hostRepository) GetAllHosts(ctx context.Context) ([]*host.Host, error) {
-	return nil, nil
+func (r *hostRepository) GetAllHosts(ctx context.Context, userId int) ([]*host.Host, error) {
+	var hosts []*host.Host
+
+	err := r.db.SelectContext(ctx, &hosts, getHostsByUserId, userId)
+
+	if err != nil {
+		return nil, err
+	}
+	if len(hosts) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	return hosts, nil
 }
 
 func (r *hostRepository) CreateHost(ctx context.Context, h *host.Host) error {

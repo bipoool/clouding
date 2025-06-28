@@ -41,7 +41,24 @@ func (c *HostController) GetHost(ctx *gin.Context) {
 }
 
 func (c *HostController) GetAllHosts(ctx *gin.Context) {
+	userIdStr := ctx.Query("userId")
+	userId, err := strconv.Atoi(userIdStr)
 
+	if err != nil {
+		slog.Debug("UserId not correct", "ERR", err)
+		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
+		return
+	}
+
+	hosts, err := c.Service.GetAllHostsByUserId(ctx.Request.Context(), userId)
+
+	if err != nil {
+		slog.Error(err.Error())
+		ctx.JSON(http.StatusBadRequest, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(hosts))
 }
 
 func (c *HostController) CreateHost(ctx *gin.Context) {
