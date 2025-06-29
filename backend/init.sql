@@ -16,3 +16,11 @@ CREATE TABLE IF NOT EXISTS hosts (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE TABLE ssh_credentials (
+    id SERIAL PRIMARY KEY,
+    user_name TEXT NOT NULL,
+    key_name TEXT NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id)
+    UNIQUE(user_id, key_name)
+);
