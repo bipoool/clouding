@@ -199,12 +199,12 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/host/:id",
+                            "raw": "{{baseUrl}}/hosts/:id",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "host",
+                                "hosts",
                                 ":id"
                             ]
                         },
@@ -223,12 +223,12 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{baseUrl}}/host/:id",
+                                    "raw": "{{baseUrl}}/hosts/:id",
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
                                     "path": [
-                                        "host",
+                                        "hosts",
                                         ":id"
                                     ]
                                 },
@@ -236,7 +236,7 @@
                             },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"id\": \"host-uuid\",\n  \"userId\": \"user-uuid\",\n  \"name\": \"Ubuntu VM\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.10\",\n  \"metaData\": {\n    \"env\": \"production\"\n  }\n}"
+                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"name\": \"UpdatedVM\",\n    \"ip\": \"192.168.1.2\",\n    \"os\": \"Ubuntu\",\n    \"metaData\": {\n      \"tag\": {\n        \"product\": \"adpushup\"\n      }\n    },\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
                         }
                     ]
                 },
@@ -252,12 +252,12 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/host",
+                            "raw": "{{baseUrl}}/hosts",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "host"
+                                "hosts"
                             ]
                         },
                         "description": "List all hosts owned by the authenticated user."
@@ -275,19 +275,19 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{baseUrl}}/host",
+                                    "raw": "{{baseUrl}}/hosts",
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
                                     "path": [
-                                        "host"
+                                        "hosts"
                                     ]
                                 },
                                 "description": "List all hosts owned by the authenticated user."
                             },
                             "status": "OK",
                             "code": 200,
-                            "body": "[\n  {\n    \"id\": \"host-uuid\",\n    \"userId\": \"user-uuid\",\n    \"name\": \"Ubuntu VM\",\n    \"os\": \"Ubuntu\",\n    \"ip\": \"192.168.1.10\",\n    \"metaData\": {}\n  }\n]"
+                            "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"userId\": 1,\n      \"name\": \"UpdatedVM\",\n      \"ip\": \"192.168.1.2\",\n      \"os\": \"Ubuntu\",\n      \"metaData\": {\n        \"tag\": {\n          \"product\": \"adpushup\"\n        }\n      },\n      \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n      \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n    }\n  ],\n  \"error\": null,\n  \"success\": true\n}"
                         }
                     ]
                 },
@@ -307,18 +307,18 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/host",
+                            "raw": "{{baseUrl}}/hosts",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "host"
+                                "hosts"
                             ]
                         },
                         "description": "Register a new host.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"userId\": \"user-uuid\",\n  \"name\": \"VM1\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.1\",\n  \"metaData\": {}\n}"
+                            "raw": "{\n  \"userId\": 1,\n  \"name\": \"VM1\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.1\",\n  \"metaData\": {\n    \"tag\": {\n      \"product\": \"adpushup\"\n    }\n  }\n}"
                         }
                     },
                     "response": [
@@ -338,23 +338,23 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{baseUrl}}/host",
+                                    "raw": "{{baseUrl}}/hosts",
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
                                     "path": [
-                                        "host"
+                                        "hosts"
                                     ]
                                 },
                                 "description": "Register a new host.",
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"userId\": \"user-uuid\",\n  \"name\": \"VM1\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.1\",\n  \"metaData\": {}\n}"
+                                    "raw": "{\n  \"userId\": 1,\n  \"name\": \"VM1\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.1\",\n  \"metaData\": {\n    \"tag\": {\n      \"product\": \"adpushup\"\n    }\n  }\n}"
                                 }
                             },
                             "status": "OK",
                             "code": 200,
-                            "body": "[\n  {\n    \"id\": \"host-uuid\",\n    \"userId\": \"user-uuid\",\n    \"name\": \"Ubuntu VM\",\n    \"os\": \"Ubuntu\",\n    \"ip\": \"192.168.1.10\",\n    \"metaData\": {}\n  }\n]"
+                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"name\": \"VM1\",\n    \"ip\": \"192.168.1.1\",\n    \"os\": \"Ubuntu\",\n    \"metaData\": {\n      \"tag\": {\n        \"product\": \"adpushup\"\n      }\n    },\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T22:04:55.788904Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
                         }
                     ]
                 },
@@ -423,7 +423,7 @@
                             },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"message\": \"Host updated successfully\"\n}"
+                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"name\": \"UpdatedVM\",\n    \"ip\": \"192.168.1.2\",\n    \"os\": \"Ubuntu\",\n    \"metaData\": {\n      \"tag\": {\n        \"product\": \"adpushup\"\n      }\n    },\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
                         }
                     ]
                 },
@@ -476,12 +476,311 @@
                             },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"message\": \"Host updated successfully\"\n}"
+                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"name\": \"UpdatedVM\",\n    \"ip\": \"192.168.1.2\",\n    \"os\": \"Ubuntu\",\n    \"metaData\": {\n      \"tag\": {\n        \"product\": \"adpushup\"\n      }\n    },\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
                         }
                     ]
                 }
             ],
             "description": "Endpoints for registering, updating, and managing virtual machines (hosts)."
+        },
+        {
+            "name": "Users",
+            "item": [
+                {
+                    "name": "Get User by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":id"
+                            ]
+                        },
+                        "description": "Retrieve user details by ID."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/users/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "users",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Retrieve user details by ID."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T22:04:55.788904Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users"
+                            ]
+                        },
+                        "description": "List all users."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/users",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "users"
+                                    ]
+                                },
+                                "description": "List all users."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"John Doe\",\n      \"email\": \"john.doe@example.com\",\n      \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n      \"updatedAt\": \"2025-06-26T22:04:55.788904Z\"\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Jane Smith\",\n      \"email\": \"jane.smith@example.com\",\n      \"createdAt\": \"2025-06-26T23:08:20.742285Z\",\n      \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n    }\n  ],\n  \"error\": null,\n  \"success\": true\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users"
+                            ]
+                        },
+                        "description": "Create a new user.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\"\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/users",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "users"
+                                    ]
+                                },
+                                "description": "Create a new user.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\"\n}"
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "body": "{\n  \"id\": 1\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update User",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":id"
+                            ]
+                        },
+                        "description": "Update an existing user.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"John Updated\",\n  \"email\": \"john.updated@example.com\"\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/users/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "users",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Update an existing user.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"John Updated\",\n  \"email\": \"john.updated@example.com\"\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":id"
+                            ]
+                        },
+                        "description": "Delete a user by ID."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{authToken}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/users/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "users",
+                                        ":id"
+                                    ]
+                                },
+                                "description": "Delete a user by ID."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"isDeleted\": true\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                        }
+                    ]
+                }
+            ],
+            "description": "Endpoints for managing users."
         },
         {
             "name": "Host Groups",

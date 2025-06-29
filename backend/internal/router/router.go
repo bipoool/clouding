@@ -9,4 +9,5 @@ import (
 
 func SetupRouter(ginRouteGroup *gin.RouterGroup, db *sqlx.DB) {
 	v1.RegisterHostRoutes(ginRouteGroup, db)
+	v1.RegisterUserRoutes(ginRouteGroup, db)
 }
