@@ -4,7 +4,7 @@ import "github.com/gin-gonic/gin"
 
 func NewApiErrorResponse(err string) gin.H {
 	return gin.H{
-		"error":   "API Error: " + err,
+		"error":   err,
 		"success": false,
 		"data":    nil,
 	}
