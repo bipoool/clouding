@@ -23,7 +23,9 @@ import { CustomNode } from '@/components/custom-node'
 import { NavigationHeader } from '@/components/infrastructure/navigation-header'
 import { ComponentsSidebar } from '@/components/infrastructure/components-sidebar'
 import { EmptyState } from '@/components/infrastructure/empty-state'
+import { ViewPlanModal } from '@/components/dashboard/ViewPlanModal'
 import { componentCategories, nodeTypes } from '@/lib/infrastructure-components'
+import { useInfraConfigs } from '@/hooks/useInfraConfigs'
 import { DashboardFooter } from '@/components/dashboard-footer'
 
 const initialNodes: Node[] = []
@@ -45,6 +47,9 @@ interface InfrastructureBuilderState {
 	searchTerm: string
 	expandedCategories: Record<string, boolean>
 	draggedNodeType: string | null
+	isViewPlanOpen: boolean
+	generatedPlan: string
+	configName: string
 }
 
 function InfrastructureBuilder() {
@@ -57,10 +62,14 @@ function InfrastructureBuilder() {
 		searchTerm: '',
 		expandedCategories: initialExpandedCategories,
 		draggedNodeType: null,
+		isViewPlanOpen: false,
+		generatedPlan: '',
+		configName: '',
 	})
 
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition } = useReactFlow()
+	const { saveConfig, generatePlan } = useInfraConfigs()
 
 	// Memoized node types for React Flow
 	const nodeTypesMap = useMemo(() => ({ customNode: CustomNode as any }), [])
@@ -263,13 +272,89 @@ function InfrastructureBuilder() {
 		[setNodes, setEdges]
 	)
 
+	// Configuration management handlers
+	const handleSaveConfiguration = useCallback(() => {
+		if (nodes.length === 0) {
+			alert('Please add some components to your configuration before saving.')
+			return
+		}
+
+		const configName = state.configName || `Config-${Date.now()}`
+		const newConfig = {
+			name: configName,
+			type: 'custom' as const,
+			nodes,
+			edges,
+			deploymentStatus: 'draft' as const,
+			assignedVMs: [],
+			assignedGroups: [],
+		}
+
+		saveConfig(newConfig)
+		alert(`Configuration "${configName}" saved successfully!`)
+	}, [nodes, edges, state.configName, saveConfig])
+
+	const handleClearCanvas = useCallback(() => {
+		if (nodes.length === 0 && edges.length === 0) return
+
+		if (
+			confirm(
+				'Are you sure you want to clear the canvas? This action cannot be undone.'
+			)
+		) {
+			setNodes([])
+			setEdges([])
+			setState(prev => ({ ...prev, configName: '' }))
+		}
+	}, [nodes.length, edges.length, setNodes, setEdges])
+
+	const handleViewPlan = useCallback(() => {
+		if (nodes.length === 0) {
+			alert('Please add some components to generate a deployment plan.')
+			return
+		}
+
+		const mockConfig = {
+			id: 'temp-config',
+			name: state.configName || 'Untitled Configuration',
+			type: 'custom' as const,
+			nodes,
+			edges,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			deploymentStatus: 'draft' as const,
+			assignedVMs: [],
+			assignedGroups: [],
+		}
+
+		const plan = generatePlan(mockConfig)
+		setState(prev => ({
+			...prev,
+			generatedPlan: plan,
+			isViewPlanOpen: true,
+		}))
+	}, [nodes, edges, state.configName, generatePlan])
+
+	const handleClosePlanModal = useCallback(() => {
+		setState(prev => ({ ...prev, isViewPlanOpen: false }))
+	}, [])
+
+	const handleConfigNameChange = useCallback((name: string) => {
+		setState(prev => ({ ...prev, configName: name }))
+	}, [])
+
 	return (
 		<div className='h-screen gradient-bg noise-overlay flex flex-col overflow-hidden'>
 			{/* Top Navigation Bar */}
 			<NavigationHeader
 				agentConnected={state.agentConnected}
 				mobileMenuOpen={state.mobileMenuOpen}
+				configName={state.configName}
 				onMobileMenuToggle={handleMobileMenuToggle}
+				onSave={handleSaveConfiguration}
+				onClear={handleClearCanvas}
+				onViewPlan={handleViewPlan}
+				onConfigNameChange={handleConfigNameChange}
 			/>
 
 			{/* Main Content Area */}
@@ -370,6 +455,25 @@ function InfrastructureBuilder() {
 				</div>
 			</div>
 			<DashboardFooter />
+
+			{/* View Plan Modal */}
+			<ViewPlanModal
+				config={{
+					id: 'temp-config',
+					name: state.configName || 'Untitled Configuration',
+					type: 'custom' as const,
+					nodes,
+					edges,
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+					deploymentStatus: 'draft' as const,
+					assignedVMs: [],
+					assignedGroups: [],
+				}}
+				plan={state.generatedPlan}
+				isOpen={state.isViewPlanOpen}
+				onClose={handleClosePlanModal}
+			/>
 		</div>
 	)
 }

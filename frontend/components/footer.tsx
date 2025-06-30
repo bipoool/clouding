@@ -58,7 +58,7 @@ export function Footer() {
 									Dashboard
 								</Link>
 								<Link
-									href='/dashboard/create'
+									href='/dashboard/infrastructure/create'
 									className='block text-secondary hover:text-accent-cyan transition-colors text-sm interactive-element'
 								>
 									Infrastructure Builder
