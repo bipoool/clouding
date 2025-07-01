@@ -3,5 +3,6 @@ frontend/.env
 frontend/dist
 frontend/build
 frontend/.next
+frontend/tsconfig.tsbuildinfo
 
 .cursor
