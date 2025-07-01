@@ -2,6 +2,7 @@
 
 import type React from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -14,12 +15,30 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { DashboardFooter } from '@/components/dashboard-footer'
 import { Home, Settings, LogOut, Search, User } from 'lucide-react'
+import { useAuthStore, useUser } from '@/lib/auth/store'
+import { toast } from 'sonner'
 
 interface DashboardLayoutProps {
 	children: React.ReactNode
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+	const router = useRouter()
+	const user = useUser()
+	const { signOut } = useAuthStore()
+
+	const handleSignOut = async () => {
+		try {
+			toast.promise(signOut(), {
+				loading: 'Signing out...',
+				success: 'Successfully signed out!',
+				error: 'Failed to sign out. Please try again.',
+			})
+		} catch (error) {
+			console.error('Error signing out:', error)
+		}
+	}
+
 	return (
 		<div className='min-h-screen animated-bg'>
 			{/* Top Navigation */}
@@ -58,9 +77,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 									className='relative h-12 w-12 rounded-full interactive-element hover:bg-gray-800/50'
 								>
 									<Avatar className='h-12 w-12 border-2 border-gray-600/50 hover:border-gray-500/70 transition-colors'>
-										{/* <AvatarImage src='/placeholder-user.jpg' alt='Profile' /> */}
+										<AvatarImage
+											src={user?.user_metadata?.avatar_url}
+											alt={user?.email || 'Profile'}
+										/>
 										<AvatarFallback className='bg-gradient-to-br from-gray-900 to-black text-gray-300 border border-gray-800/30'>
-											<User className='h-6 w-6 text-gray-400' />
+											{user?.email?.charAt(0).toUpperCase() || (
+												<User className='h-6 w-6 text-gray-400' />
+											)}
 										</AvatarFallback>
 									</Avatar>
 								</Button>
@@ -70,6 +94,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 								align='end'
 								sideOffset={8}
 							>
+								{user && (
+									<div className='flex items-center justify-start gap-2 p-2'>
+										<div className='flex flex-col space-y-1 leading-none'>
+											<p className='text-sm font-medium text-white'>
+												{user.user_metadata?.full_name || 'User'}
+											</p>
+											<p className='text-xs text-gray-400'>{user.email}</p>
+										</div>
+									</div>
+								)}
+								<DropdownMenuSeparator className='bg-gray-700/50 my-2' />
 								<DropdownMenuItem asChild>
 									<Link
 										href='/dashboard/profile'
@@ -89,14 +124,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 									</Link>
 								</DropdownMenuItem>
 								<DropdownMenuSeparator className='bg-gray-700/50 my-2' />
-								<DropdownMenuItem asChild>
-									<Link
-										href='/'
-										className='flex items-center text-red-300 hover:text-red-200 hover:bg-red-900/30 rounded-lg px-3 py-2.5 cursor-pointer transition-colors'
-									>
-										<LogOut className='mr-3 h-5 w-5' />
-										<span className='font-medium'>Logout</span>
-									</Link>
+								<DropdownMenuItem
+									onClick={handleSignOut}
+									className='flex items-center text-red-300 hover:text-red-200 hover:bg-red-900/30 rounded-lg px-3 py-2.5 cursor-pointer transition-colors'
+								>
+									<LogOut className='mr-3 h-5 w-5' />
+									<span className='font-medium'>Logout</span>
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>

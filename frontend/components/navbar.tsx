@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Menu, X, User, Settings, LogOut } from 'lucide-react'
 import { useUser, useAuthStore } from '@/lib/auth/store'
+import { toast } from 'sonner'
 
 export function Navbar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -21,7 +22,11 @@ export function Navbar() {
 
 	const handleSignOut = async () => {
 		try {
-			await signOut()
+			toast.promise(signOut(), {
+				loading: 'Signing out...',
+				success: 'Successfully signed out!',
+				error: 'Failed to sign out. Please try again.',
+			})
 		} catch (error) {
 			console.error('Error signing out:', error)
 		}

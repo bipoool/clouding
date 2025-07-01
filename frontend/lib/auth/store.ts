@@ -136,22 +136,79 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       signOut: async () => {
-        const supabase = createClient()
         set({ loading: true })
         
-        // Cleanup subscription before signing out
-        const { authSubscription } = get()
-        if (authSubscription) {
-          authSubscription()
-          set({ authSubscription: null })
-        }
-        
-        const { error } = await supabase.auth.signOut()
-        if (error) {
-          set({ loading: false })
+        try {
+          // Cleanup subscription before signing out
+          const { authSubscription } = get()
+          if (authSubscription) {
+            authSubscription()
+            set({ authSubscription: null })
+          }
+          
+          // Create client instance
+          const supabase = createClient()
+          
+          try {
+            // Call server-side logout API for proper session cleanup
+            const response = await fetch('/auth/logout', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+            
+            // Don't throw error if server logout fails, continue with client logout
+            if (!response.ok) {
+              console.warn('Server-side logout failed, continuing with client-side logout')
+            }
+          } catch (serverError) {
+            console.warn('Server-side logout request failed:', serverError)
+            // Continue with client-side logout
+          }
+          
+          // Always attempt client-side logout
+          const { error } = await supabase.auth.signOut()
+          
+          if (error) {
+            console.error('Error signing out from client:', error)
+            // Continue with cleanup even if client logout fails
+          }
+          
+          // Clear local state regardless of API results
+          set({ 
+            user: null, 
+            session: null, 
+            loading: false 
+          })
+          
+          // Use window.location for a full page reload to ensure clean state
+          if (typeof window !== 'undefined') {
+            // Add a small delay to allow toast to show
+            setTimeout(() => {
+              window.location.href = '/'
+            }, 500)
+          }
+        } catch (error: unknown) {
+          console.error('Error during sign out:', error)
+          
+          // Even if there's an error, clear the local state
+          set({ 
+            user: null, 
+            session: null, 
+            loading: false 
+          })
+          
+          // Still redirect to home page
+          if (typeof window !== 'undefined') {
+            setTimeout(() => {
+              window.location.href = '/'
+            }, 500)
+          }
+          
           throw error
         }
-        set({ user: null, session: null, loading: false })
       },
 
       cleanup: () => {
@@ -202,11 +259,19 @@ export const useAuthStore = create<AuthStore>()(
 
               // Handle different auth events
               if (event === 'SIGNED_IN') {
-                // User signed in
+                // User signed in - could trigger additional actions
+                console.log('User signed in')
               } else if (event === 'SIGNED_OUT') {
-                // User signed out
+                // User signed out - ensure clean state
+                console.log('User signed out')
+                set({ 
+                  user: null, 
+                  session: null, 
+                  loading: false 
+                })
               } else if (event === 'TOKEN_REFRESHED') {
-                // Token was refreshed
+                // Token was refreshed - update session
+                console.log('Token refreshed')
               }
             }
           )
