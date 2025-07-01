@@ -70,9 +70,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 								align='end'
 								sideOffset={8}
 							>
-								<DropdownMenuItem className='text-popover-foreground hover:bg-accent hover:text-accent-foreground rounded-lg px-3 py-2.5 cursor-pointer transition-colors'>
-									<User className='mr-3 h-5 w-5' />
-									<span className='font-medium'>Profile</span>
+								<DropdownMenuItem asChild>
+									<Link
+										href='/dashboard/profile'
+										className='flex items-center text-popover-foreground hover:bg-accent hover:text-accent-foreground rounded-lg px-3 py-2.5 cursor-pointer transition-colors'
+									>
+										<User className='mr-3 h-5 w-5' />
+										<span className='font-medium'>Profile</span>
+									</Link>
 								</DropdownMenuItem>
 								<DropdownMenuItem asChild>
 									<Link

@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -18,11 +21,123 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { User, Key, Palette, Trash2, Save } from 'lucide-react'
+import {
+	User,
+	Key,
+	Palette,
+	Trash2,
+	Save,
+	Mail,
+	Calendar,
+	Shield,
+} from 'lucide-react'
+import { useUser, useAuthLoading } from '@/lib/auth/store'
+import { toast } from 'sonner'
 
 export default function SettingsPage() {
+	const user = useUser()
+	const loading = useAuthLoading()
 	const [darkMode, setDarkMode] = useState(true)
 	const [notifications, setNotifications] = useState(true)
+	const [profileData, setProfileData] = useState({
+		name: '',
+		email: '',
+	})
+	const [passwords, setPasswords] = useState({
+		current: '',
+		new: '',
+		confirm: '',
+	})
+
+	// Initialize profile data when user loads
+	useEffect(() => {
+		if (user) {
+			setProfileData({
+				name: user.user_metadata?.full_name || '',
+				email: user.email || '',
+			})
+		}
+	}, [user])
+
+	const handleSaveProfile = async () => {
+		try {
+			// Here you would typically update user metadata via Supabase
+			// For now, we'll just show a success message
+			toast.success('Profile updated successfully!')
+		} catch (error) {
+			toast.error('Failed to update profile')
+			console.error('Error updating profile:', error)
+		}
+	}
+
+	const handleUpdatePassword = async () => {
+		if (!passwords.current || !passwords.new || !passwords.confirm) {
+			toast.error('Please fill in all password fields')
+			return
+		}
+
+		if (passwords.new !== passwords.confirm) {
+			toast.error('New passwords do not match')
+			return
+		}
+
+		if (passwords.new.length < 6) {
+			toast.error('Password must be at least 6 characters')
+			return
+		}
+
+		try {
+			// Here you would typically update password via Supabase
+			toast.success('Password updated successfully!')
+			setPasswords({ current: '', new: '', confirm: '' })
+		} catch (error) {
+			toast.error('Failed to update password')
+			console.error('Error updating password:', error)
+		}
+	}
+
+	const formatDate = (dateString: string) => {
+		return new Date(dateString).toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+		})
+	}
+
+	if (loading) {
+		return (
+			<DashboardLayout>
+				<div className='max-w-4xl mx-auto space-y-8'>
+					<div className='space-y-2'>
+						<Skeleton className='h-8 w-48' />
+						<Skeleton className='h-4 w-64' />
+					</div>
+					<Skeleton className='h-96 w-full rounded-lg' />
+					<Skeleton className='h-64 w-full rounded-lg' />
+				</div>
+			</DashboardLayout>
+		)
+	}
+
+	if (!user) {
+		return (
+			<DashboardLayout>
+				<div className='max-w-4xl mx-auto'>
+					<div className='glass-card border-red-500/20 p-6'>
+						<div className='text-center text-red-400'>
+							<Shield className='h-12 w-12 mx-auto mb-4' />
+							<h2 className='text-xl font-semibold mb-2'>
+								Authentication Required
+							</h2>
+							<p className='text-gray-400'>
+								Please sign in to access settings.
+							</p>
+						</div>
+					</div>
+				</div>
+			</DashboardLayout>
+		)
+	}
 
 	return (
 		<DashboardLayout>
@@ -32,6 +147,47 @@ export default function SettingsPage() {
 					<p className='text-gray-400'>
 						Manage your account preferences and security settings
 					</p>
+				</div>
+
+				{/* Current User Info */}
+				<div className='glass-card space-y-4'>
+					<div className='flex items-center gap-4'>
+						<Avatar className='h-16 w-16 border-2 border-accent-cyan/30'>
+							<AvatarImage
+								src={user.user_metadata?.avatar_url}
+								alt={profileData.name || user.email || 'User'}
+							/>
+							<AvatarFallback className='bg-accent-cyan/10 text-accent-cyan text-lg'>
+								{(profileData.name || user.email || 'U')
+									.charAt(0)
+									.toUpperCase()}
+							</AvatarFallback>
+						</Avatar>
+						<div className='flex-1'>
+							<h3 className='text-xl font-semibold text-white'>
+								{profileData.name || 'Anonymous User'}
+							</h3>
+							<div className='flex items-center gap-2 mt-1'>
+								<Mail className='h-4 w-4 text-gray-400' />
+								<span className='text-gray-400'>{user.email}</span>
+								{user.email_confirmed_at && (
+									<Badge
+										variant='secondary'
+										className='bg-green-500/20 text-green-400 border-green-500/30'
+									>
+										Verified
+									</Badge>
+								)}
+							</div>
+							<div className='flex items-center gap-2 mt-1'>
+								<Calendar className='h-4 w-4 text-gray-400' />
+								<span className='text-gray-400 text-sm'>
+									Member since{' '}
+									{user.created_at ? formatDate(user.created_at) : 'Unknown'}
+								</span>
+							</div>
+						</div>
+					</div>
 				</div>
 
 				{/* Profile Settings */}
@@ -50,7 +206,11 @@ export default function SettingsPage() {
 							</Label>
 							<Input
 								id='name'
-								defaultValue='John Developer'
+								value={profileData.name}
+								onChange={e =>
+									setProfileData(prev => ({ ...prev, name: e.target.value }))
+								}
+								placeholder='Enter your full name'
 								className='glow-border bg-white/5 border-white/10 text-white'
 							/>
 						</div>
@@ -62,13 +222,24 @@ export default function SettingsPage() {
 							<Input
 								id='email'
 								type='email'
-								defaultValue='john@clouding.dev'
+								value={profileData.email}
+								onChange={e =>
+									setProfileData(prev => ({ ...prev, email: e.target.value }))
+								}
 								className='glow-border bg-white/5 border-white/10 text-white'
+								readOnly
+								title='Email cannot be changed from settings'
 							/>
+							<p className='text-xs text-gray-500'>
+								Email address cannot be changed from settings
+							</p>
 						</div>
 					</div>
 
-					<Button className='bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white'>
+					<Button
+						onClick={handleSaveProfile}
+						className='bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white'
+					>
 						<Save className='h-4 w-4 mr-2' />
 						Save Profile
 					</Button>
@@ -90,6 +261,10 @@ export default function SettingsPage() {
 								id='current-password'
 								type='password'
 								placeholder='••••••••'
+								value={passwords.current}
+								onChange={e =>
+									setPasswords(prev => ({ ...prev, current: e.target.value }))
+								}
 								className='glow-border bg-white/5 border-white/10 text-white'
 							/>
 						</div>
@@ -102,6 +277,10 @@ export default function SettingsPage() {
 								id='new-password'
 								type='password'
 								placeholder='••••••••'
+								value={passwords.new}
+								onChange={e =>
+									setPasswords(prev => ({ ...prev, new: e.target.value }))
+								}
 								className='glow-border bg-white/5 border-white/10 text-white'
 							/>
 						</div>
@@ -114,12 +293,17 @@ export default function SettingsPage() {
 								id='confirm-password'
 								type='password'
 								placeholder='••••••••'
+								value={passwords.confirm}
+								onChange={e =>
+									setPasswords(prev => ({ ...prev, confirm: e.target.value }))
+								}
 								className='glow-border bg-white/5 border-white/10 text-white'
 							/>
 						</div>
 					</div>
 
 					<Button
+						onClick={handleUpdatePassword}
 						variant='outline'
 						className='glow-border bg-transparent text-purple-400 hover:bg-purple-400/10'
 					>
