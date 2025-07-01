@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS hosts (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE ssh_credentials (
+CREATE TABLE IF NOT EXISTS ssh_credentials (
     id SERIAL PRIMARY KEY,
     user_name TEXT NOT NULL,
     key_name TEXT NOT NULL,
