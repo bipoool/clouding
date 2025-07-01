@@ -51,7 +51,10 @@ func (c *UserController) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, &user.CreateUserResponse{ID: userObj.ID})
+	res := &user.CreateUserResponse{
+		ID: userObj.ID,
+	}
+	ctx.JSON(http.StatusCreated, utils.NewSuccessResponse(res))
 }
 
 func (c *UserController) UpdateUser(ctx *gin.Context) {
@@ -94,9 +97,9 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	res := &user.DeleteUserResponse{
+	resp := &user.DeleteUserResponse{
 		ID:        &id,
 		IsDeleted: true,
 	}
-	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(res))
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(resp))
 }

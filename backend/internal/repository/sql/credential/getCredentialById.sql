@@ -1,0 +1,1 @@
+SELECT * FROM credentials WHERE id = $1; 

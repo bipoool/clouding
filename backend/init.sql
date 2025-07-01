@@ -17,10 +17,19 @@ CREATE TABLE IF NOT EXISTS hosts (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS ssh_credentials (
+CREATE TYPE credential_type AS ENUM (
+  'ssh_key',
+  'ssl_cert',
+  'password',
+  'api_key'
+);
+
+CREATE TABLE IF NOT EXISTS credentials (
     id SERIAL PRIMARY KEY,
-    user_name TEXT NOT NULL,
-    key_name TEXT NOT NULL,
-    user_id INTEGER NOT NULL REFERENCES users(id)
-    UNIQUE(user_id, key_name)
+    name TEXT NOT NULL,
+    type credential_type NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, name)
 );
