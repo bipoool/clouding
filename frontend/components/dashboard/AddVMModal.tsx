@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { logger } from '@/lib/utils/logger'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -92,7 +93,7 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 			setOpen(false)
 			form.reset()
 		} catch (error) {
-			console.error('Failed to add VM:', error)
+			logger.error('Failed to add VM:', error)
 		} finally {
 			setIsSubmitting(false)
 		}

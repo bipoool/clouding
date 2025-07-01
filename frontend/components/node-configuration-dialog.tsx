@@ -22,6 +22,7 @@ import {
 	VERSION_PLACEHOLDERS,
 	FORM_FIELD_CLASSES,
 } from '@/lib/node-types'
+import { logger } from '@/lib/utils/logger'
 
 interface NodeConfigurationDialogProps {
 	nodeData: CustomNodeData
@@ -235,7 +236,7 @@ const ConfigurationForm: React.FC<{
 
 	const handleSaveConfiguration = () => {
 		// TODO: Implement configuration save logic
-		console.log('Saving configuration for node:', nodeData.label)
+		logger.log('Saving configuration for node:', nodeData.label)
 	}
 
 	return (

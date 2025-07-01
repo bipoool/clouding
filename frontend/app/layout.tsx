@@ -1,12 +1,18 @@
-import type React from 'react'
 import type { Metadata } from 'next'
-import { FontLoader } from '@/components/font-loader'
+import { JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
+
+const jetbrainsMono = JetBrains_Mono({
+	subsets: ['latin'],
+	variable: '--font-jetbrains',
+})
 
 export const metadata: Metadata = {
-	title: 'Clouding - Infrastructure Management',
-	description: 'Visualize. Configure. Deploy.',
-	generator: 'v0.dev',
+	title: 'Clouding - Modern Infrastructure Management',
+	description:
+		'Simplify your cloud infrastructure with our modern, intuitive platform.',
 }
 
 export default function RootLayout({
@@ -15,10 +21,17 @@ export default function RootLayout({
 	children: React.ReactNode
 }) {
 	return (
-		<html lang='en'>
-			<body className='font-mono antialiased animated-bg min-h-screen'>
-				<FontLoader />
-				{children}
+		<html lang='en' suppressHydrationWarning>
+			<body className={`${jetbrainsMono.variable} font-sans antialiased`}>
+				<ThemeProvider
+					attribute='class'
+					defaultTheme='dark'
+					enableSystem
+					disableTransitionOnChange
+				>
+					{children}
+					<Toaster />
+				</ThemeProvider>
 			</body>
 		</html>
 	)

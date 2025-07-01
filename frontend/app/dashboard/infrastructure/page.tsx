@@ -8,6 +8,7 @@ import { ViewPlanModal } from '@/components/dashboard/ViewPlanModal'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useInfraConfigs } from '@/hooks/useInfraConfigs'
+import { logger } from '@/lib/utils/logger'
 import {
 	ArrowLeft,
 	Plus,
@@ -53,14 +54,14 @@ export default function InfrastructurePage() {
 
 	const handleDeploy = async (configId: string) => {
 		// In a real app, this would open a dialog to select VMs/groups and confirm deployment
-		console.log('Deploy config:', configId)
+		logger.log('Deploy config:', configId)
 		// Placeholder deployment
 		await deployConfig(configId, 'vm', 'vm-1')
 	}
 
 	const handleAssign = (configId: string) => {
 		// In a real app, this would open a dialog to assign to VMs/groups
-		console.log('Assign config:', configId)
+		logger.log('Assign config:', configId)
 	}
 
 	const handleDelete = (configId: string) => {
@@ -71,7 +72,7 @@ export default function InfrastructurePage() {
 
 	const handleEdit = (configId: string) => {
 		// In a real app, this would navigate to the config editor
-		console.log('Edit config:', configId)
+		logger.log('Edit config:', configId)
 	}
 
 	return (

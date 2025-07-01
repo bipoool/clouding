@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { Node, Edge } from '@xyflow/react'
+import { logger } from '@/lib/utils/logger'
 
 export interface InfraConfig {
   id: string
@@ -144,7 +145,7 @@ export function useInfraConfigs() {
     ))
     
     // Placeholder for future SSE integration
-    console.log(`Deploying config ${configId} to ${targetType} ${targetId}`)
+    logger.log(`Deploying config ${configId} to ${targetType} ${targetId}`)
     return { success: true, deploymentId: `deploy-${Date.now()}` }
   }, [])
 

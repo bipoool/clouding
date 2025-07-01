@@ -9,6 +9,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { logger } from '@/lib/utils/logger'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Copy, Download, FileCode, CheckCircle } from 'lucide-react'
@@ -38,7 +39,7 @@ export function ViewPlanModal({
 			setCopied(true)
 			setTimeout(() => setCopied(false), 2000)
 		} catch (error) {
-			console.error('Failed to copy to clipboard:', error)
+			logger.error('Failed to copy to clipboard:', error)
 		}
 	}
 
