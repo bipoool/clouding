@@ -73,7 +73,11 @@ func (c *HostController) CreateHost(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, &host.CreateHostResponse{ID: hostObj.ID})
+	resp := &host.CreateHostResponse{
+		ID: hostObj.ID,
+	}
+
+	ctx.JSON(http.StatusCreated, utils.NewSuccessResponse(resp))
 }
 
 func (c *HostController) UpdateHost(ctx *gin.Context) {
@@ -116,9 +120,9 @@ func (c *HostController) DeleteHost(ctx *gin.Context) {
 		return
 	}
 
-	res := &host.DeleteHostResponse{
+	resp := &host.DeleteHostResponse{
 		ID:        &id,
 		IsDeleted: true,
 	}
-	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(res))
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(resp))
 }

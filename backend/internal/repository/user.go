@@ -97,8 +97,13 @@ func (r *userRepository) UpdateUser(ctx context.Context, u *user.User) error {
 }
 
 func (r *userRepository) DeleteUser(ctx context.Context, id int) error {
-	if err := r.db.GetContext(ctx, &id, deleteUserQuery, id); err != nil {
+	result, err := r.db.ExecContext(ctx, deleteUserQuery, id)
+	if err != nil {
 		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return sql.ErrNoRows
 	}
 	return nil
 }
