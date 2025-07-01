@@ -112,9 +112,7 @@ export function AuthForm() {
 			await signUp(email, password)
 			setMessage('Check your email for the confirmation link!')
 		} catch (error: unknown) {
-			const errorMessage =
-				error instanceof Error ? error.message : 'Failed to sign up'
-			setError(errorMessage)
+			setError('Failed to sign up')
 		} finally {
 			setLoading(false)
 		}
