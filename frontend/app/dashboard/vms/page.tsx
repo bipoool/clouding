@@ -8,6 +8,7 @@ import { AddVMModal } from '@/components/dashboard/AddVMModal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useVMs } from '@/hooks/useVMs'
+import { logger } from '@/lib/utils/logger'
 import {
 	Server,
 	Plus,
@@ -38,13 +39,13 @@ export default function VMsPage() {
 	const handleAssignToGroup = (vmId: string) => {
 		setSelectedVMForGroup(vmId)
 		// In a real app, this would open a dialog to select a group
-		console.log('Assign VM to group:', vmId)
+		logger.log('Assign VM to group:', vmId)
 	}
 
 	const handleAssignConfig = (vmId: string) => {
 		setSelectedVMForConfig(vmId)
 		// In a real app, this would open a dialog to select a config
-		console.log('Assign config to VM:', vmId)
+		logger.log('Assign config to VM:', vmId)
 	}
 
 	return (

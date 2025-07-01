@@ -68,6 +68,13 @@ export function AuthForm() {
 			return
 		}
 
+		// Basic email format validation
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+		if (!emailRegex.test(email)) {
+			setError('Invalid email format')
+			return
+		}
+
 		setLoading(true)
 		setError('')
 
@@ -75,9 +82,7 @@ export function AuthForm() {
 			await signInWithPassword(email, password)
 			router.push('/dashboard')
 		} catch (error: unknown) {
-			const errorMessage =
-				error instanceof Error ? error.message : 'Failed to sign in'
-			setError(errorMessage)
+			setError('Invalid email or password')
 		} finally {
 			setLoading(false)
 		}
@@ -134,11 +139,7 @@ export function AuthForm() {
 					break
 			}
 		} catch (error: unknown) {
-			const errorMessage =
-				error instanceof Error
-					? error.message
-					: 'Failed to authenticate with social provider'
-			setError(errorMessage)
+			setError('Failed to authenticate with social provider')
 			setLoading(false)
 		}
 	}

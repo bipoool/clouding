@@ -16,6 +16,7 @@ import {
 import { DashboardFooter } from '@/components/dashboard-footer'
 import { Home, Settings, LogOut, Search, User } from 'lucide-react'
 import { useAuthStore, useUser } from '@/lib/auth/store'
+import { logger } from '@/lib/utils/logger'
 import { toast } from 'sonner'
 
 interface DashboardLayoutProps {
@@ -35,7 +36,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 				error: 'Failed to sign out. Please try again.',
 			})
 		} catch (error) {
-			console.error('Error signing out:', error)
+			logger.error('Error signing out:', error)
 		}
 	}
 

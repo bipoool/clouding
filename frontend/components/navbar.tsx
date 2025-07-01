@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Menu, X, User, Settings, LogOut } from 'lucide-react'
 import { useUser, useAuthStore } from '@/lib/auth/store'
+import { logger } from '@/lib/utils/logger'
 import { toast } from 'sonner'
 
 export function Navbar() {
@@ -28,7 +29,7 @@ export function Navbar() {
 				error: 'Failed to sign out. Please try again.',
 			})
 		} catch (error) {
-			console.error('Error signing out:', error)
+			logger.error('Error signing out:', error)
 		}
 	}
 

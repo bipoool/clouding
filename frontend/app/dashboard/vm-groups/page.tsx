@@ -7,6 +7,7 @@ import { VMGroupCard } from '@/components/dashboard/VMGroupCard'
 import { CreateGroupModal } from '@/components/dashboard/CreateGroupModal'
 import { Button } from '@/components/ui/button'
 import { useVMs, useVMGroups } from '@/hooks/useVMs'
+import { logger } from '@/lib/utils/logger'
 import {
 	Users,
 	Plus,
@@ -31,17 +32,17 @@ export default function VMGroupsPage() {
 	const handleAddVMsToGroup = (groupId: string) => {
 		setSelectedGroup(groupId)
 		// In a real app, this would open a dialog to select VMs
-		console.log('Add VMs to group:', groupId)
+		logger.log('Add VMs to group:', groupId)
 	}
 
 	const handleAssignConfig = (groupId: string) => {
 		// In a real app, this would open a dialog to select a config
-		console.log('Assign config to group:', groupId)
+		logger.log('Assign config to group:', groupId)
 	}
 
 	const handleManageVMs = (groupId: string) => {
 		// In a real app, this would open a management dialog
-		console.log('Manage VMs in group:', groupId)
+		logger.log('Manage VMs in group:', groupId)
 	}
 
 	return (

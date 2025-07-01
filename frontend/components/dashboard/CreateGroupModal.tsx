@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { logger } from '@/lib/utils/logger'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -70,7 +71,7 @@ export function CreateGroupModal({
 			setOpen(false)
 			form.reset()
 		} catch (error) {
-			console.error('Failed to create group:', error)
+			logger.error('Failed to create group:', error)
 		} finally {
 			setIsSubmitting(false)
 		}

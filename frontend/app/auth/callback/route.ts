@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Validates if a redirect path is safe and internal
@@ -41,14 +42,14 @@ export async function GET(request: NextRequest) {
       const { error } = await supabase.auth.exchangeCodeForSession(code)
       
       if (error) {
-        console.error('Auth callback error:', error)
+        logger.error('Auth callback error:', error)
         return NextResponse.redirect(`${origin}/auth?error=auth_error`)
       }
 
       // Successful authentication, redirect to dashboard or specified redirect
       return NextResponse.redirect(`${origin}${redirectTo}`)
     } catch (error) {
-      console.error('Auth callback exception:', error)
+      logger.error('Auth callback exception:', error)
       return NextResponse.redirect(`${origin}/auth?error=server_error`)
     }
   }

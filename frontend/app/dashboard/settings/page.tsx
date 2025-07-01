@@ -34,6 +34,7 @@ import {
 import { useUser, useAuthLoading } from '@/lib/auth/store'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils/date'
+import { logger } from '@/lib/utils/logger'
 
 export default function SettingsPage() {
 	const user = useUser()
@@ -67,7 +68,7 @@ export default function SettingsPage() {
 			toast.success('Profile updated successfully!')
 		} catch (error) {
 			toast.error('Failed to update profile')
-			console.error('Error updating profile:', error)
+			logger.error('Error updating profile:', error)
 		}
 	}
 
@@ -94,7 +95,7 @@ export default function SettingsPage() {
 			setPasswords({ current: '', new: '', confirm: '' })
 		} catch (error) {
 			toast.error('Failed to update password')
-			console.error('Error updating password:', error)
+			logger.error('Error updating password:', error)
 		}
 	}
 
@@ -217,9 +218,6 @@ export default function SettingsPage() {
 								id='email'
 								type='email'
 								value={profileData.email}
-								onChange={e =>
-									setProfileData(prev => ({ ...prev, email: e.target.value }))
-								}
 								className='glow-border bg-white/5 border-white/10 text-white'
 								readOnly
 								title='Email cannot be changed from settings'

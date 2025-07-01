@@ -34,6 +34,7 @@ import {
 	Gamepad2,
 } from 'lucide-react'
 import { useUser, useAuthLoading } from '@/lib/auth/store'
+import { logger } from '@/lib/utils/logger'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils/date'
 
@@ -73,7 +74,7 @@ export default function ProfilePage() {
 			setIsEditing(false)
 		} catch (error) {
 			toast.error('Failed to update profile')
-			console.error('Error updating profile:', error)
+			logger.error('Error updating profile:', error)
 		}
 	}
 

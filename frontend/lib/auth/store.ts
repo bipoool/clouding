@@ -3,6 +3,7 @@ import { devtools } from 'zustand/middleware'
 import type { User, Session } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { signInWithPassword as serverSignInWithPassword, signUp as serverSignUp } from './actions'
+import { logger } from '@/lib/utils/logger'
 
 // Types for the auth store
 interface AuthState {
@@ -21,6 +22,7 @@ interface AuthActions {
   setAuthSubscription: (subscription: (() => void) | null) => void
   signInWithPassword: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>
+  signInWithOAuth: (provider: 'google' | 'github' | 'discord') => Promise<void>
   signInWithGoogle: () => Promise<void>
   signInWithGitHub: () => Promise<void>
   signInWithDiscord: () => Promise<void>
@@ -54,8 +56,6 @@ export const useAuthStore = create<AuthStore>()(
         try {
           await serverSignInWithPassword(email, password)
           // The session will be updated through the auth listener
-        } catch (error: unknown) {
-          throw error
         } finally {
           set({ loading: false })
         }
@@ -72,12 +72,13 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      signInWithGoogle: async () => {
+      // Reusable OAuth sign-in function
+      signInWithOAuth: async (provider: 'google' | 'github' | 'discord') => {
         set({ loading: true })
         try {
           const supabase = createClient()
           const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
+            provider,
             options: {
               redirectTo: `${window.location.origin}/auth/callback`,
             },
@@ -86,53 +87,21 @@ export const useAuthStore = create<AuthStore>()(
           if (error) {
             throw error
           }
-        } catch (error: unknown) {
-          throw error
         } finally {
           set({ loading: false })
         }
+      },
+
+      signInWithGoogle: async () => {
+        return get().signInWithOAuth('google')
       },
 
       signInWithGitHub: async () => {
-        set({ loading: true })
-        try {
-          const supabase = createClient()
-          const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'github',
-            options: {
-              redirectTo: `${window.location.origin}/auth/callback`,
-            },
-          })
-
-          if (error) {
-            throw error
-          }
-        } catch (error: unknown) {
-          throw error
-        } finally {
-          set({ loading: false })
-        }
+        return get().signInWithOAuth('github')
       },
 
       signInWithDiscord: async () => {
-        set({ loading: true })
-        try {
-          const supabase = createClient()
-          const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'discord',
-            options: {
-              redirectTo: `${window.location.origin}/auth/callback`,
-            },
-          })
-
-          if (error) {
-            throw error
-          }
-        } catch (error: unknown) {
-          throw error
-        } finally {
-          set({ loading: false })
-        }
+        return get().signInWithOAuth('discord')
       },
 
       signOut: async () => {
@@ -161,10 +130,10 @@ export const useAuthStore = create<AuthStore>()(
             
             // Don't throw error if server logout fails, continue with client logout
             if (!response.ok) {
-              console.warn('Server-side logout failed, continuing with client-side logout')
+              logger.warn('Server-side logout failed, continuing with client-side logout')
             }
           } catch (serverError) {
-            console.warn('Server-side logout request failed:', serverError)
+            logger.warn('Server-side logout request failed:', serverError)
             // Continue with client-side logout
           }
           
@@ -172,7 +141,7 @@ export const useAuthStore = create<AuthStore>()(
           const { error } = await supabase.auth.signOut()
           
           if (error) {
-            console.error('Error signing out from client:', error)
+            logger.error('Error signing out from client:', error)
             // Continue with cleanup even if client logout fails
           }
           
@@ -185,13 +154,10 @@ export const useAuthStore = create<AuthStore>()(
           
           // Use window.location for a full page reload to ensure clean state
           if (typeof window !== 'undefined') {
-            // Add a small delay to allow toast to show
-            setTimeout(() => {
-              window.location.href = '/'
-            }, 500)
+            window.location.href = '/'
           }
         } catch (error: unknown) {
-          console.error('Error during sign out:', error)
+          logger.error('Error during sign out:', error)
           
           // Even if there's an error, clear the local state
           set({ 
@@ -202,9 +168,7 @@ export const useAuthStore = create<AuthStore>()(
           
           // Still redirect to home page
           if (typeof window !== 'undefined') {
-            setTimeout(() => {
-              window.location.href = '/'
-            }, 500)
+            window.location.href = '/'
           }
           
           throw error
@@ -233,7 +197,7 @@ export const useAuthStore = create<AuthStore>()(
           const { data: { session }, error } = await supabase.auth.getSession()
           
           if (error) {
-            console.error('Error getting session:', error)
+            logger.error('Error getting session:', error)
           }
 
           set({
@@ -247,9 +211,7 @@ export const useAuthStore = create<AuthStore>()(
           const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
               // Only log in development environment
-              if (process.env.NODE_ENV !== 'production') {
-                console.log('Auth state changed:', event, session)
-              }
+              logger.log('Auth state changed:', event, session)
 
               set({
                 session,
@@ -260,10 +222,10 @@ export const useAuthStore = create<AuthStore>()(
               // Handle different auth events
               if (event === 'SIGNED_IN') {
                 // User signed in - could trigger additional actions
-                console.log('User signed in')
+                logger.log('User signed in')
               } else if (event === 'SIGNED_OUT') {
                 // User signed out - ensure clean state
-                console.log('User signed out')
+                logger.log('User signed out')
                 set({ 
                   user: null, 
                   session: null, 
@@ -271,7 +233,7 @@ export const useAuthStore = create<AuthStore>()(
                 })
               } else if (event === 'TOKEN_REFRESHED') {
                 // Token was refreshed - update session
-                console.log('Token refreshed')
+                logger.log('Token refreshed')
               }
             }
           )
@@ -281,7 +243,7 @@ export const useAuthStore = create<AuthStore>()(
           
           return subscription
         } catch (error) {
-          console.error('Error initializing auth:', error)
+          logger.error('Error initializing auth:', error)
           set({ loading: false, initialized: true })
         }
       },
