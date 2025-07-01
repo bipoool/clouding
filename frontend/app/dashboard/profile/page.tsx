@@ -24,14 +24,18 @@ import {
 	Edit3,
 	Save,
 	X,
-	Camera,
 	Globe,
 	MapPin,
 	Phone,
 	Building,
+	Camera,
+	Github,
+	Chrome,
+	Gamepad2,
 } from 'lucide-react'
 import { useUser, useAuthLoading } from '@/lib/auth/store'
 import { toast } from 'sonner'
+import { formatDate } from '@/lib/utils/date'
 
 export default function ProfilePage() {
 	const user = useUser()
@@ -64,8 +68,7 @@ export default function ProfilePage() {
 
 	const handleSave = async () => {
 		try {
-			// Here you would typically update user metadata via Supabase
-			// For now, we'll just show a success message
+			//TODO: Implment Profile Update
 			toast.success('Profile updated successfully!')
 			setIsEditing(false)
 		} catch (error) {
@@ -90,24 +93,28 @@ export default function ProfilePage() {
 		setIsEditing(false)
 	}
 
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-		})
-	}
-
 	const getProviderIcon = (provider: string) => {
 		switch (provider) {
 			case 'google':
-				return '🔍'
+				return <Chrome className='h-3 w-3 mr-1' />
 			case 'github':
-				return '🐙'
+				return <Github className='h-3 w-3 mr-1' />
 			case 'discord':
-				return '🎮'
+				return <Gamepad2 className='h-3 w-3 mr-1' />
 			default:
-				return '📧'
+				return <Mail className='h-3 w-3 mr-1' />
+		}
+	}
+
+	const isValidUrl = (url: string): boolean => {
+		if (!url || url.trim() === '') return false
+
+		try {
+			const urlObj = new URL(url)
+			// Only allow http and https protocols for security
+			return urlObj.protocol === 'http:' || urlObj.protocol === 'https:'
+		} catch {
+			return false
 		}
 	}
 
@@ -402,7 +409,7 @@ export default function ProfilePage() {
 										/>
 									) : (
 										<p className='text-white px-3 py-2'>
-											{formData.website ? (
+											{formData.website && isValidUrl(formData.website) ? (
 												<a
 													href={formData.website}
 													target='_blank'
@@ -411,6 +418,10 @@ export default function ProfilePage() {
 												>
 													{formData.website}
 												</a>
+											) : formData.website && !isValidUrl(formData.website) ? (
+												<span className='text-gray-400'>
+													Invalid URL: {formData.website}
+												</span>
 											) : (
 												'Not provided'
 											)}

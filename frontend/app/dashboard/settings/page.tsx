@@ -33,6 +33,7 @@ import {
 } from 'lucide-react'
 import { useUser, useAuthLoading } from '@/lib/auth/store'
 import { toast } from 'sonner'
+import { formatDate } from '@/lib/utils/date'
 
 export default function SettingsPage() {
 	const user = useUser()
@@ -88,20 +89,13 @@ export default function SettingsPage() {
 
 		try {
 			// Here you would typically update password via Supabase
+			//TODO: Implement Password Update
 			toast.success('Password updated successfully!')
 			setPasswords({ current: '', new: '', confirm: '' })
 		} catch (error) {
 			toast.error('Failed to update password')
 			console.error('Error updating password:', error)
 		}
-	}
-
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-		})
 	}
 
 	if (loading) {

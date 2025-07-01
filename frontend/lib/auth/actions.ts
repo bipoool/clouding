@@ -7,9 +7,32 @@ import { createClient } from '@/lib/supabase/server'
 export async function signInWithEmail(formData: FormData) {
   const supabase = await createClient()
 
+  const email = formData.get('email')
+  const password = formData.get('password')
+
+  // Check if fields exist and are strings
+  if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+    redirect('/auth?error=missing_fields')
+  }
+
+  // Trim whitespace
+  const trimmedEmail = email.trim()
+  const trimmedPassword = password.trim()
+
+  // Check if fields are non-empty after trimming
+  if (!trimmedEmail || !trimmedPassword) {
+    redirect('/auth?error=missing_fields')
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(trimmedEmail)) {
+    redirect('/auth?error=invalid_email')
+  }
+
   const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
+    email: trimmedEmail,
+    password: trimmedPassword,
   }
 
   const { error } = await supabase.auth.signInWithPassword(data)

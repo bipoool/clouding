@@ -10,6 +10,7 @@ interface AuthState {
   session: Session | null
   loading: boolean
   initialized: boolean
+  authSubscription: (() => void) | null
 }
 
 interface AuthActions {
@@ -17,6 +18,7 @@ interface AuthActions {
   setSession: (session: Session | null) => void
   setLoading: (loading: boolean) => void
   setInitialized: (initialized: boolean) => void
+  setAuthSubscription: (subscription: (() => void) | null) => void
   signInWithPassword: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
@@ -24,6 +26,7 @@ interface AuthActions {
   signInWithDiscord: () => Promise<void>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
+  cleanup: () => void
 }
 
 type AuthStore = AuthState & AuthActions
@@ -31,18 +34,20 @@ type AuthStore = AuthState & AuthActions
 // Create the Zustand store
 export const useAuthStore = create<AuthStore>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       // State
       user: null,
       session: null,
       loading: true,
       initialized: false,
+      authSubscription: null,
 
       // Actions
       setUser: (user) => set({ user }),
       setSession: (session) => set({ session }),
       setLoading: (loading) => set({ loading }),
       setInitialized: (initialized) => set({ initialized }),
+      setAuthSubscription: (subscription) => set({ authSubscription: subscription }),
 
       signInWithPassword: async (email: string, password: string) => {
         set({ loading: true })
@@ -50,8 +55,9 @@ export const useAuthStore = create<AuthStore>()(
           await serverSignInWithPassword(email, password)
           // The session will be updated through the auth listener
         } catch (error: unknown) {
-          set({ loading: false })
           throw error
+        } finally {
+          set({ loading: false })
         }
       },
 
@@ -67,50 +73,79 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       signInWithGoogle: async () => {
-        const supabase = createClient()
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-          },
-        })
+        set({ loading: true })
+        try {
+          const supabase = createClient()
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: `${window.location.origin}/auth/callback`,
+            },
+          })
 
-        if (error) {
+          if (error) {
+            throw error
+          }
+        } catch (error: unknown) {
           throw error
+        } finally {
+          set({ loading: false })
         }
       },
 
       signInWithGitHub: async () => {
-        const supabase = createClient()
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'github',
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-          },
-        })
+        set({ loading: true })
+        try {
+          const supabase = createClient()
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'github',
+            options: {
+              redirectTo: `${window.location.origin}/auth/callback`,
+            },
+          })
 
-        if (error) {
+          if (error) {
+            throw error
+          }
+        } catch (error: unknown) {
           throw error
+        } finally {
+          set({ loading: false })
         }
       },
 
       signInWithDiscord: async () => {
-        const supabase = createClient()
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'discord',
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-          },
-        })
+        set({ loading: true })
+        try {
+          const supabase = createClient()
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'discord',
+            options: {
+              redirectTo: `${window.location.origin}/auth/callback`,
+            },
+          })
 
-        if (error) {
+          if (error) {
+            throw error
+          }
+        } catch (error: unknown) {
           throw error
+        } finally {
+          set({ loading: false })
         }
       },
 
       signOut: async () => {
         const supabase = createClient()
         set({ loading: true })
+        
+        // Cleanup subscription before signing out
+        const { authSubscription } = get()
+        if (authSubscription) {
+          authSubscription()
+          set({ authSubscription: null })
+        }
+        
         const { error } = await supabase.auth.signOut()
         if (error) {
           set({ loading: false })
@@ -119,10 +154,24 @@ export const useAuthStore = create<AuthStore>()(
         set({ user: null, session: null, loading: false })
       },
 
+      cleanup: () => {
+        const { authSubscription } = get()
+        if (authSubscription) {
+          authSubscription()
+          set({ authSubscription: null })
+        }
+      },
+
       initialize: async () => {
         const supabase = createClient()
         
         try {
+          // Cleanup any existing subscription
+          const { authSubscription } = get()
+          if (authSubscription) {
+            authSubscription()
+          }
+
           // Get initial session
           const { data: { session }, error } = await supabase.auth.getSession()
           
@@ -140,7 +189,10 @@ export const useAuthStore = create<AuthStore>()(
           // Listen for auth changes
           const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
-              console.log('Auth state changed:', event, session)
+              // Only log in development environment
+              if (process.env.NODE_ENV !== 'production') {
+                console.log('Auth state changed:', event, session)
+              }
 
               set({
                 session,
@@ -159,7 +211,9 @@ export const useAuthStore = create<AuthStore>()(
             }
           )
 
-          // Store the subscription for cleanup if needed
+          // Store the subscription for cleanup
+          set({ authSubscription: subscription.unsubscribe })
+          
           return subscription
         } catch (error) {
           console.error('Error initializing auth:', error)
