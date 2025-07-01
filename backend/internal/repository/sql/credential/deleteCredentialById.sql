@@ -1,1 +1,1 @@
-DELETE FROM credentials WHERE id = $1 RETURNING id; 
+DELETE FROM credentials WHERE id = $1; 

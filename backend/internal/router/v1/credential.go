@@ -12,7 +12,7 @@ import (
 
 func RegisterCredentialRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
 	repo := repository.NewCredentialRepository(db)
-	secretsManager, _ := utils.NewSecretManager()
+	secretsManager := utils.NewSecretManager()
 	service := service.NewCredentialService(repo, secretsManager)
 	controller := v1.NewCredentialController(service)
 

@@ -102,8 +102,13 @@ func (r *credentialRepository) UpdateCredential(ctx context.Context, c *credenti
 }
 
 func (r *credentialRepository) DeleteCredential(ctx context.Context, id int) error {
-	if err := r.db.GetContext(ctx, &id, deleteCredentialByIdQuery, id); err != nil {
+	result, err := r.db.ExecContext(ctx, deleteCredentialByIdQuery, id)
+	if err != nil {
 		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return sql.ErrNoRows
 	}
 	return nil
 }

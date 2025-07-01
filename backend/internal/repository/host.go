@@ -125,8 +125,13 @@ func (r *hostRepository) UpdateHost(ctx context.Context, h *host.Host) error {
 }
 
 func (r *hostRepository) DeleteHost(ctx context.Context, id int) error {
-	if err := r.db.GetContext(ctx, &id, deleteHostQuery, id); err != nil {
+	result, err := r.db.ExecContext(ctx, deleteHostQuery, id)
+	if err != nil {
 		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return sql.ErrNoRows
 	}
 	return nil
 }

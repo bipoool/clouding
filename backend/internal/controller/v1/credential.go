@@ -30,7 +30,7 @@ func (c *CredentialController) GetAllByUserId(ctx *gin.Context) {
 	creds, err := c.Service.GetAllByUserId(ctx.Request.Context(), userId)
 	if err != nil {
 		slog.Error(err.Error())
-		ctx.JSON(http.StatusBadRequest, utils.NewInternalErrorResponse(err.Error()))
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
 	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(creds))
@@ -47,7 +47,7 @@ func (c *CredentialController) GetById(ctx *gin.Context) {
 	cred, err := c.Service.GetById(ctx.Request.Context(), id)
 	if err != nil {
 		slog.Error(err.Error())
-		ctx.JSON(http.StatusBadRequest, utils.NewInternalErrorResponse(err.Error()))
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
 	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(cred))

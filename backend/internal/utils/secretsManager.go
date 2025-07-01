@@ -20,7 +20,7 @@ type AwsSecretsManager struct {
 	secretsmanagerClient *awsSecretManagerCore.Client
 }
 
-func NewSecretManager() (SecretsManager, error) {
+func NewSecretManager() SecretsManager {
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		slog.Error("Error creating secrets manager")
@@ -35,7 +35,7 @@ func NewSecretManager() (SecretsManager, error) {
 	smClient := awsSecretManagerCore.NewFromConfig(cfg)
 	return &AwsSecretsManager{
 		secretsmanagerClient: smClient,
-	}, nil
+	}
 }
 
 func (aws *AwsSecretsManager) GetSecret(secretName string) (string, error) {
