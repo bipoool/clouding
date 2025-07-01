@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import type { User, Session } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
-import { signInWithPassword as serverSignInWithPassword, signUp as serverSignUp } from './actions'
 import { logger } from '@/lib/utils/logger'
 
 // Types for the auth store
@@ -20,8 +19,6 @@ interface AuthActions {
   setLoading: (loading: boolean) => void
   setInitialized: (initialized: boolean) => void
   setAuthSubscription: (subscription: (() => void) | null) => void
-  signInWithPassword: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string) => Promise<void>
   signInWithOAuth: (provider: 'google' | 'github' | 'discord') => Promise<void>
   signInWithGoogle: () => Promise<void>
   signInWithGitHub: () => Promise<void>
@@ -50,27 +47,6 @@ export const useAuthStore = create<AuthStore>()(
       setLoading: (loading) => set({ loading }),
       setInitialized: (initialized) => set({ initialized }),
       setAuthSubscription: (subscription) => set({ authSubscription: subscription }),
-
-      signInWithPassword: async (email: string, password: string) => {
-        set({ loading: true })
-        try {
-          await serverSignInWithPassword(email, password)
-          // The session will be updated through the auth listener
-        } finally {
-          set({ loading: false })
-        }
-      },
-
-      signUp: async (email: string, password: string) => {
-        set({ loading: true })
-        try {
-          await serverSignUp(email, password)
-          set({ loading: false })
-        } catch (error: unknown) {
-          set({ loading: false })
-          throw error
-        }
-      },
 
       // Reusable OAuth sign-in function
       signInWithOAuth: async (provider: 'google' | 'github' | 'discord') => {

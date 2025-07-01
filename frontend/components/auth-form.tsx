@@ -4,35 +4,21 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Eye, EyeOff, ArrowLeft, Github } from 'lucide-react'
+import { ArrowLeft, Github } from 'lucide-react'
 import { useAuthStore, useUser } from '@/lib/auth/store'
 
 export function AuthForm() {
-	const [showPassword, setShowPassword] = useState(false)
-	const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-	const [email, setEmail] = useState('')
-	const [password, setPassword] = useState('')
-	const [confirmPassword, setConfirmPassword] = useState('')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
-	const [message, setMessage] = useState('')
 
 	const router = useRouter()
 	const searchParams = useSearchParams()
 	const user = useUser()
 
 	// Get auth actions from Zustand store
-	const {
-		signInWithPassword,
-		signUp,
-		signInWithGoogle,
-		signInWithGitHub,
-		signInWithDiscord,
-	} = useAuthStore()
+	const { signInWithGoogle, signInWithGitHub, signInWithDiscord } =
+		useAuthStore()
 
 	// Check for auth errors from URL params
 	useEffect(() => {
@@ -60,63 +46,6 @@ export function AuthForm() {
 			router.push('/dashboard')
 		}
 	}, [user, router])
-
-	const handleSignIn = async (e: React.FormEvent) => {
-		e.preventDefault()
-		if (!email || !password) {
-			setError('Please fill in all fields')
-			return
-		}
-
-		// Basic email format validation
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-		if (!emailRegex.test(email)) {
-			setError('Invalid email format')
-			return
-		}
-
-		setLoading(true)
-		setError('')
-
-		try {
-			await signInWithPassword(email, password)
-			router.push('/dashboard')
-		} catch (error: unknown) {
-			setError('Invalid email or password')
-		} finally {
-			setLoading(false)
-		}
-	}
-
-	const handleSignUp = async (e: React.FormEvent) => {
-		e.preventDefault()
-		if (!email || !password || !confirmPassword) {
-			setError('Please fill in all fields')
-			return
-		}
-
-		if (password !== confirmPassword) {
-			setError('Passwords do not match')
-			return
-		}
-
-		if (password.length < 6) {
-			setError('Password must be at least 6 characters')
-			return
-		}
-
-		setLoading(true)
-		setError('')
-
-		try {
-			await signUp(email, password)
-			setMessage('Check your email for the confirmation link!')
-		} catch (error: unknown) {
-			setError('Failed to sign up')
-		} finally {
-			setLoading(false)
-		}
-	}
 
 	const handleSocialAuth = async (
 		provider: 'google' | 'github' | 'discord'
@@ -164,32 +93,24 @@ export function AuthForm() {
 					<p className='text-secondary'>Access your infrastructure dashboard</p>
 				</div>
 
-				{/* Error/Success Messages */}
+				{/* Error Messages */}
 				{error && (
-					<Alert className='mb-4 border-red-500/20 bg-red-500/10'>
+					<Alert className='mb-6 border-red-500/20 bg-red-500/10'>
 						<AlertDescription className='text-red-200'>
 							{error}
 						</AlertDescription>
 					</Alert>
 				)}
 
-				{message && (
-					<Alert className='mb-4 border-green-500/20 bg-green-500/10'>
-						<AlertDescription className='text-green-200'>
-							{message}
-						</AlertDescription>
-					</Alert>
-				)}
-
 				{/* Social Auth Buttons */}
-				<div className='space-y-3 mb-6'>
+				<div className='space-y-4'>
 					<Button
 						onClick={() => handleSocialAuth('google')}
 						disabled={loading}
 						variant='outline'
-						className='w-full glass-input hover:bg-white/10'
+						className='w-full glass-input hover:bg-white/10 h-12'
 					>
-						<svg className='w-5 h-5 mr-2' viewBox='0 0 24 24'>
+						<svg className='w-5 h-5 mr-3' viewBox='0 0 24 24'>
 							<path
 								fill='currentColor'
 								d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'
@@ -214,9 +135,9 @@ export function AuthForm() {
 						onClick={() => handleSocialAuth('github')}
 						disabled={loading}
 						variant='outline'
-						className='w-full glass-input hover:bg-white/10'
+						className='w-full glass-input hover:bg-white/10 h-12'
 					>
-						<Github className='w-5 h-5 mr-2' />
+						<Github className='w-5 h-5 mr-3' />
 						Continue with GitHub
 					</Button>
 
@@ -224,10 +145,10 @@ export function AuthForm() {
 						onClick={() => handleSocialAuth('discord')}
 						disabled={loading}
 						variant='outline'
-						className='w-full glass-input hover:bg-white/10'
+						className='w-full glass-input hover:bg-white/10 h-12'
 					>
 						<svg
-							className='w-5 h-5 mr-2'
+							className='w-5 h-5 mr-3'
 							viewBox='0 0 24 24'
 							fill='currentColor'
 						>
@@ -237,187 +158,17 @@ export function AuthForm() {
 					</Button>
 				</div>
 
-				<div className='relative mb-6'>
-					<div className='absolute inset-0 flex items-center'>
-						<span className='w-full border-t border-white/10' />
-					</div>
-					<div className='relative flex justify-center text-xs uppercase'>
-						<span className='bg-[#0a0a0a] px-2 text-secondary'>
-							Or continue with email
-						</span>
-					</div>
+				<div className='mt-8 text-center'>
+					<p className='text-sm text-secondary'>
+						By continuing, you agree to our{' '}
+						<Link
+							href='/privacy'
+							className='text-accent-cyan hover:text-cyan-300'
+						>
+							Privacy Policy
+						</Link>
+					</p>
 				</div>
-
-				<Tabs defaultValue='login' className='w-full'>
-					<TabsList className='grid w-full grid-cols-2 bg-white/5 border border-white/10'>
-						<TabsTrigger
-							value='login'
-							className='data-[state=active]:bg-cyan-500/20 data-[state=active]:text-accent-cyan'
-						>
-							Login
-						</TabsTrigger>
-						<TabsTrigger
-							value='signup'
-							className='data-[state=active]:bg-cyan-500/20 data-[state=active]:text-accent-cyan'
-						>
-							Sign Up
-						</TabsTrigger>
-					</TabsList>
-
-					<TabsContent value='login' className='space-y-4 mt-6'>
-						<form onSubmit={handleSignIn} className='space-y-4'>
-							<div className='space-y-2'>
-								<Label htmlFor='login-email' className='text-gray-200'>
-									Email
-								</Label>
-								<Input
-									id='login-email'
-									type='email'
-									placeholder='dev@clouding.com'
-									className='glass-input'
-									value={email}
-									onChange={e => setEmail(e.target.value)}
-									required
-								/>
-							</div>
-
-							<div className='space-y-2'>
-								<Label htmlFor='login-password' className='text-gray-200'>
-									Password
-								</Label>
-								<div className='relative'>
-									<Input
-										id='login-password'
-										type={showPassword ? 'text' : 'password'}
-										placeholder='••••••••'
-										className='glass-input pr-10'
-										value={password}
-										onChange={e => setPassword(e.target.value)}
-										required
-									/>
-									<Button
-										type='button'
-										variant='ghost'
-										size='sm'
-										className='absolute right-0 top-0 h-full px-3 text-secondary hover:text-accent-cyan'
-										onClick={() => setShowPassword(!showPassword)}
-									>
-										{showPassword ? (
-											<EyeOff className='h-4 w-4' />
-										) : (
-											<Eye className='h-4 w-4' />
-										)}
-									</Button>
-								</div>
-							</div>
-
-							<div className='flex items-center justify-between'>
-								<Link
-									href='/forgot-password'
-									className='text-sm text-accent-cyan hover:text-cyan-300'
-								>
-									Forgot password?
-								</Link>
-							</div>
-
-							<Button
-								type='submit'
-								className='w-full my-4 gradient-border-btn'
-								disabled={loading}
-							>
-								{loading ? 'Signing in...' : 'Sign In'}
-							</Button>
-						</form>
-					</TabsContent>
-
-					<TabsContent value='signup' className='space-y-4 mt-6'>
-						<form onSubmit={handleSignUp} className='space-y-4'>
-							<div className='space-y-2'>
-								<Label htmlFor='signup-email' className='text-gray-200'>
-									Email
-								</Label>
-								<Input
-									id='signup-email'
-									type='email'
-									placeholder='dev@clouding.com'
-									className='glass-input'
-									value={email}
-									onChange={e => setEmail(e.target.value)}
-									required
-								/>
-							</div>
-
-							<div className='space-y-2'>
-								<Label htmlFor='signup-password' className='text-gray-200'>
-									Password
-								</Label>
-								<div className='relative'>
-									<Input
-										id='signup-password'
-										type={showPassword ? 'text' : 'password'}
-										placeholder='••••••••'
-										className='glass-input pr-10'
-										value={password}
-										onChange={e => setPassword(e.target.value)}
-										required
-										minLength={6}
-									/>
-									<Button
-										type='button'
-										variant='ghost'
-										size='sm'
-										className='absolute right-0 top-0 h-full px-3 text-secondary hover:text-accent-cyan'
-										onClick={() => setShowPassword(!showPassword)}
-									>
-										{showPassword ? (
-											<EyeOff className='h-4 w-4' />
-										) : (
-											<Eye className='h-4 w-4' />
-										)}
-									</Button>
-								</div>
-							</div>
-
-							<div className='space-y-2'>
-								<Label htmlFor='confirm-password' className='text-gray-200'>
-									Confirm Password
-								</Label>
-								<div className='relative'>
-									<Input
-										id='confirm-password'
-										type={showConfirmPassword ? 'text' : 'password'}
-										placeholder='••••••••'
-										className='glass-input pr-10'
-										value={confirmPassword}
-										onChange={e => setConfirmPassword(e.target.value)}
-										required
-									/>
-									<Button
-										type='button'
-										variant='ghost'
-										size='sm'
-										className='absolute right-0 top-0 h-full px-3 text-secondary hover:text-accent-cyan'
-										onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-									>
-										{showConfirmPassword ? (
-											<EyeOff className='h-4 w-4' />
-										) : (
-											<Eye className='h-4 w-4' />
-										)}
-									</Button>
-								</div>
-							</div>
-
-							<Button
-								type='submit'
-								className='w-full gradient-border-btn'
-								disabled={loading}
-							>
-								{loading ? 'Creating Account...' : 'Create Account'}
-							</Button>
-						</form>
-					</TabsContent>
-				</Tabs>
 			</div>
 
 			{/* Background Effects */}
