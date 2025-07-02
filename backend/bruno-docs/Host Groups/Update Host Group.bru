@@ -1,0 +1,31 @@
+meta {
+  name: Update Host Group
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/hostGroup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "userId": "user-uuid",
+    "name": "Updated Group",
+    "hosts": [
+      "host1",
+      "host2"
+    ]
+  }
+}
+
+docs {
+  Update an existing host group.
+}

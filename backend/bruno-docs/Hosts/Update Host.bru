@@ -1,0 +1,27 @@
+meta {
+  name: Update Host
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/hosts/:id
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "name": "UpdatedVM",
+    "ip": "192.168.1.2"
+  }
+}
+
+docs {
+  Update an existing host.
+}

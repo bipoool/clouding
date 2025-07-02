@@ -1,0 +1,19 @@
+meta {
+  name: Get Blueprint by ID
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/blueprint/:id
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Get blueprint details.
+}

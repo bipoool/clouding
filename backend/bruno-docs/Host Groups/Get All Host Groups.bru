@@ -1,0 +1,19 @@
+meta {
+  name: Get All Host Groups
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/hostGroup
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Get all host groups for the user.
+}

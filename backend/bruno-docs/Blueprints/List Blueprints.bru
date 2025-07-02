@@ -1,0 +1,19 @@
+meta {
+  name: List Blueprints
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/blueprint
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  List all blueprints for current user.
+}

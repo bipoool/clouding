@@ -1,0 +1,19 @@
+meta {
+  name: Get Deployment Runs by Blueprint
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/blueprints/:blueprintId/deploymentRuns
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  List deployment runs for a blueprint.
+}

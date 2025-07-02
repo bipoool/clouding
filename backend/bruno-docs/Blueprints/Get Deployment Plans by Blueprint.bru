@@ -1,0 +1,19 @@
+meta {
+  name: Get Deployment Plans by Blueprint
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/blueprints/:blueprintId/deploymentPlans
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  List deployment plans for a blueprint.
+}

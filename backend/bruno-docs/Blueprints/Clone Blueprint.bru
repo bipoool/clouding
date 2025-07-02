@@ -1,0 +1,19 @@
+meta {
+  name: Clone Blueprint
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/blueprint/:id/clone
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Clone a blueprint.
+}

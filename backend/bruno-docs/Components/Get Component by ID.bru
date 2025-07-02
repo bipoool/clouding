@@ -1,0 +1,19 @@
+meta {
+  name: Get Component by ID
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/components/:id
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Get component details.
+}

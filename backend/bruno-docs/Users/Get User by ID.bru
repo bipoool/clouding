@@ -1,0 +1,19 @@
+meta {
+  name: Get User by ID
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/users/:id
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Retrieve user details by ID.
+}

@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Clouding.co API",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

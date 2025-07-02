@@ -1,0 +1,19 @@
+meta {
+  name: Get All Hosts
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/hosts
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  List all hosts owned by the authenticated user.
+}

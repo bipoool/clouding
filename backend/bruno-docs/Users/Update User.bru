@@ -1,0 +1,27 @@
+meta {
+  name: Update User
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/users/:id
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "name": "John Updated",
+    "email": "john.updated@example.com"
+  }
+}
+
+docs {
+  Update an existing user.
+}

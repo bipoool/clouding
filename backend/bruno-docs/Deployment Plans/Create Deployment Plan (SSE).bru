@@ -1,0 +1,28 @@
+meta {
+  name: Create Deployment Plan (SSE)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/deploymentPlan
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "id": "uuid-from-client",
+    "hostid": "host-uuid",
+    "blueprintId": "bp-uuid"
+  }
+}
+
+docs {
+  Create a deployment plan and return progress via SSE.
+}

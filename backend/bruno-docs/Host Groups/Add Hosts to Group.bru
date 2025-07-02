@@ -1,0 +1,29 @@
+meta {
+  name: Add Hosts to Group
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/hostGroup/:id/hosts
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "hostIds": [
+      "host1",
+      "host2"
+    ]
+  }
+}
+
+docs {
+  Add hosts to a host group.
+}

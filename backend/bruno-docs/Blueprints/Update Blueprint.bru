@@ -1,0 +1,29 @@
+meta {
+  name: Update Blueprint
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/blueprint
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "plan": [
+      "component3"
+    ],
+    "description": "Updated plan"
+  }
+}
+
+docs {
+  Update a blueprint.
+}

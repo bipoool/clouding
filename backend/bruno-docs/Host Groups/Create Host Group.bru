@@ -1,0 +1,30 @@
+meta {
+  name: Create Host Group
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/hostGroup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "userId": "user-uuid",
+    "name": "MyGroup",
+    "hostIds": [
+      "host-uuid"
+    ]
+  }
+}
+
+docs {
+  Create a new host group.
+}
