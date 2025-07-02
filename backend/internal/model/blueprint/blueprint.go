@@ -85,3 +85,8 @@ type UpdateBlueprintComponentResponse struct {
 	ComponentID          *int `json:"componentId"`
 	Position             *int `json:"position"`
 }
+
+type DeleteBlueprintResponse struct {
+	ID        *int `json:"id"`
+	IsDeleted bool `json:"isDeleted"`
+}

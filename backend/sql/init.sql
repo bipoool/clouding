@@ -37,6 +37,23 @@ CREATE TABLE IF NOT EXISTS hosts (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS host_groups (
+    id SERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS host_groups_to_host_mapping (
+    host_group_id INT NOT NULL REFERENCES host_groups(id) ON DELETE CASCADE,
+    host_id INT NOT NULL REFERENCES hosts(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+    UNIQUE(host_id)
+);
+
 CREATE TABLE IF NOT EXISTS components (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
@@ -80,7 +97,7 @@ CREATE TYPE deployment_type AS ENUM ('plan', 'deploy');
 
 CREATE TYPE deployment_status AS ENUM ('pending', 'started', 'completed', 'failed');
 
-CREATE TABLE deployments (
+CREATE TABLE IF NOT EXISTS deployments (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   blueprint_id INT NOT NULL REFERENCES blueprints(id) ON DELETE CASCADE,
@@ -90,7 +107,7 @@ CREATE TABLE deployments (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE deployment_host_mappings (
+CREATE TABLE IF NOT EXISTS deployment_host_mappings (
     deployment_id UUID NOT NULL,
     host_id INTEGER NOT NULL,
     status deployment_status NOT NULL DEFAULT 'pending',

@@ -172,5 +172,10 @@ func (c *BlueprintController) Delete(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
-	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(gin.H{"id": id}))
+
+	resp := blueprint.DeleteBlueprintResponse{
+		ID:        &id,
+		IsDeleted: true,
+	}
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(resp))
 }

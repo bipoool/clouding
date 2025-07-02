@@ -9,13 +9,14 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 
 	"github.com/jmoiron/sqlx"
 )
 
 // HostRepository defines data access for hosts
 type HostRepository interface {
-	GetHost(ctx context.Context, id int) (*host.Host, error)
+	GetHosts(ctx context.Context, id []int) ([]*host.Host, error)
 	GetAllHosts(ctx context.Context, userId string) ([]*host.Host, error)
 	CreateHost(ctx context.Context, h *host.Host) error
 	UpdateHost(ctx context.Context, h *host.Host) error
@@ -46,10 +47,10 @@ func NewHostRepository(db *sqlx.DB) HostRepository {
 	}
 }
 
-func (r *hostRepository) GetHost(ctx context.Context, id int) (*host.Host, error) {
-	var host host.Host
+func (r *hostRepository) GetHosts(ctx context.Context, ids []int) ([]*host.Host, error) {
+	var hosts []*host.Host
 
-	err := r.db.GetContext(ctx, &host, getHostByIdQuery, id)
+	err := r.db.SelectContext(ctx, &hosts, getHostByIdQuery, pq.Array(ids))
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -58,7 +59,7 @@ func (r *hostRepository) GetHost(ctx context.Context, id int) (*host.Host, error
 		return nil, err
 	}
 
-	return &host, nil
+	return hosts, nil
 }
 
 func (r *hostRepository) GetAllHosts(ctx context.Context, userId string) ([]*host.Host, error) {
