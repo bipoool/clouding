@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+ansible-runner
+sse-starlette

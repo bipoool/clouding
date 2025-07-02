@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "Hello from Ansible"
+    - name: Wait for 1 seconds
+      ansible.builtin.pause:
+        seconds: 1
+    - name: Wait for 2 seconds
+      ansible.builtin.pause:
+        seconds: 2
