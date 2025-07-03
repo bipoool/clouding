@@ -1,4 +1,5 @@
 import { Upload } from 'lucide-react'
+import { useRef, useCallback } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import {
 	FormControl,
@@ -20,25 +21,13 @@ interface CredentialFormFieldsProps {
 	onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-export const CredentialFormFields = ({
-	form,
-	type,
-	onFileUpload,
-}: CredentialFormFieldsProps) => {
-	switch (type) {
-		case 'ssh_key':
-			return <SSHKeyFields form={form} />
-		case 'password':
-			return <PasswordFields form={form} />
-		case 'ssl_cert':
-			return <SSLCertificateFields form={form} onFileUpload={onFileUpload} />
-		case 'api_key':
-			return <APIKeyFields form={form} />
-		default:
-			return null
-	}
-}
+// Common styling constants
+const GLASS_INPUT_CLASSES = 'glass-input'
+const GLASS_BUTTON_CLASSES = 'glass-btn'
+const LABEL_CLASSES = 'text-secondary'
+const DESCRIPTION_CLASSES = 'text-xs text-gray-500'
 
+// Credential type specific field components
 const SSHKeyFields = ({
 	form,
 }: {
@@ -49,16 +38,16 @@ const SSHKeyFields = ({
 		name='sshKey'
 		render={({ field }) => (
 			<FormItem>
-				<FormLabel className='text-secondary'>SSH Private Key</FormLabel>
+				<FormLabel className={LABEL_CLASSES}>SSH Private Key</FormLabel>
 				<FormControl>
 					<Textarea
 						placeholder='-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----'
-						className='glass-input resize-none font-mono text-sm'
+						className={`${GLASS_INPUT_CLASSES} resize-none font-mono text-sm`}
 						rows={8}
 						{...field}
 					/>
 				</FormControl>
-				<FormDescription className='text-xs text-gray-500'>
+				<FormDescription className={DESCRIPTION_CLASSES}>
 					Paste your SSH private key here
 				</FormDescription>
 				<FormMessage />
@@ -78,9 +67,13 @@ const PasswordFields = ({
 			name='username'
 			render={({ field }) => (
 				<FormItem>
-					<FormLabel className='text-secondary'>Username</FormLabel>
+					<FormLabel className={LABEL_CLASSES}>Username</FormLabel>
 					<FormControl>
-						<Input placeholder='username' className='glass-input' {...field} />
+						<Input
+							placeholder='username'
+							className={GLASS_INPUT_CLASSES}
+							{...field}
+						/>
 					</FormControl>
 					<FormMessage />
 				</FormItem>
@@ -91,12 +84,12 @@ const PasswordFields = ({
 			name='password'
 			render={({ field }) => (
 				<FormItem>
-					<FormLabel className='text-secondary'>Password</FormLabel>
+					<FormLabel className={LABEL_CLASSES}>Password</FormLabel>
 					<FormControl>
 						<Input
 							type='password'
 							placeholder='••••••••'
-							className='glass-input'
+							className={GLASS_INPUT_CLASSES}
 							{...field}
 						/>
 					</FormControl>
@@ -113,48 +106,57 @@ const SSLCertificateFields = ({
 }: {
 	form: UseFormReturn<CredentialFormData>
 	onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
-}) => (
-	<FormField
-		control={form.control}
-		name='certificateFile'
-		render={({ field }) => (
-			<FormItem>
-				<FormLabel className='text-secondary'>Certificate File</FormLabel>
-				<FormControl>
-					<div className='space-y-2'>
-						<div className='flex items-center gap-2'>
-							<Button
-								type='button'
-								variant='outline'
-								className='glass-btn'
-								onClick={() => document.getElementById('cert-upload')?.click()}
-							>
-								<Upload className='h-4 w-4 mr-2' />
-								Upload Certificate
-							</Button>
-							{form.watch('certificateFileName') && (
-								<span className='text-sm text-secondary'>
-									{form.watch('certificateFileName')}
-								</span>
-							)}
+}) => {
+	const fileInputRef = useRef<HTMLInputElement>(null)
+
+	const handleButtonClick = useCallback(() => {
+		fileInputRef.current?.click()
+	}, [])
+
+	return (
+		<FormField
+			control={form.control}
+			name='certificateFile'
+			render={({ field }) => (
+				<FormItem>
+					<FormLabel className={LABEL_CLASSES}>Certificate File</FormLabel>
+					<FormControl>
+						<div className='space-y-2'>
+							<div className='flex items-center gap-2'>
+								<Button
+									type='button'
+									variant='outline'
+									className={GLASS_BUTTON_CLASSES}
+									onClick={handleButtonClick}
+								>
+									<Upload className='h-4 w-4 mr-2' />
+									Upload Certificate
+								</Button>
+								{form.watch('certificateFileName') && (
+									<span className='text-sm text-secondary truncate max-w-xs'>
+										{form.watch('certificateFileName')}
+									</span>
+								)}
+							</div>
+							<input
+								ref={fileInputRef}
+								type='file'
+								accept='.crt,.cer,.pem'
+								className='hidden'
+								onChange={onFileUpload}
+								aria-label='Upload certificate file'
+							/>
 						</div>
-						<input
-							id='cert-upload'
-							type='file'
-							accept='.crt,.cer,.pem'
-							className='hidden'
-							onChange={onFileUpload}
-						/>
-					</div>
-				</FormControl>
-				<FormDescription className='text-xs text-gray-500'>
-					Upload your SSL certificate file (.crt, .cer, .pem)
-				</FormDescription>
-				<FormMessage />
-			</FormItem>
-		)}
-	/>
-)
+					</FormControl>
+					<FormDescription className={DESCRIPTION_CLASSES}>
+						Upload your SSL certificate file (.crt, .cer, .pem)
+					</FormDescription>
+					<FormMessage />
+				</FormItem>
+			)}
+		/>
+	)
+}
 
 const APIKeyFields = ({
 	form,
@@ -166,16 +168,16 @@ const APIKeyFields = ({
 		name='apiKey'
 		render={({ field }) => (
 			<FormItem>
-				<FormLabel className='text-secondary'>API Key</FormLabel>
+				<FormLabel className={LABEL_CLASSES}>API Key</FormLabel>
 				<FormControl>
 					<Textarea
 						placeholder='sk-1234567890abcdef...'
-						className='glass-input resize-none font-mono text-sm'
+						className={`${GLASS_INPUT_CLASSES} resize-none font-mono text-sm`}
 						rows={3}
 						{...field}
 					/>
 				</FormControl>
-				<FormDescription className='text-xs text-gray-500'>
+				<FormDescription className={DESCRIPTION_CLASSES}>
 					Enter your API key or token
 				</FormDescription>
 				<FormMessage />
@@ -183,3 +185,23 @@ const APIKeyFields = ({
 		)}
 	/>
 )
+
+// Main component
+export const CredentialFormFields = ({
+	form,
+	type,
+	onFileUpload,
+}: CredentialFormFieldsProps) => {
+	switch (type) {
+		case 'ssh_key':
+			return <SSHKeyFields form={form} />
+		case 'password':
+			return <PasswordFields form={form} />
+		case 'ssl_cert':
+			return <SSLCertificateFields form={form} onFileUpload={onFileUpload} />
+		case 'api_key':
+			return <APIKeyFields form={form} />
+		default:
+			return null
+	}
+}

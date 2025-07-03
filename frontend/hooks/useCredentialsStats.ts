@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import type { Credential } from './useCredentials'
+import type { Credential } from '@/lib/utils/credential-types'
+import { EXPIRY_WARNING_DAYS } from '@/lib/constants/credentials'
 
 export interface CredentialStats {
 	total: number
@@ -17,13 +18,13 @@ export function useCredentialsStats(credentials: Credential[]): CredentialStats 
 		const sslCredentials = credentials.filter(cred => cred.type === 'ssl_cert')
 		const apiCredentials = credentials.filter(cred => cred.type === 'api_key')
 
-		// Check for credentials expiring soon (within 30 days)
+		// Check for credentials expiring soon (within configured warning period)
 		const expiringCredentials = credentials.filter(cred => {
 			if (!cred.metadata?.expiresAt) return false
 			const expiryDate = new Date(cred.metadata.expiresAt)
-			const thirtyDaysFromNow = new Date()
-			thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
-			return expiryDate <= thirtyDaysFromNow
+			const warningDate = new Date()
+			warningDate.setDate(warningDate.getDate() + EXPIRY_WARNING_DAYS)
+			return expiryDate <= warningDate
 		})
 
 		return {

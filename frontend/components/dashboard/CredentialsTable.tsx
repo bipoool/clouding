@@ -32,6 +32,38 @@ import {
 import type { Credential, CredentialType } from '@/lib/utils/credential-types'
 import { formatDistanceToNow } from 'date-fns'
 
+// Configuration object mapping credential types to their badge properties
+const CREDENTIAL_BADGE_CONFIG = {
+	ssh_key: {
+		icon: Key,
+		label: 'SSH Key',
+		badgeClasses: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+		iconClasses: 'h-4 w-4 text-blue-400',
+		badgeIconClasses: 'h-3 w-3 mr-1',
+	},
+	password: {
+		icon: Lock,
+		label: 'Password',
+		badgeClasses: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+		iconClasses: 'h-4 w-4 text-purple-400',
+		badgeIconClasses: 'h-3 w-3 mr-1',
+	},
+	ssl_cert: {
+		icon: Shield,
+		label: 'SSL Cert',
+		badgeClasses: 'bg-green-500/20 text-green-400 border-green-500/30',
+		iconClasses: 'h-4 w-4 text-green-400',
+		badgeIconClasses: 'h-3 w-3 mr-1',
+	},
+	api_key: {
+		icon: Code,
+		label: 'API Key',
+		badgeClasses: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+		iconClasses: 'h-4 w-4 text-orange-400',
+		badgeIconClasses: 'h-3 w-3 mr-1',
+	},
+} as const
+
 interface CredentialsTableProps {
 	credentials: Credential[]
 	onDeleteCredential: (id: string) => void
@@ -55,53 +87,36 @@ export function CredentialsTable({
 	})
 
 	const getTypeBadge = (type: CredentialType) => {
-		switch (type) {
-			case 'ssh_key':
-				return (
-					<Badge className='bg-blue-500/20 text-blue-400 border-blue-500/30'>
-						<Key className='h-3 w-3 mr-1' />
-						SSH Key
-					</Badge>
-				)
-			case 'password':
-				return (
-					<Badge className='bg-purple-500/20 text-purple-400 border-purple-500/30'>
-						<Lock className='h-3 w-3 mr-1' />
-						Password
-					</Badge>
-				)
-			case 'ssl_cert':
-				return (
-					<Badge className='bg-green-500/20 text-green-400 border-green-500/30'>
-						<Shield className='h-3 w-3 mr-1' />
-						SSL Cert
-					</Badge>
-				)
-			case 'api_key':
-				return (
-					<Badge className='bg-orange-500/20 text-orange-400 border-orange-500/30'>
-						<Code className='h-3 w-3 mr-1' />
-						API Key
-					</Badge>
-				)
-			default:
-				return <Badge variant='secondary'>{type}</Badge>
+		const config = CREDENTIAL_BADGE_CONFIG[type]
+
+		if (!config) {
+			return <Badge variant='secondary'>{type}</Badge>
 		}
+
+		const {
+			icon: IconComponent,
+			label,
+			badgeClasses,
+			badgeIconClasses,
+		} = config
+
+		return (
+			<Badge className={badgeClasses}>
+				<IconComponent className={badgeIconClasses} />
+				{label}
+			</Badge>
+		)
 	}
 
 	const getTypeIcon = (type: CredentialType) => {
-		switch (type) {
-			case 'ssh_key':
-				return <Key className='h-4 w-4 text-blue-400' />
-			case 'password':
-				return <Lock className='h-4 w-4 text-purple-400' />
-			case 'ssl_cert':
-				return <Shield className='h-4 w-4 text-green-400' />
-			case 'api_key':
-				return <Code className='h-4 w-4 text-orange-400' />
-			default:
-				return <Key className='h-4 w-4 text-gray-400' />
+		const config = CREDENTIAL_BADGE_CONFIG[type]
+
+		if (!config) {
+			return <Key className='h-4 w-4 text-gray-400' />
 		}
+
+		const { icon: IconComponent, iconClasses } = config
+		return <IconComponent className={iconClasses} />
 	}
 
 	const formatDate = (dateString: string) => {

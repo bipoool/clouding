@@ -2,27 +2,11 @@ import { Key, Lock, Shield, Code } from 'lucide-react'
 
 export type CredentialType = 'ssh_key' | 'ssl_cert' | 'password' | 'api_key'
 
-export interface Credential {
+// Base interface with common fields
+interface BaseCredential {
 	id: string
 	name: string
-	type: CredentialType
 	userId: string
-	
-	// SSH Key specific field
-	sshKey?: string
-	
-	// Password specific fields
-	username?: string
-	password?: string
-	
-	// SSH Certificate specific field
-	certificateFile?: string // Base64 encoded file content or file path
-	certificateFileName?: string
-	
-	// API Key specific field
-	apiKey?: string
-	
-	// Additional metadata
 	metadata?: {
 		description?: string
 		expiresAt?: string
@@ -31,27 +15,112 @@ export interface Credential {
 	updatedAt: string
 }
 
-export interface CreateCredentialData {
+// Specific credential type interfaces
+interface SSHKeyCredential extends BaseCredential {
+	type: 'ssh_key'
+	sshKey: string
+}
+
+interface PasswordCredential extends BaseCredential {
+	type: 'password'
+	username: string
+	password: string
+}
+
+interface SSLCertificateCredential extends BaseCredential {
+	type: 'ssl_cert'
+	certificateFile: string // Base64 encoded file content or file path
+	certificateFileName: string
+}
+
+interface APIKeyCredential extends BaseCredential {
+	type: 'api_key'
+	apiKey: string
+}
+
+// Discriminated union type for Credential
+export type Credential = 
+	| SSHKeyCredential 
+	| PasswordCredential 
+	| SSLCertificateCredential 
+	| APIKeyCredential
+
+// Base interface for creating credentials
+// Note: userId is intentionally excluded as it's automatically assigned from the authenticated user's session
+// This prevents users from creating credentials for other users (security best practice)
+interface BaseCreateCredentialData {
 	name: string
-	type: CredentialType
-	
-	// SSH Key specific field
-	sshKey?: string
-	
-	// Password specific fields
-	username?: string
-	password?: string
-	
-	// SSH Certificate specific fields
-	certificateFile?: string
-	certificateFileName?: string
-	
-	// API Key specific field
-	apiKey?: string
-	
 	metadata?: {
 		description?: string
 		expiresAt?: string
+	}
+}
+
+// Specific create credential data interfaces
+interface CreateSSHKeyCredentialData extends BaseCreateCredentialData {
+	type: 'ssh_key'
+	sshKey: string
+}
+
+interface CreatePasswordCredentialData extends BaseCreateCredentialData {
+	type: 'password'
+	username: string
+	password: string
+}
+
+interface CreateSSLCertificateCredentialData extends BaseCreateCredentialData {
+	type: 'ssl_cert'
+	certificateFile: string
+	certificateFileName: string
+}
+
+interface CreateAPIKeyCredentialData extends BaseCreateCredentialData {
+	type: 'api_key'
+	apiKey: string
+}
+
+// Discriminated union type for CreateCredentialData
+export type CreateCredentialData = 
+	| CreateSSHKeyCredentialData 
+	| CreatePasswordCredentialData 
+	| CreateSSLCertificateCredentialData 
+	| CreateAPIKeyCredentialData
+
+// Type guard functions for discriminated union
+export const isSSHKeyCredential = (credential: Credential): credential is SSHKeyCredential => {
+	return credential.type === 'ssh_key'
+}
+
+export const isPasswordCredential = (credential: Credential): credential is PasswordCredential => {
+	return credential.type === 'password'
+}
+
+export const isSSLCertificateCredential = (credential: Credential): credential is SSLCertificateCredential => {
+	return credential.type === 'ssl_cert'
+}
+
+export const isAPIKeyCredential = (credential: Credential): credential is APIKeyCredential => {
+	return credential.type === 'api_key'
+}
+
+// Utility function to get credential-specific data in a type-safe way
+export const getCredentialData = (credential: Credential) => {
+	switch (credential.type) {
+		case 'ssh_key':
+			return { sshKey: credential.sshKey }
+		case 'password':
+			return { username: credential.username, password: credential.password }
+		case 'ssl_cert':
+			return { 
+				certificateFile: credential.certificateFile, 
+				certificateFileName: credential.certificateFileName 
+			}
+		case 'api_key':
+			return { apiKey: credential.apiKey }
+		default:
+			// This should never happen with the discriminated union
+			const _exhaustive: never = credential
+			throw new Error(`Unknown credential type: ${JSON.stringify(credential)}`)
 	}
 }
 

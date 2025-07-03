@@ -7,6 +7,7 @@ import type {
 } from '@/lib/utils/credential-types'
 import { credentialSchema } from '@/lib/utils/credential-validation'
 import { MOCK_CREDENTIALS, DEFAULT_USER_ID } from '@/lib/data/mock-credentials'
+import { getErrorMessage } from '@/lib/utils'
 
 /**
  * Custom hook for managing credentials with full CRUD operations
@@ -31,8 +32,8 @@ export function useCredentials(): CredentialsHookReturn {
     try {
       credentialSchema.parse(data)
       return true
-    } catch (validationError: any) {
-      const errorMessage = validationError.errors?.[0]?.message || 'Invalid credential data'
+    } catch (validationError: unknown) {
+      const errorMessage = getErrorMessage(validationError, 'Invalid credential data')
       setError(errorMessage)
       return false
     }
@@ -73,7 +74,7 @@ export function useCredentials(): CredentialsHookReturn {
       const newCredential: Credential = {
         ...data,
         id: uuid(),
-        userId: DEFAULT_USER_ID,
+        userId: DEFAULT_USER_ID, // TODO: Replace with authenticated user ID from auth store (user.id)
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -81,8 +82,8 @@ export function useCredentials(): CredentialsHookReturn {
       setCredentials(prev => [...prev, newCredential])
       return newCredential
 
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to create credential'
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Failed to create credential')
       setError(errorMessage)
       throw new Error(errorMessage)
     } finally {
@@ -106,18 +107,77 @@ export function useCredentials(): CredentialsHookReturn {
         throw new Error('Credential not found')
       }
 
-      // Merge updates with existing data for validation
-      const updatedData = { ...existingCredential, ...updates }
-      
-      // Validate merged data
-      if (!validateCredentialData(updatedData)) {
-        throw new Error('Validation failed')
+      // For updates, we create a new credential data object that represents the full updated credential
+      // We can't just merge updates because discriminated unions require complete type-specific data
+      let updatedCredentialData: CreateCredentialData
+
+      if (updates.type && updates.type !== existingCredential.type) {
+        // If the type is changing, we need the complete new credential data
+        if (!validateCredentialData(updates as CreateCredentialData)) {
+          throw new Error('Validation failed')
+        }
+        updatedCredentialData = updates as CreateCredentialData
+      } else {
+        // Type is staying the same, so we can merge appropriately based on the existing type
+        switch (existingCredential.type) {
+          case 'ssh_key': {
+            const sshUpdates = updates as Partial<Extract<CreateCredentialData, { type: 'ssh_key' }>>
+            updatedCredentialData = {
+              type: 'ssh_key',
+              name: updates.name ?? existingCredential.name,
+              sshKey: sshUpdates.sshKey ?? existingCredential.sshKey,
+              metadata: updates.metadata ?? existingCredential.metadata
+            }
+            break
+          }
+          case 'password': {
+            const passwordUpdates = updates as Partial<Extract<CreateCredentialData, { type: 'password' }>>
+            updatedCredentialData = {
+              type: 'password',
+              name: updates.name ?? existingCredential.name,
+              username: passwordUpdates.username ?? existingCredential.username,
+              password: passwordUpdates.password ?? existingCredential.password,
+              metadata: updates.metadata ?? existingCredential.metadata
+            }
+            break
+          }
+          case 'ssl_cert': {
+            const sslUpdates = updates as Partial<Extract<CreateCredentialData, { type: 'ssl_cert' }>>
+            updatedCredentialData = {
+              type: 'ssl_cert',
+              name: updates.name ?? existingCredential.name,
+              certificateFile: sslUpdates.certificateFile ?? existingCredential.certificateFile,
+              certificateFileName: sslUpdates.certificateFileName ?? existingCredential.certificateFileName,
+              metadata: updates.metadata ?? existingCredential.metadata
+            }
+            break
+          }
+          case 'api_key': {
+            const apiUpdates = updates as Partial<Extract<CreateCredentialData, { type: 'api_key' }>>
+            updatedCredentialData = {
+              type: 'api_key',
+              name: updates.name ?? existingCredential.name,
+              apiKey: apiUpdates.apiKey ?? existingCredential.apiKey,
+              metadata: updates.metadata ?? existingCredential.metadata
+            }
+            break
+          }
+          default: {
+            const _exhaustive: never = existingCredential
+            throw new Error(`Unknown credential type: ${(_exhaustive as { type: string }).type}`)
+          }
+        }
+
+        // Validate the merged data
+        if (!validateCredentialData(updatedCredentialData)) {
+          throw new Error('Validation failed')
+        }
       }
 
       // Check for duplicate names (excluding current credential)
-      if (updates.name) {
+      if (updatedCredentialData.name) {
         const nameExists = credentials.some(cred => 
-          cred.id !== id && cred.name.toLowerCase() === updates.name!.toLowerCase()
+          cred.id !== id && cred.name.toLowerCase() === updatedCredentialData.name.toLowerCase()
         )
         
         if (nameExists) {
@@ -130,12 +190,18 @@ export function useCredentials(): CredentialsHookReturn {
 
       setCredentials(prev => prev.map(cred => 
         cred.id === id 
-          ? { ...cred, ...updates, updatedAt: new Date().toISOString() }
+          ? { 
+              ...updatedCredentialData, 
+              id: cred.id, 
+              userId: cred.userId, 
+              createdAt: cred.createdAt, 
+              updatedAt: new Date().toISOString() 
+            } as Credential
           : cred
       ))
 
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to update credential'
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Failed to update credential')
       setError(errorMessage)
       throw new Error(errorMessage)
     } finally {
@@ -161,8 +227,8 @@ export function useCredentials(): CredentialsHookReturn {
 
       setCredentials(prev => prev.filter(cred => cred.id !== id))
 
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to delete credential'
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Failed to delete credential')
       setError(errorMessage)
       throw new Error(errorMessage)
     } finally {

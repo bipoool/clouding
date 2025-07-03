@@ -1,20 +1,26 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import {
-	CredentialsTable,
-	CredentialsPageHeader,
-	SecurityAlert,
-	CredentialsStatsSection,
+	CredentialsPageContent,
+	CredentialsPageSkeleton,
+	ErrorAlert,
 } from '@/components/dashboard'
 import { useCredentials } from '@/hooks/useCredentials'
 import { useCredentialsStats } from '@/hooks/useCredentialsStats'
 import type { Credential } from '@/lib/utils/credential-types'
 
 export default function CredentialsPage() {
-	const { credentials, createCredential, updateCredential, deleteCredential } =
-		useCredentials()
+	const {
+		credentials,
+		isLoading,
+		error,
+		createCredential,
+		updateCredential,
+		deleteCredential,
+		clearError,
+	} = useCredentials()
 	const stats = useCredentialsStats(credentials)
 
 	const [editingCredential, setEditingCredential] = useState<Credential | null>(
@@ -29,31 +35,46 @@ export default function CredentialsPage() {
 		setEditingCredential(null)
 	}, [])
 
+	// Memoize content props to prevent unnecessary re-renders
+	const contentProps = useMemo(
+		() => ({
+			credentials,
+			stats,
+			editingCredential,
+			onCreateCredential: createCredential,
+			onUpdateCredential: updateCredential,
+			onDeleteCredential: deleteCredential,
+			onEditCredential: handleEditCredential,
+			onEditComplete: handleEditComplete,
+		}),
+		[
+			credentials,
+			stats,
+			editingCredential,
+			createCredential,
+			updateCredential,
+			deleteCredential,
+			handleEditCredential,
+			handleEditComplete,
+		]
+	)
+
+	// Loading state
+	if (isLoading) {
+		return (
+			<DashboardLayout>
+				<CredentialsPageSkeleton />
+			</DashboardLayout>
+		)
+	}
+
 	return (
 		<DashboardLayout>
 			<div className='space-y-8'>
-				<CredentialsPageHeader
-					onCreateCredential={createCredential}
-					onUpdateCredential={updateCredential}
-					editingCredential={editingCredential}
-					onEditComplete={handleEditComplete}
-				/>
+				{/* Error Alert */}
+				{error && <ErrorAlert error={error} onDismiss={clearError} />}
 
-				<SecurityAlert expiringCredentials={stats.expiring} />
-
-				<CredentialsStatsSection stats={stats} />
-
-				{/* Credentials Table */}
-				<div className='glass-card'>
-					<div className='flex items-center justify-between mb-6'>
-						<h3 className='text-2xl font-bold text-primary'>All Credentials</h3>
-					</div>
-					<CredentialsTable
-						credentials={credentials}
-						onDeleteCredential={deleteCredential}
-						onEditCredential={handleEditCredential}
-					/>
-				</div>
+				<CredentialsPageContent {...contentProps} />
 			</div>
 		</DashboardLayout>
 	)
