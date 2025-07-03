@@ -15,7 +15,7 @@ import (
 // HostRepository defines data access for hosts
 type HostGroupRepository interface {
 	GetHostGroupByID(ctx context.Context, id int) (*hostgroup.HostGroup, error)
-	GetAllHostGroups(ctx context.Context, userId int) ([]*hostgroup.HostGroup, error)
+	GetAllHostGroups(ctx context.Context, userId string) ([]*hostgroup.HostGroup, error)
 	CreateHostGroup(ctx context.Context, h *hostgroup.HostGroup) error
 	UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup, groupID int) error
 	AddHostsToGroup(ctx context.Context, groupID int, newHosts []int) error
@@ -64,7 +64,7 @@ func (r *hostGroupRepository) GetHostGroupByID(ctx context.Context, id int) (*ho
 	return &hostGroup, nil
 }
 
-func (r *hostGroupRepository) GetAllHostGroups(ctx context.Context, userId int) ([]*hostgroup.HostGroup, error) {
+func (r *hostGroupRepository) GetAllHostGroups(ctx context.Context, userId string) ([]*hostgroup.HostGroup, error) {
 	var hostGroups []*hostgroup.HostGroup
 	if err := r.db.SelectContext(ctx, &hostGroups, getAllHostGroupsQuery, userId); err != nil {
 		return nil, err

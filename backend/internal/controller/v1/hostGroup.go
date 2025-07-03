@@ -37,15 +37,9 @@ func (h *HostGroupController) GetHostGroupByID(c *gin.Context) {
 }
 
 func (h *HostGroupController) GetAllHostGroups(c *gin.Context) {
-	userIdStr := c.Query("userId")
-	if userIdStr == "" {
+	userId := c.Query("userId")
+	if userId == "" {
 		c.JSON(http.StatusBadRequest, utils.NewWrongParamResponse("Missing userId"))
-		return
-	}
-
-	userId, err := strconv.Atoi(userIdStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.NewWrongParamResponse("userId must be a number"))
 		return
 	}
 
