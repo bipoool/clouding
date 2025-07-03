@@ -9,7 +9,7 @@ import (
 )
 
 type CredentialService interface {
-	GetAllByUserId(ctx context.Context, userId int) ([]*credential.Credential, error)
+	GetAllByUserId(ctx context.Context, userId string) ([]*credential.Credential, error)
 	GetById(ctx context.Context, id int) (*credential.Credential, error)
 	Create(ctx context.Context, cred *credential.Credential) error
 	Update(ctx context.Context, cred *credential.Credential) error
@@ -25,7 +25,7 @@ func NewCredentialService(repo repository.CredentialRepository, secretsManager u
 	return &credentialService{repo: repo, secretsManager: secretsManager}
 }
 
-func (s *credentialService) GetAllByUserId(ctx context.Context, userId int) ([]*credential.Credential, error) {
+func (s *credentialService) GetAllByUserId(ctx context.Context, userId string) ([]*credential.Credential, error) {
 	creds, err := s.repo.GetAllCredentials(ctx, userId)
 
 	if err != nil {

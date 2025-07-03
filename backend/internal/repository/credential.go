@@ -13,7 +13,7 @@ import (
 
 type CredentialRepository interface {
 	GetCredential(ctx context.Context, id int) (*credential.Credential, error)
-	GetAllCredentials(ctx context.Context, userId int) ([]*credential.Credential, error)
+	GetAllCredentials(ctx context.Context, userId string) ([]*credential.Credential, error)
 	CreateCredential(ctx context.Context, c *credential.Credential) error
 	UpdateCredential(ctx context.Context, c *credential.Credential) error
 	DeleteCredential(ctx context.Context, id int) error
@@ -50,7 +50,7 @@ func (r *credentialRepository) GetCredential(ctx context.Context, id int) (*cred
 	return &cred, nil
 }
 
-func (r *credentialRepository) GetAllCredentials(ctx context.Context, userId int) ([]*credential.Credential, error) {
+func (r *credentialRepository) GetAllCredentials(ctx context.Context, userId string) ([]*credential.Credential, error) {
 	var creds []*credential.Credential
 	err := r.db.SelectContext(ctx, &creds, getCredentialsByUserIdQuery, userId)
 	if err != nil {

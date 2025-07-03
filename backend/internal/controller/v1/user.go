@@ -6,7 +6,6 @@ import (
 	"clouding/backend/internal/utils"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,14 +19,7 @@ func NewUserController(s service.UserService) *UserController {
 }
 
 func (c *UserController) GetUser(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-
-	if err != nil {
-		slog.Debug("UserId not correct", "ERR", err)
-		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
-		return
-	}
+	id := ctx.GetString("userId")
 
 	userObj, err := c.Service.GetUser(ctx.Request.Context(), id)
 
@@ -58,12 +50,7 @@ func (c *UserController) CreateUser(ctx *gin.Context) {
 }
 
 func (c *UserController) UpdateUser(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
-		return
-	}
+	id := ctx.GetString("userId")
 
 	var userObj user.User
 	if err := ctx.ShouldBindJSON(&userObj); err != nil {
@@ -85,12 +72,7 @@ func (c *UserController) UpdateUser(ctx *gin.Context) {
 }
 
 func (c *UserController) DeleteUser(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
-		return
-	}
+	id := ctx.GetString("userId")
 
 	if err := c.Service.DeleteUser(ctx.Request.Context(), id); err != nil {
 		ctx.JSON(http.StatusNotFound, utils.NewInternalErrorResponse(err.Error()))

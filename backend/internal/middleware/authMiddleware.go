@@ -43,7 +43,12 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		// you can set user data in context if needed
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if ok {
-			c.Set("user", claims)
+			userId, err := claims.GetSubject()
+			if err != nil {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, utils.NewApiErrorResponse(err.Error()))
+				return
+			}
+			c.Set("userId", userId)
 		}
 
 		c.Next()

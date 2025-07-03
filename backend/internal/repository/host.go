@@ -15,7 +15,7 @@ import (
 // HostRepository defines data access for hosts
 type HostRepository interface {
 	GetHost(ctx context.Context, id int) (*host.Host, error)
-	GetAllHosts(ctx context.Context, userId int) ([]*host.Host, error)
+	GetAllHosts(ctx context.Context, userId string) ([]*host.Host, error)
 	CreateHost(ctx context.Context, h *host.Host) error
 	UpdateHost(ctx context.Context, h *host.Host) error
 	DeleteHost(ctx context.Context, id int) error
@@ -57,7 +57,7 @@ func (r *hostRepository) GetHost(ctx context.Context, id int) (*host.Host, error
 	return &host, nil
 }
 
-func (r *hostRepository) GetAllHosts(ctx context.Context, userId int) ([]*host.Host, error) {
+func (r *hostRepository) GetAllHosts(ctx context.Context, userId string) ([]*host.Host, error) {
 	var hosts []*host.Host
 
 	err := r.db.SelectContext(ctx, &hosts, getHostsByUserId, userId)

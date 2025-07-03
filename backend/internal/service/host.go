@@ -9,7 +9,7 @@ import (
 // HostService defines business logic for hosts
 type HostService interface {
 	GetHost(ctx context.Context, id int) (*host.Host, error)
-	GetAllHostsByUserId(ctx context.Context, userId int) ([]*host.Host, error)
+	GetAllHostsByUserId(ctx context.Context, userId string) ([]*host.Host, error)
 	CreateHost(ctx context.Context, h *host.Host) error
 	UpdateHost(ctx context.Context, h *host.Host) error
 	DeleteHost(ctx context.Context, id int) error
@@ -26,7 +26,7 @@ func NewHostService(repo repository.HostRepository) HostService {
 func (s *hostService) GetHost(ctx context.Context, id int) (*host.Host, error) {
 	return s.repo.GetHost(ctx, id)
 }
-func (s *hostService) GetAllHostsByUserId(ctx context.Context, userId int) ([]*host.Host, error) {
+func (s *hostService) GetAllHostsByUserId(ctx context.Context, userId string) ([]*host.Host, error) {
 	return s.repo.GetAllHosts(ctx, userId)
 }
 func (s *hostService) CreateHost(ctx context.Context, h *host.Host) error {
