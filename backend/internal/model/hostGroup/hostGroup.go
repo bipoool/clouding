@@ -1,28 +1,30 @@
 package hostgroup
 
 import (
+	"encoding/json"
 	"time"
 )
 
 type HostGroup struct {
-	ID        *int       `db:"id" json:"id"`
-	UserID    *int       `db:"user_id" json:"userId"`
-	Name      *string    `db:"name" json:"name"`
-	HostIDs   *[]int     `db:"host_ids" json:"hostIds"` // Assumes host IDs are integers stored as int[] in PostgreSQL
-	CreatedAt *time.Time `db:"created_at" json:"createdAt"`
-	UpdatedAt *time.Time `db:"updated_at" json:"updatedAt"`
+	ID        int             `json:"id" db:"id"`
+	UserID    int             `json:"userId" db:"user_id"`
+	Name      *string         `json:"name" db:"name"`
+	HostIDs   []int           `json:"hostIds,omitempty" db:"host_ids"` // for CREATE and raw access
+	Hosts     json.RawMessage `json:"hosts,omitempty"`                 // for GET (joined from hosts table)
+	CreatedAt *time.Time      `json:"createdAt" db:"created_at"`
+	UpdatedAt *time.Time      `json:"updatedAt" db:"updated_at"`
 }
 
 type CreateHostGroupResponse struct {
-	ID *int `json:"id"`
+	ID int `json:"id"`
 }
 
 type UpdateHostGroupResponse struct {
-	ID        *int       `json:"id"`
+	ID        int        `json:"id"`
 	UpdatedAt *time.Time `json:"updatedAt"`
 }
 
 type DeleteHostGroupResponse struct {
-	ID        *int `json:"id"`
+	ID        int  `json:"id"`
 	IsDeleted bool `json:"isDeleted"`
 }

@@ -29,6 +29,7 @@ func (s *hostService) GetHost(ctx context.Context, id int) (*host.Host, error) {
 func (s *hostService) GetAllHostsByUserId(ctx context.Context, userId string) ([]*host.Host, error) {
 	return s.repo.GetAllHosts(ctx, userId)
 }
+
 func (s *hostService) CreateHost(ctx context.Context, h *host.Host) error {
 	return s.repo.CreateHost(ctx, h)
 }

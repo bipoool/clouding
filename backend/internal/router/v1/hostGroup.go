@@ -22,6 +22,8 @@ func RegisterHostGroupRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
 		group.PUT("/:id", hostGroupController.UpdateHostGroup)
 		group.POST("/:id/hosts", hostGroupController.AddHostsToGroup)
 		group.DELETE("/:id/hosts/:hostId", hostGroupController.RemoveHostFromGroup)
+		group.DELETE("/:id", hostGroupController.DeleteHostGroup)
+
 	}
 
 }

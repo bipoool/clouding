@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	_ "embed" // Required for embedding
-	"time"
 
 	sq "github.com/Masterminds/squirrel"
 
@@ -18,7 +17,7 @@ type HostGroupRepository interface {
 	GetHostGroupByID(ctx context.Context, id int) (*hostgroup.HostGroup, error)
 	GetAllHostGroups(ctx context.Context, userId int) ([]*hostgroup.HostGroup, error)
 	CreateHostGroup(ctx context.Context, h *hostgroup.HostGroup) error
-	UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup) error
+	UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup, groupID int) error
 	AddHostsToGroup(ctx context.Context, groupID int, newHosts []int) error
 	RemoveHostFromGroup(ctx context.Context, groupID int, hostID int) error
 	DeleteHostGroup(ctx context.Context, id int) error
@@ -26,18 +25,24 @@ type HostGroupRepository interface {
 
 // SQL Queries (embed the .sql files)
 
+//go:embed sql/hostGroup/getHostGroupByID.sql
 var getHostGroupByIDQuery string
 
+//go:embed sql/hostGroup/getAllHostGroupByUser.sql
 var getAllHostGroupsQuery string
 
+//go:embed sql/hostGroup/createHostGroup.sql
 var createHostGroupQuery string
 
 var updateHostGroupQuery string
 
+//go:embed sql/hostGroup/addNewHostToGroup.sql
 var addHostsToGroupQuery string
 
+//go:embed sql/hostGroup/removeHostFromGroup.sql
 var removeHostFromGroupQuery string
 
+//go:embed sql/hostGroup/deleteHostGroupById.sql
 var deleteHostGroupQuery string
 
 type hostGroupRepository struct {
@@ -67,30 +72,34 @@ func (r *hostGroupRepository) GetAllHostGroups(ctx context.Context, userId int) 
 }
 
 func (r *hostGroupRepository) CreateHostGroup(ctx context.Context, h *hostgroup.HostGroup) error {
-	rows, err := r.db.NamedQueryContext(ctx, createHostGroupQuery, h)
+	data := map[string]interface{}{
+		"user_id":  h.UserID,
+		"name":     h.Name,
+		"host_ids": pq.Array(h.HostIDs),
+	}
+	rows, err := r.db.NamedQueryContext(ctx, createHostGroupQuery, data)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 	if rows.Next() {
-		return rows.Scan(&h.ID)
+		return rows.Scan(&h.ID, &h.CreatedAt, &h.UpdatedAt)
 	}
 	return sql.ErrNoRows
 }
 
-func (r *hostGroupRepository) UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup) error {
-	// Use squirrel for dynamic update
-	builder := sq.
-		Update("host_group").
-		Set("updated_at", "NOW()").
-		Where(sq.Eq{"id": h.ID}).
+func (r *hostGroupRepository) UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup, groupID int) error {
+	builder := sq.Update("host_group").
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"id": groupID}).
 		PlaceholderFormat(sq.Dollar)
 
 	if h.Name != nil {
 		builder = builder.Set("name", *h.Name)
 	}
-	if h.HostIDs != nil {
-		builder = builder.Set("host_ids", h.HostIDs)
+
+	if len(h.HostIDs) > 0 {
+		builder = builder.Set("host_ids", pq.Array(h.HostIDs))
 	}
 
 	query, args, err := builder.ToSql()
@@ -98,15 +107,12 @@ func (r *hostGroupRepository) UpdateHostGroup(ctx context.Context, h *hostgroup.
 		return err
 	}
 
-	var updatedAt time.Time
-	if err := r.db.GetContext(ctx, &updatedAt, query, args...); err != nil {
-		return err
-	}
-	h.UpdatedAt = &updatedAt
-	return nil
+	_, err = r.db.ExecContext(ctx, query, args...)
+	return err
 }
 
 func (r *hostGroupRepository) AddHostsToGroup(ctx context.Context, groupID int, newHosts []int) error {
+
 	_, err := r.db.ExecContext(ctx, addHostsToGroupQuery, groupID, pq.Array(newHosts))
 	return err
 }
