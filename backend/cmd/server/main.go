@@ -53,7 +53,7 @@ func Start() {
 	ginEngine := gin.New()
 	ginEngine.Use(gin.Recovery())
 	ginEngine.Use(middleware.SlogMiddleware())
-	// ginEngine.Use(middleware.JWTAuthMiddleware())
+	ginEngine.Use(middleware.JWTAuthMiddleware())
 	v1RouteGroup := ginEngine.Group("/api/v1")
 
 	//Register routes here
