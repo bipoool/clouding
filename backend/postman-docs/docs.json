@@ -2,7 +2,7 @@
     "info": {
         "name": "Clouding.co API",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-        "description": "API documentation for Clouding.co \u2013 manage Hosts, SSH Credentials, Host Groups, Blueprints, Deployment Plans & Runs"
+        "description": "API documentation for Clouding.co – manage Hosts, SSH Credentials, Host Groups, Blueprints, Deployment Plans & Runs"
     },
     "item": [
         {
@@ -13,51 +13,36 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/credentials/:id",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "credentials",
-                                ":id"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/credentials/:id", "host": ["{{baseUrl}}"], "path": ["credentials", ":id"] },
                         "description": "Fetch an SSH credential by ID."
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/credentials/:id",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "credentials",
-                                        ":id"
-                                    ]
-                                },
-                                "description": "Fetch an SSH credential by ID."
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"id\": \"cred-uuid\",\n  \"username\": \"ubuntu\",\n  \"privateKeyPath\": \"s3://bucket/keys/cred-uuid.pem\"\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"My SSH Key\",\n    \"type\": \"ssh_key\",\n    \"userId\": \"user-uuid\",\n    \"created_at\": \"2024-06-01T12:00:00Z\",\n    \"updated_at\": \"2024-06-01T12:00:00Z\",\n    \"secret\": {\n      \"username\": \"ubuntu\",\n      \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n    }\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All SSH Credentials",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
+                        ],
+                        "url": { "raw": "{{baseUrl}}/credentials", "host": ["{{baseUrl}}"], "path": ["credentials"] },
+                        "description": "List all SSH credentials owned by the authenticated user."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"My SSH Key 1\",\n      \"type\": \"ssh_key\",\n      \"userId\": \"user-uuid\",\n      \"created_at\": \"2024-06-01T12:00:00Z\",\n      \"updated_at\": \"2024-06-01T12:00:00Z\",\n      \"secret\": {\n        \"username\": \"ubuntu\",\n        \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n      }\n    },\n    {\n      \"id\": 2,\n      \"name\": \"My SSH Key 2\",\n      \"type\": \"ssh_key\",\n      \"userId\": \"user-uuid\",\n      \"created_at\": \"2024-06-01T12:00:00Z\",\n      \"updated_at\": \"2024-06-01T12:00:00Z\",\n      \"secret\": {\n        \"username\": \"ubuntu\",\n        \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n      }\n    }\n  ]\n}"
                         }
                     ]
                 },
@@ -66,65 +51,46 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/credentials",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "credentials"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/credentials", "host": ["{{baseUrl}}"], "path": ["credentials"] },
                         "description": "Add a new SSH credential. The private key will be uploaded to object storage.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"username\": \"ubuntu\",\n  \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n}"
+                            "raw": "{\n  \"name\": \"My SSH Key\",\n  \"type\": \"ssh_key\",\n  \"secret\": {\n    \"username\": \"ubuntu\",\n    \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n  }\n}"
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "status": "Created",
+                            "code": 201,
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update SSH Credential",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
+                        ],
+                        "url": { "raw": "{{baseUrl}}/credentials/:id", "host": ["{{baseUrl}}"], "path": ["credentials", ":id"] },
+                        "description": "Update an existing SSH credential by ID. Only type and secret could be updated. Secret will be updated in secret manager.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"nameIsNot\",\n  \"type\": \"ssh_key\",\n  \"secret\": {\n    \"anyKey\": \"ValuePair\",\n    \"username\": \"ubuntu\",\n    \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n  }\n}"
                         }
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/credentials",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "credentials"
-                                    ]
-                                },
-                                "description": "Add a new SSH credential. The private key will be uploaded to object storage.",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"username\": \"ubuntu\",\n  \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n}"
-                                }
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"id\": \"cred-uuid\",\n  \"username\": \"ubuntu\",\n  \"privateKeyPath\": \"s3://bucket/keys/cred-uuid.pem\"\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1,\n    \"updatedAt\": \"2024-06-01T12:00:00Z\"\n  }\n}"
                         }
                     ]
                 },
@@ -133,51 +99,17 @@
                     "request": {
                         "method": "DELETE",
                         "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/credentials/:id",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "credentials",
-                                ":id"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/credentials/:id", "host": ["{{baseUrl}}"], "path": ["credentials", ":id"] },
                         "description": "Delete an SSH credential by ID."
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "DELETE",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/credentials/:id",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "credentials",
-                                        ":id"
-                                    ]
-                                },
-                                "description": "Delete an SSH credential by ID."
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"id\": \"cred-uuid\",\n  \"username\": \"ubuntu\",\n  \"privateKeyPath\": \"s3://bucket/keys/cred-uuid.pem\"\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1,\n    \"isDeleted\": true\n  }\n}"
                         }
                     ]
                 }
@@ -192,51 +124,17 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/hosts/:id",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "hosts",
-                                ":id"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/hosts/:id", "host": ["{{baseUrl}}"], "path": ["hosts", ":id"] },
                         "description": "Retrieve host details by ID."
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/hosts/:id",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "hosts",
-                                        ":id"
-                                    ]
-                                },
-                                "description": "Retrieve host details by ID."
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"name\": \"UpdatedVM\",\n    \"ip\": \"192.168.1.2\",\n    \"os\": \"Ubuntu\",\n    \"metaData\": {\n      \"tag\": {\n        \"product\": \"adpushup\"\n      }\n    },\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1,\n    \"userId\": \"user-uuid\",\n    \"name\": \"VM1\",\n    \"ip\": \"192.168.1.1\",\n    \"os\": \"Ubuntu\",\n    \"credentialId\": 1,\n    \"metaData\": {\n      \"tag\": {\n        \"product\": \"adpushup\"\n      }\n    },\n    \"createdAt\": \"2024-06-01T12:00:00Z\",\n    \"updatedAt\": \"2024-06-01T12:00:00Z\"\n  }\n}"
                         }
                     ]
                 },
@@ -245,49 +143,17 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/hosts",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "hosts"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/hosts", "host": ["{{baseUrl}}"], "path": ["hosts"] },
                         "description": "List all hosts owned by the authenticated user."
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/hosts",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "hosts"
-                                    ]
-                                },
-                                "description": "List all hosts owned by the authenticated user."
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"userId\": 1,\n      \"name\": \"UpdatedVM\",\n      \"ip\": \"192.168.1.2\",\n      \"os\": \"Ubuntu\",\n      \"metaData\": {\n        \"tag\": {\n          \"product\": \"adpushup\"\n        }\n      },\n      \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n      \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n    }\n  ],\n  \"error\": null,\n  \"success\": true\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"userId\": \"user-uuid\",\n      \"name\": \"VM1\",\n      \"ip\": \"192.168.1.1\",\n      \"os\": \"Ubuntu\",\n      \"credentialId\": 1,\n      \"metaData\": {\n        \"tag\": {\n          \"product\": \"adpushup\"\n        }\n      },\n      \"createdAt\": \"2024-06-01T12:00:00Z\",\n      \"updatedAt\": \"2024-06-01T12:00:00Z\"\n    },\n    {\n      \"id\": 2,\n      \"userId\": \"user-uuid\",\n      \"name\": \"VM2\",\n      \"ip\": \"192.168.1.1\",\n      \"os\": \"Ubuntu\",\n      \"credentialId\": 1,\n      \"metaData\": {\n        \"tag\": {\n          \"product\": \"pubx\"\n        }\n      },\n      \"createdAt\": \"2024-06-01T12:00:00Z\",\n      \"updatedAt\": \"2024-06-01T12:00:00Z\"\n    }\n  ]\n}"
                         }
                     ]
                 },
@@ -296,65 +162,22 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/hosts",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "hosts"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/hosts", "host": ["{{baseUrl}}"], "path": ["hosts"] },
                         "description": "Register a new host.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"userId\": 1,\n  \"name\": \"VM1\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.1\",\n  \"metaData\": {\n    \"tag\": {\n      \"product\": \"adpushup\"\n    }\n  }\n}"
+                            "raw": "{\n  \"name\": \"VM1\",\n  \"ip\": \"192.168.1.1\",\n  \"os\": \"Ubuntu\",\n  \"credentialId\": 1,\n  \"metaData\": {\n    \"tag\": {\n      \"product\": \"adpushup\"\n    }\n  }\n}"
                         }
                     },
                     "response": [
                         {
-                            "name": "200 OK",
-                            "originalRequest": {
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/hosts",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "hosts"
-                                    ]
-                                },
-                                "description": "Register a new host.",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"userId\": 1,\n  \"name\": \"VM1\",\n  \"os\": \"Ubuntu\",\n  \"ip\": \"192.168.1.1\",\n  \"metaData\": {\n    \"tag\": {\n      \"product\": \"adpushup\"\n    }\n  }\n}"
-                                }
-                            },
-                            "status": "OK",
-                            "code": 200,
-                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"name\": \"VM1\",\n    \"ip\": \"192.168.1.1\",\n    \"os\": \"Ubuntu\",\n    \"metaData\": {\n      \"tag\": {\n        \"product\": \"adpushup\"\n      }\n    },\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T22:04:55.788904Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                            "name": "201 Created",
+                            "status": "Created",
+                            "code": 201,
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1\n  }\n}"
                         }
                     ]
                 },
@@ -363,67 +186,22 @@
                     "request": {
                         "method": "PUT",
                         "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/hosts/:id",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "hosts",
-                                ":id"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/hosts/:id", "host": ["{{baseUrl}}"], "path": ["hosts", ":id"] },
                         "description": "Update an existing host.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"name\": \"UpdatedVM\",\n  \"ip\": \"192.168.1.2\"\n}"
+                            "raw": "{\n  \"name\": \"UpdatedVM\",\n  \"ip\": \"192.168.1.2\",\n  \"os\": \"Ubuntu\",\n  \"credentialId\": 1,\n  \"metaData\": {\n    \"tag\": {\n      \"product\": \"adpushup\"\n    }\n  }\n}"
                         }
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "PUT",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/hosts/:id",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "hosts",
-                                        ":id"
-                                    ]
-                                },
-                                "description": "Update an existing host.",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"UpdatedVM\",\n  \"ip\": \"192.168.1.2\"\n}"
-                                }
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"name\": \"UpdatedVM\",\n    \"ip\": \"192.168.1.2\",\n    \"os\": \"Ubuntu\",\n    \"metaData\": {\n      \"tag\": {\n        \"product\": \"adpushup\"\n      }\n    },\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1,\n    \"updatedAt\": \"2024-06-01T12:00:00Z\"\n  }\n}"
                         }
                     ]
                 },
@@ -432,51 +210,17 @@
                     "request": {
                         "method": "DELETE",
                         "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/hosts/:id",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "hosts",
-                                ":id"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/hosts/:id", "host": ["{{baseUrl}}"], "path": ["hosts", ":id"] },
                         "description": "Delete a host by ID."
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "DELETE",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/hosts/:id",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "hosts",
-                                        ":id"
-                                    ]
-                                },
-                                "description": "Delete a host by ID."
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 1,\n    \"name\": \"UpdatedVM\",\n    \"ip\": \"192.168.1.2\",\n    \"os\": \"Ubuntu\",\n    \"metaData\": {\n      \"tag\": {\n        \"product\": \"adpushup\"\n      }\n    },\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1,\n    \"isDeleted\": true\n  }\n}"
                         }
                     ]
                 }
@@ -491,51 +235,17 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/users/:id",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "users",
-                                ":id"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/users/:id", "host": ["{{baseUrl}}"], "path": ["users", ":id"] },
                         "description": "Retrieve user details by ID."
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/users/:id",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "users",
-                                        ":id"
-                                    ]
-                                },
-                                "description": "Retrieve user details by ID."
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n    \"updatedAt\": \"2025-06-26T22:04:55.788904Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": \"user-uuid\",\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"fullName\": \"Johnathan Doe\",\n    \"avatarUrl\": \"https://example.com/avatar.png\",\n    \"picture\": \"https://example.com/picture.png\",\n    \"createdAt\": \"2024-06-01T12:00:00Z\",\n    \"updatedAt\": \"2024-06-01T12:00:00Z\"\n  }\n}"
                         }
                     ]
                 },
@@ -544,49 +254,17 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/users",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "users"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
                         "description": "List all users."
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/users",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "users"
-                                    ]
-                                },
-                                "description": "List all users."
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"John Doe\",\n      \"email\": \"john.doe@example.com\",\n      \"createdAt\": \"2025-06-26T22:04:55.788904Z\",\n      \"updatedAt\": \"2025-06-26T22:04:55.788904Z\"\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Jane Smith\",\n      \"email\": \"jane.smith@example.com\",\n      \"createdAt\": \"2025-06-26T23:08:20.742285Z\",\n      \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n    }\n  ],\n  \"error\": null,\n  \"success\": true\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": [\n    {\n      \"id\": \"user-uuid\",\n      \"name\": \"John Doe\",\n      \"email\": \"john.doe@example.com\",\n      \"fullName\": \"Johnathan Doe\",\n      \"avatarUrl\": \"https://example.com/avatar.png\",\n      \"picture\": \"https://example.com/picture.png\",\n      \"createdAt\": \"2024-06-01T12:00:00Z\",\n      \"updatedAt\": \"2024-06-01T12:00:00Z\"\n    }\n  ]\n}"
                         }
                     ]
                 },
@@ -595,65 +273,22 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/users",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "users"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
                         "description": "Create a new user.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\"\n}"
+                            "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"fullName\": \"Johnathan Doe\",\n  \"avatarUrl\": \"https://example.com/avatar.png\",\n  \"picture\": \"https://example.com/picture.png\"\n}"
                         }
                     },
                     "response": [
                         {
                             "name": "201 Created",
-                            "originalRequest": {
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/users",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "users"
-                                    ]
-                                },
-                                "description": "Create a new user.",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\"\n}"
-                                }
-                            },
                             "status": "Created",
                             "code": 201,
-                            "body": "{\n  \"id\": 1\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": \"user-uuid\"\n  }\n}"
                         }
                     ]
                 },
@@ -662,67 +297,22 @@
                     "request": {
                         "method": "PUT",
                         "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/users/:id",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "users",
-                                ":id"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/users/:id", "host": ["{{baseUrl}}"], "path": ["users", ":id"] },
                         "description": "Update an existing user.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"name\": \"John Updated\",\n  \"email\": \"john.updated@example.com\"\n}"
+                            "raw": "{\n  \"name\": \"John Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"fullName\": \"Johnathan Updated\",\n  \"avatarUrl\": \"https://example.com/avatar-updated.png\",\n  \"picture\": \"https://example.com/picture-updated.png\"\n}"
                         }
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "PUT",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/users/:id",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "users",
-                                        ":id"
-                                    ]
-                                },
-                                "description": "Update an existing user.",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"John Updated\",\n  \"email\": \"john.updated@example.com\"\n}"
-                                }
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"updatedAt\": \"2025-06-26T23:08:20.742285Z\"\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": \"user-uuid\",\n    \"updatedAt\": \"2024-06-01T12:00:00Z\"\n  }\n}"
                         }
                     ]
                 },
@@ -731,51 +321,17 @@
                     "request": {
                         "method": "DELETE",
                         "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}",
-                                "type": "text"
-                            }
+                            { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
-                        "url": {
-                            "raw": "{{baseUrl}}/users/:id",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "users",
-                                ":id"
-                            ]
-                        },
+                        "url": { "raw": "{{baseUrl}}/users/:id", "host": ["{{baseUrl}}"], "path": ["users", ":id"] },
                         "description": "Delete a user by ID."
                     },
                     "response": [
                         {
                             "name": "200 OK",
-                            "originalRequest": {
-                                "method": "DELETE",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{authToken}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/users/:id",
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "path": [
-                                        "users",
-                                        ":id"
-                                    ]
-                                },
-                                "description": "Delete a user by ID."
-                            },
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"isDeleted\": true\n  },\n  \"error\": null,\n  \"success\": true\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": \"user-uuid\",\n    \"isDeleted\": true\n  }\n}"
                         }
                     ]
                 }
