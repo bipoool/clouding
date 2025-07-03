@@ -10,7 +10,7 @@ import {
 } from '@/components/dashboard'
 import { useCredentials } from '@/hooks/useCredentials'
 import { useCredentialsStats } from '@/hooks/useCredentialsStats'
-import type { Credential } from '@/hooks/useCredentials'
+import type { Credential } from '@/lib/utils/credential-types'
 
 export default function CredentialsPage() {
 	const { credentials, createCredential, updateCredential, deleteCredential } =

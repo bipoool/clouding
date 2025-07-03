@@ -29,7 +29,7 @@ import {
 	Lock,
 	Code,
 } from 'lucide-react'
-import type { Credential, CredentialType } from '@/hooks/useCredentials'
+import type { Credential, CredentialType } from '@/lib/utils/credential-types'
 import { formatDistanceToNow } from 'date-fns'
 
 interface CredentialsTableProps {

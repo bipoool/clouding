@@ -1,148 +1,186 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
+import { v4 as uuid } from 'uuid'
+import type { 
+  Credential, 
+  CreateCredentialData, 
+  CredentialsHookReturn 
+} from '@/lib/utils/credential-types'
+import { credentialSchema } from '@/lib/utils/credential-validation'
+import { MOCK_CREDENTIALS, DEFAULT_USER_ID } from '@/lib/data/mock-credentials'
 
-export type CredentialType = 'ssh_key' | 'ssl_cert' | 'password' | 'api_key'
+/**
+ * Custom hook for managing credentials with full CRUD operations
+ * Includes validation, error handling, and optimized performance
+ */
+export function useCredentials(): CredentialsHookReturn {
+  const [credentials, setCredentials] = useState<Credential[]>(MOCK_CREDENTIALS)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-export interface Credential {
-  id: string
-  name: string
-  type: CredentialType
-  userId: string
-  
-  // SSH Key specific field
-  sshKey?: string
-  
-  // Password specific fields
-  username?: string
-  password?: string
-  
-  // SSH Certificate specific field
-  certificateFile?: string // Base64 encoded file content or file path
-  certificateFileName?: string
-  
-  // API Key specific field
-  apiKey?: string
-  
-  // Additional metadata
-  metadata?: {
-    description?: string
-    expiresAt?: string
-  }
-  createdAt: string
-  updatedAt: string
-}
+  /**
+   * Clear any existing errors
+   */
+  const clearError = useCallback(() => {
+    setError(null)
+  }, [])
 
-export interface CreateCredentialData {
-  name: string
-  type: CredentialType
-  
-  // SSH Key specific field
-  sshKey?: string
-  
-  // Password specific fields
-  username?: string
-  password?: string
-  
-  // SSH Certificate specific fields
-  certificateFile?: string
-  certificateFileName?: string
-  
-  // API Key specific field
-  apiKey?: string
-  
-  metadata?: {
-    description?: string
-    expiresAt?: string
-  }
-}
-
-// Mock data for development
-const mockCredentials: Credential[] = [
-  {
-    id: 'cred-1',
-    name: 'Production SSH Key',
-    type: 'ssh_key',
-    userId: 'user-1',
-    sshKey: '-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAlwAAAAdzc2gtcn...\n-----END OPENSSH PRIVATE KEY-----',
-    metadata: {
-      description: 'Main SSH key for production servers'
-    },
-    createdAt: '2024-01-10T09:00:00Z',
-    updatedAt: '2024-01-10T09:00:00Z'
-  },
-  {
-    id: 'cred-2',
-    name: 'Dev Environment Access',
-    type: 'password',
-    userId: 'user-1',
-    username: 'developer',
-    password: '••••••••',
-    metadata: {
-      description: 'Username/password for development servers'
-    },
-    createdAt: '2024-01-12T11:00:00Z',
-    updatedAt: '2024-01-12T11:00:00Z'
-  },
-  {
-    id: 'cred-3',
-    name: 'SSL Certificate',
-    type: 'ssl_cert',
-    userId: 'user-1',
-    certificateFile: 'LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t...',
-    certificateFileName: 'server.crt',
-    metadata: {
-      description: 'SSL certificate for web server',
-      expiresAt: '2024-12-31T23:59:59Z'
-    },
-    createdAt: '2024-01-08T14:00:00Z',
-    updatedAt: '2024-01-08T14:00:00Z'
-  },
-  {
-    id: 'cred-4',
-    name: 'API Access Token',
-    type: 'api_key',
-    userId: 'user-1',
-    apiKey: 'sk-1234567890abcdef1234567890abcdef1234567890abcdef',
-    metadata: {
-      expiresAt: '2024-12-31T23:59:59Z',
-      description: 'API token for external service integration'
-    },
-    createdAt: '2024-01-05T08:00:00Z',
-    updatedAt: '2024-01-05T08:00:00Z'
-  }
-]
-
-export function useCredentials() {
-  const [credentials, setCredentials] = useState<Credential[]>(mockCredentials)
-
-  const createCredential = useCallback((data: CreateCredentialData) => {
-    const newCredential: Credential = {
-      ...data,
-      id: `cred-${Date.now()}`,
-      userId: 'user-1', // In real app, get from auth context
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+  /**
+   * Validate credential data using Zod schema
+   */
+  const validateCredentialData = useCallback((data: CreateCredentialData): boolean => {
+    try {
+      credentialSchema.parse(data)
+      return true
+    } catch (validationError: any) {
+      const errorMessage = validationError.errors?.[0]?.message || 'Invalid credential data'
+      setError(errorMessage)
+      return false
     }
-    setCredentials(prev => [...prev, newCredential])
-    return newCredential
   }, [])
 
-  const updateCredential = useCallback((id: string, updates: Partial<CreateCredentialData>) => {
-    setCredentials(prev => prev.map(cred => 
-      cred.id === id 
-        ? { ...cred, ...updates, updatedAt: new Date().toISOString() }
-        : cred
-    ))
+  /**
+   * Simulate API delay for realistic UX
+   */
+  const simulateDelay = useCallback((ms: number = 500): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, ms))
   }, [])
 
-  const deleteCredential = useCallback((id: string) => {
-    setCredentials(prev => prev.filter(cred => cred.id !== id))
-  }, [])
+  /**
+   * Create a new credential with validation and error handling
+   */
+  const createCredential = useCallback(async (data: CreateCredentialData): Promise<Credential> => {
+    setIsLoading(true)
+    setError(null)
 
-  const getCredentialById = useCallback((id: string) => {
+    try {
+      // Validate input data
+      if (!validateCredentialData(data)) {
+        throw new Error('Validation failed')
+      }
+
+      // Check for duplicate names
+      const nameExists = credentials.some(cred => 
+        cred.name.toLowerCase() === data.name.toLowerCase()
+      )
+      
+      if (nameExists) {
+        throw new Error('A credential with this name already exists')
+      }
+
+      // Simulate API call
+      await simulateDelay()
+
+      const newCredential: Credential = {
+        ...data,
+        id: uuid(),
+        userId: DEFAULT_USER_ID,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+
+      setCredentials(prev => [...prev, newCredential])
+      return newCredential
+
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to create credential'
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [credentials, validateCredentialData, simulateDelay])
+
+  /**
+   * Update an existing credential
+   */
+  const updateCredential = useCallback(async (
+    id: string, 
+    updates: Partial<CreateCredentialData>
+  ): Promise<void> => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const existingCredential = credentials.find(cred => cred.id === id)
+      if (!existingCredential) {
+        throw new Error('Credential not found')
+      }
+
+      // Merge updates with existing data for validation
+      const updatedData = { ...existingCredential, ...updates }
+      
+      // Validate merged data
+      if (!validateCredentialData(updatedData)) {
+        throw new Error('Validation failed')
+      }
+
+      // Check for duplicate names (excluding current credential)
+      if (updates.name) {
+        const nameExists = credentials.some(cred => 
+          cred.id !== id && cred.name.toLowerCase() === updates.name!.toLowerCase()
+        )
+        
+        if (nameExists) {
+          throw new Error('A credential with this name already exists')
+        }
+      }
+
+      // Simulate API call
+      await simulateDelay()
+
+      setCredentials(prev => prev.map(cred => 
+        cred.id === id 
+          ? { ...cred, ...updates, updatedAt: new Date().toISOString() }
+          : cred
+      ))
+
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to update credential'
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [credentials, validateCredentialData, simulateDelay])
+
+  /**
+   * Delete a credential by ID
+   */
+  const deleteCredential = useCallback(async (id: string): Promise<void> => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const credentialExists = credentials.some(cred => cred.id === id)
+      if (!credentialExists) {
+        throw new Error('Credential not found')
+      }
+
+      // Simulate API call
+      await simulateDelay()
+
+      setCredentials(prev => prev.filter(cred => cred.id !== id))
+
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to delete credential'
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [credentials, simulateDelay])
+
+  /**
+   * Get a credential by ID (memoized for performance)
+   */
+  const getCredentialById = useCallback((id: string): Credential | undefined => {
     return credentials.find(cred => cred.id === id)
   }, [credentials])
 
-  const getSSHCredentials = useCallback(() => {
+  /**
+   * Get SSH-compatible credentials (memoized for performance)
+   */
+  const getSSHCredentials = useCallback((): Credential[] => {
     return credentials.filter(cred => 
       cred.type === 'ssh_key' || cred.type === 'password'
     )
@@ -150,10 +188,13 @@ export function useCredentials() {
 
   return {
     credentials,
+    isLoading,
+    error,
     createCredential,
     updateCredential,
     deleteCredential,
     getCredentialById,
-    getSSHCredentials
+    getSSHCredentials,
+    clearError
   }
 } 

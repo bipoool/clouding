@@ -1,10 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { logger } from '@/lib/utils/logger'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
+import { Plus } from 'lucide-react'
 import {
 	Dialog,
 	DialogContent,
@@ -32,37 +29,17 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Key, Lock, Shield, Code, Upload } from 'lucide-react'
+import { useCredentialForm } from '@/hooks/useCredentialForm'
+import { CredentialFormFields } from './credential-form-fields'
+import {
+	CREDENTIAL_TYPE_CONFIG,
+	getCredentialTypeIconConfig,
+	shouldShowExpirationField,
+} from '@/lib/utils/credential-types'
 import type {
 	Credential,
 	CreateCredentialData,
-	CredentialType,
-} from '@/hooks/useCredentials'
-
-const credentialSchema = z.object({
-	name: z
-		.string()
-		.min(1, 'Credential name is required')
-		.max(100, 'Name too long'),
-	type: z.enum(['ssh_key', 'password', 'ssl_cert', 'api_key'], {
-		required_error: 'Please select a credential type',
-	}),
-	// SSH Key fields
-	sshKey: z.string().optional(),
-	// Password fields
-	username: z.string().optional(),
-	password: z.string().optional(),
-	// SSL Certificate fields
-	certificateFile: z.string().optional(),
-	certificateFileName: z.string().optional(),
-	// API Key fields
-	apiKey: z.string().optional(),
-	// Common fields
-	description: z.string().optional(),
-	expiresAt: z.string().optional(),
-})
-
-type CredentialFormData = z.infer<typeof credentialSchema>
+} from '@/lib/utils/credential-types'
 
 interface AddCredentialModalProps {
 	onAddCredential: (credential: CreateCredentialData) => void
@@ -81,25 +58,14 @@ export function AddCredentialModal({
 	trigger,
 }: AddCredentialModalProps) {
 	const [open, setOpen] = useState(false)
-	const [isSubmitting, setIsSubmitting] = useState(false)
 
-	const form = useForm<CredentialFormData>({
-		resolver: zodResolver(credentialSchema),
-		defaultValues: {
-			name: '',
-			type: 'ssh_key',
-			sshKey: '',
-			username: '',
-			password: '',
-			certificateFile: '',
-			certificateFileName: '',
-			apiKey: '',
-			description: '',
-			expiresAt: '',
-		},
-	})
-
-	const selectedType = form.watch('type')
+	const { form, selectedType, isSubmitting, handleFileUpload, handleSubmit } =
+		useCredentialForm({
+			onAddCredential,
+			onUpdateCredential,
+			editCredential,
+			onClose: () => setOpen(false),
+		})
 
 	// Auto-open modal when editCredential is provided
 	useEffect(() => {
@@ -108,262 +74,8 @@ export function AddCredentialModal({
 		}
 	}, [editCredential])
 
-	// Populate form when editing
-	useEffect(() => {
-		if (editCredential && open) {
-			form.reset({
-				name: editCredential.name,
-				type: editCredential.type,
-				sshKey: editCredential.sshKey || '',
-				username: editCredential.username || '',
-				password: editCredential.password || '',
-				certificateFile: editCredential.certificateFile || '',
-				certificateFileName: editCredential.certificateFileName || '',
-				apiKey: editCredential.apiKey || '',
-				description: editCredential.metadata?.description || '',
-				expiresAt: editCredential.metadata?.expiresAt?.split('T')[0] || '',
-			})
-		} else if (!editCredential && open) {
-			form.reset({
-				name: '',
-				type: 'ssh_key',
-				sshKey: '',
-				username: '',
-				password: '',
-				certificateFile: '',
-				certificateFileName: '',
-				apiKey: '',
-				description: '',
-				expiresAt: '',
-			})
-		}
-	}, [editCredential, open, form])
-
-	const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0]
-		if (file) {
-			const reader = new FileReader()
-			reader.onload = event => {
-				const content = event.target?.result as string
-				// Store as base64 for simplicity
-				const base64Content = btoa(content)
-				form.setValue('certificateFile', base64Content)
-				form.setValue('certificateFileName', file.name)
-			}
-			reader.readAsText(file)
-		}
-	}
-
-	const handleSubmit = async (data: CredentialFormData) => {
-		setIsSubmitting(true)
-
-		try {
-			const credentialData: CreateCredentialData = {
-				name: data.name,
-				type: data.type,
-				metadata: {
-					...(data.description && { description: data.description }),
-					...(data.expiresAt && {
-						expiresAt: new Date(data.expiresAt).toISOString(),
-					}),
-				},
-			}
-
-			// Add type-specific fields
-			switch (data.type) {
-				case 'ssh_key':
-					if (data.sshKey) credentialData.sshKey = data.sshKey
-					break
-				case 'password':
-					if (data.username) credentialData.username = data.username
-					if (data.password) credentialData.password = data.password
-					break
-				case 'ssl_cert':
-					if (data.certificateFile)
-						credentialData.certificateFile = data.certificateFile
-					if (data.certificateFileName)
-						credentialData.certificateFileName = data.certificateFileName
-					break
-				case 'api_key':
-					if (data.apiKey) credentialData.apiKey = data.apiKey
-					break
-			}
-
-			if (editCredential && onUpdateCredential) {
-				onUpdateCredential(editCredential.id, credentialData)
-			} else {
-				onAddCredential(credentialData)
-			}
-
-			setOpen(false)
-			form.reset()
-		} catch (error) {
-			logger.error('Failed to save credential:', error)
-		} finally {
-			setIsSubmitting(false)
-		}
-	}
-
-	const getTypeIcon = (type: CredentialType) => {
-		switch (type) {
-			case 'ssh_key':
-				return <Key className='h-5 w-5 text-blue-400' />
-			case 'password':
-				return <Lock className='h-5 w-5 text-purple-400' />
-			case 'ssl_cert':
-				return <Shield className='h-5 w-5 text-green-400' />
-			case 'api_key':
-				return <Code className='h-5 w-5 text-orange-400' />
-		}
-	}
-
-	const renderTypeSpecificFields = () => {
-		switch (selectedType) {
-			case 'ssh_key':
-				return (
-					<FormField
-						control={form.control}
-						name='sshKey'
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel className='text-secondary'>
-									SSH Private Key
-								</FormLabel>
-								<FormControl>
-									<Textarea
-										placeholder='-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----'
-										className='glass-input resize-none font-mono text-sm'
-										rows={8}
-										{...field}
-									/>
-								</FormControl>
-								<FormDescription className='text-xs text-gray-500'>
-									Paste your SSH private key here
-								</FormDescription>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				)
-
-			case 'password':
-				return (
-					<div className='space-y-4'>
-						<FormField
-							control={form.control}
-							name='username'
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className='text-secondary'>Username</FormLabel>
-									<FormControl>
-										<Input
-											placeholder='username'
-											className='glass-input'
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name='password'
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className='text-secondary'>Password</FormLabel>
-									<FormControl>
-										<Input
-											type='password'
-											placeholder='••••••••'
-											className='glass-input'
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</div>
-				)
-
-			case 'ssl_cert':
-				return (
-					<FormField
-						control={form.control}
-						name='certificateFile'
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel className='text-secondary'>
-									Certificate File
-								</FormLabel>
-								<FormControl>
-									<div className='space-y-2'>
-										<div className='flex items-center gap-2'>
-											<Button
-												type='button'
-												variant='outline'
-												className='glass-btn'
-												onClick={() =>
-													document.getElementById('cert-upload')?.click()
-												}
-											>
-												<Upload className='h-4 w-4 mr-2' />
-												Upload Certificate
-											</Button>
-											{form.watch('certificateFileName') && (
-												<span className='text-sm text-secondary'>
-													{form.watch('certificateFileName')}
-												</span>
-											)}
-										</div>
-										<input
-											id='cert-upload'
-											type='file'
-											accept='.crt,.cer,.pem'
-											className='hidden'
-											onChange={handleFileUpload}
-										/>
-									</div>
-								</FormControl>
-								<FormDescription className='text-xs text-gray-500'>
-									Upload your SSL certificate file (.crt, .cer, .pem)
-								</FormDescription>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				)
-
-			case 'api_key':
-				return (
-					<FormField
-						control={form.control}
-						name='apiKey'
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel className='text-secondary'>API Key</FormLabel>
-								<FormControl>
-									<Textarea
-										placeholder='sk-1234567890abcdef...'
-										className='glass-input resize-none font-mono text-sm'
-										rows={3}
-										{...field}
-									/>
-								</FormControl>
-								<FormDescription className='text-xs text-gray-500'>
-									Enter your API key or token
-								</FormDescription>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				)
-
-			default:
-				return null
-		}
-	}
+	const selectedTypeConfig = getCredentialTypeIconConfig(selectedType)
+	const IconComponent = selectedTypeConfig.icon
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
@@ -378,7 +90,7 @@ export function AddCredentialModal({
 			<DialogContent className='bg-black/90 backdrop-blur-md border border-white/10 max-w-md max-h-[80vh] overflow-y-auto'>
 				<DialogHeader>
 					<DialogTitle className='text-primary flex items-center gap-2'>
-						{getTypeIcon(selectedType)}
+						<IconComponent className={`h-5 w-5 ${selectedTypeConfig.color}`} />
 						{editCredential ? 'Edit Credential' : 'Add Credential'}
 					</DialogTitle>
 					<DialogDescription className='text-secondary'>
@@ -393,6 +105,7 @@ export function AddCredentialModal({
 						onSubmit={form.handleSubmit(handleSubmit)}
 						className='space-y-4'
 					>
+						{/* Credential Name Field */}
 						<FormField
 							control={form.control}
 							name='name'
@@ -416,6 +129,7 @@ export function AddCredentialModal({
 							)}
 						/>
 
+						{/* Credential Type Field */}
 						<FormField
 							control={form.control}
 							name='type'
@@ -431,30 +145,21 @@ export function AddCredentialModal({
 											</SelectTrigger>
 										</FormControl>
 										<SelectContent className='bg-black/90 backdrop-blur-sm border border-white/10'>
-											<SelectItem value='ssh_key'>
-												<div className='flex items-center gap-2'>
-													<Key className='h-4 w-4 text-blue-400' />
-													SSH Key
-												</div>
-											</SelectItem>
-											<SelectItem value='password'>
-												<div className='flex items-center gap-2'>
-													<Lock className='h-4 w-4 text-purple-400' />
-													Password
-												</div>
-											</SelectItem>
-											<SelectItem value='ssl_cert'>
-												<div className='flex items-center gap-2'>
-													<Shield className='h-4 w-4 text-green-400' />
-													SSL Certificate
-												</div>
-											</SelectItem>
-											<SelectItem value='api_key'>
-												<div className='flex items-center gap-2'>
-													<Code className='h-4 w-4 text-orange-400' />
-													API Key
-												</div>
-											</SelectItem>
+											{Object.entries(CREDENTIAL_TYPE_CONFIG).map(
+												([type, config]) => {
+													const TypeIcon = config.icon
+													return (
+														<SelectItem key={type} value={type}>
+															<div className='flex items-center gap-2'>
+																<TypeIcon
+																	className={`h-4 w-4 ${config.color}`}
+																/>
+																{config.label}
+															</div>
+														</SelectItem>
+													)
+												}
+											)}
 										</SelectContent>
 									</Select>
 									<FormMessage />
@@ -462,9 +167,15 @@ export function AddCredentialModal({
 							)}
 						/>
 
-						{renderTypeSpecificFields()}
+						{/* Type-specific Fields */}
+						<CredentialFormFields
+							form={form}
+							type={selectedType}
+							onFileUpload={handleFileUpload}
+						/>
 
-						{(selectedType === 'ssl_cert' || selectedType === 'api_key') && (
+						{/* Expiration Date Field (for SSL certs and API keys) */}
+						{shouldShowExpirationField(selectedType) && (
 							<FormField
 								control={form.control}
 								name='expiresAt'
@@ -485,6 +196,7 @@ export function AddCredentialModal({
 							/>
 						)}
 
+						{/* Description Field */}
 						<FormField
 							control={form.control}
 							name='description'
@@ -504,6 +216,7 @@ export function AddCredentialModal({
 							)}
 						/>
 
+						{/* Action Buttons */}
 						<div className='flex gap-3 pt-4'>
 							<Button
 								type='submit'

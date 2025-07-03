@@ -2,7 +2,10 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddCredentialModal } from './AddCredentialModal'
-import type { Credential, CreateCredentialData } from '@/hooks/useCredentials'
+import type {
+	Credential,
+	CreateCredentialData,
+} from '@/lib/utils/credential-types'
 
 interface CredentialsPageHeaderProps {
 	onCreateCredential: (data: CreateCredentialData) => void

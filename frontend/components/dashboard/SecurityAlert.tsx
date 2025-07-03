@@ -1,6 +1,6 @@
 import { AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import type { Credential } from '@/hooks/useCredentials'
+import type { Credential } from '@/lib/utils/credential-types'
 
 interface SecurityAlertProps {
 	expiringCredentials: Credential[]
