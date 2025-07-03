@@ -14,10 +14,10 @@ import (
 
 // UserRepository defines data access for users
 type UserRepository interface {
-	GetUser(ctx context.Context, id int) (*user.User, error)
+	GetUser(ctx context.Context, id string) (*user.User, error)
 	CreateUser(ctx context.Context, u *user.User) error
 	UpdateUser(ctx context.Context, u *user.User) error
-	DeleteUser(ctx context.Context, id int) error
+	DeleteUser(ctx context.Context, id string) error
 }
 
 // Queries
@@ -41,7 +41,7 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 	}
 }
 
-func (r *userRepository) GetUser(ctx context.Context, id int) (*user.User, error) {
+func (r *userRepository) GetUser(ctx context.Context, id string) (*user.User, error) {
 	var userObj user.User
 
 	err := r.db.GetContext(ctx, &userObj, getUserByIdQuery, id)
@@ -96,7 +96,7 @@ func (r *userRepository) UpdateUser(ctx context.Context, u *user.User) error {
 	return nil
 }
 
-func (r *userRepository) DeleteUser(ctx context.Context, id int) error {
+func (r *userRepository) DeleteUser(ctx context.Context, id string) error {
 	result, err := r.db.ExecContext(ctx, deleteUserQuery, id)
 	if err != nil {
 		return err

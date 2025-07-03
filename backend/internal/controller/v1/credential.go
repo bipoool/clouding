@@ -20,13 +20,7 @@ func NewCredentialController(s service.CredentialService) *CredentialController 
 }
 
 func (c *CredentialController) GetAllByUserId(ctx *gin.Context) {
-	userIdStr := ctx.Query("userId")
-	userId, err := strconv.Atoi(userIdStr)
-	if err != nil {
-		slog.Debug("UserId not correct", "ERR", err)
-		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
-		return
-	}
+	userId := ctx.GetString("userId")
 	creds, err := c.Service.GetAllByUserId(ctx.Request.Context(), userId)
 	if err != nil {
 		slog.Error(err.Error())
@@ -54,11 +48,14 @@ func (c *CredentialController) GetById(ctx *gin.Context) {
 }
 
 func (c *CredentialController) Create(ctx *gin.Context) {
+	userId := ctx.GetString("userId")
 	req := credential.Credential{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
 		return
 	}
+
+	req.UserID = &userId
 	if err := c.Service.Create(ctx.Request.Context(), &req); err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
@@ -73,6 +70,7 @@ func (c *CredentialController) Create(ctx *gin.Context) {
 
 func (c *CredentialController) Update(ctx *gin.Context) {
 	idStr := ctx.Param("id")
+	userId := ctx.GetString("userId")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
@@ -85,7 +83,7 @@ func (c *CredentialController) Update(ctx *gin.Context) {
 		return
 	}
 	cred.ID = &id
-
+	cred.UserID = &userId
 	if err := c.Service.Update(ctx.Request.Context(), &cred); err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return

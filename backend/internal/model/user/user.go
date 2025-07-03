@@ -5,8 +5,11 @@ import (
 )
 
 type User struct {
-	ID        *int       `db:"id" json:"id"`
+	ID        *string    `db:"id" json:"id"`
 	Name      *string    `db:"name" json:"name"`
+	Picture   *string    `db:"picture" json:"picture"`
+	FullName  *string    `db:"full_name" json:"fullName"`
+	AvatarUrl *string    `db:"avatar_url" json:"avatarUrl"`
 	Email     *string    `db:"email" json:"email"`
 	CreatedAt *time.Time `db:"created_at" json:"createdAt"`
 	UpdatedAt *time.Time `db:"updated_at" json:"updatedAt"`
@@ -14,15 +17,15 @@ type User struct {
 
 // Response structs
 type CreateUserResponse struct {
-	ID *int `json:"id"`
+	ID *string `json:"id"`
 }
 
 type UpdateUserResponse struct {
-	ID        *int       `json:"id"`
+	ID        *string    `json:"id"`
 	UpdatedAt *time.Time `json:"updatedAt"`
 }
 
 type DeleteUserResponse struct {
-	ID        *int `json:"id"`
-	IsDeleted bool `json:"isDeleted"`
+	ID        *string `json:"id"`
+	IsDeleted bool    `json:"isDeleted"`
 }

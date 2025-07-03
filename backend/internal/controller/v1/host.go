@@ -41,14 +41,7 @@ func (c *HostController) GetHost(ctx *gin.Context) {
 }
 
 func (c *HostController) GetAllHosts(ctx *gin.Context) {
-	userIdStr := ctx.Query("userId")
-	userId, err := strconv.Atoi(userIdStr)
-
-	if err != nil {
-		slog.Debug("UserId not correct", "ERR", err)
-		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
-		return
-	}
+	userId := ctx.GetString("userId")
 
 	hosts, err := c.Service.GetAllHostsByUserId(ctx.Request.Context(), userId)
 
@@ -62,11 +55,15 @@ func (c *HostController) GetAllHosts(ctx *gin.Context) {
 }
 
 func (c *HostController) CreateHost(ctx *gin.Context) {
+	userId := ctx.GetString("userId")
+
 	var hostObj host.Host
 	if err := ctx.ShouldBindJSON(&hostObj); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
 		return
 	}
+
+	hostObj.UserID = &userId
 
 	if err := c.Service.CreateHost(ctx.Request.Context(), &hostObj); err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
@@ -82,6 +79,7 @@ func (c *HostController) CreateHost(ctx *gin.Context) {
 
 func (c *HostController) UpdateHost(ctx *gin.Context) {
 	idStr := ctx.Param("id")
+	userId := ctx.GetString("userId")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
@@ -93,7 +91,9 @@ func (c *HostController) UpdateHost(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
 		return
 	}
+
 	hostObj.ID = &id
+	hostObj.UserID = &userId
 
 	if err := c.Service.UpdateHost(ctx.Request.Context(), &hostObj); err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
