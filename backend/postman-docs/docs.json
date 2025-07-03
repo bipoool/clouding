@@ -82,7 +82,7 @@
                         "description": "Update an existing SSH credential by ID. Only type and secret could be updated. Secret will be updated in secret manager.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"name\": \"nameIsNot\",\n  \"type\": \"ssh_key\",\n  \"secret\": {\n    \"anyKey\": \"ValuePair\",\n    \"username\": \"ubuntu\",\n    \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n  }\n}"
+                            "raw": "{\n  \"type\": \"ssh_key\",\n  \"secret\": {\n    \"anyKey\": \"ValuePair\",\n    \"username\": \"ubuntu\",\n    \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n  }\n}"
                         }
                     },
                     "response": [
