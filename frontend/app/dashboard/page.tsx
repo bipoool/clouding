@@ -9,6 +9,7 @@ import {
 	Users,
 	Layers,
 	Settings,
+	Key,
 } from 'lucide-react'
 
 const stats = [
@@ -31,21 +32,21 @@ const stats = [
 		changeColor: 'text-green-400',
 	},
 	{
+		name: 'Credentials',
+		value: '3',
+		change: '+1',
+		icon: Key,
+		gradient: 'from-orange-500/20 to-yellow-500/10',
+		iconColor: 'text-orange-400',
+		changeColor: 'text-green-400',
+	},
+	{
 		name: 'Configurations',
 		value: '8',
 		change: '+3',
 		icon: Layers,
 		gradient: 'from-green-500/20 to-emerald-500/10',
 		iconColor: 'text-green-400',
-		changeColor: 'text-green-400',
-	},
-	{
-		name: 'Avg Health',
-		value: '93.5%',
-		change: '+1.2%',
-		icon: TrendingUp,
-		gradient: 'from-pink-500/20 to-rose-500/10',
-		iconColor: 'text-pink-400',
 		changeColor: 'text-green-400',
 	},
 ]
@@ -62,8 +63,8 @@ export default function DashboardPage() {
 								Infrastructure Dashboard
 							</h1>
 							<p className='text-lg text-gray-200'>
-								Manage your virtual machines, VM groups, and infrastructure
-								configurations from one central location.
+								Manage your virtual machines, VM groups, credentials, and
+								infrastructure configurations from one central location.
 							</p>
 						</div>
 					</div>
@@ -117,7 +118,7 @@ export default function DashboardPage() {
 					<h3 className='text-2xl font-bold text-primary mb-6'>
 						Management Sections
 					</h3>
-					<div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
 						<Link href='/dashboard/vms' className='interactive-element'>
 							<div className='glass-card glass-card-hover group relative overflow-hidden h-full'>
 								<div className='absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-cyan-600/5 opacity-50' />
@@ -201,15 +202,42 @@ export default function DashboardPage() {
 								</div>
 							</div>
 						</Link>
+
+						<Link href='/dashboard/credentials' className='interactive-element'>
+							<div className='glass-card glass-card-hover group relative overflow-hidden h-full'>
+								<div className='absolute inset-0 bg-gradient-to-br from-orange-500/20 via-yellow-500/10 to-orange-600/5 opacity-50' />
+								<div className='relative z-10 p-6'>
+									<div className='flex items-center mb-4'>
+										<div className='p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-yellow-500/10 mr-4'>
+											<Key className='h-8 w-8 text-orange-400 group-hover:scale-110 transition-transform' />
+										</div>
+										<div>
+											<h4 className='text-xl font-bold text-primary mb-1'>
+												Credentials
+											</h4>
+											<p className='text-sm text-secondary'>3 Credentials</p>
+										</div>
+									</div>
+									<p className='text-gray-200 mb-4'>
+										Manage SSH keys, SSL certificates, API tokens, and other
+										authentication credentials for your infrastructure.
+									</p>
+									<div className='flex items-center text-sm text-orange-400'>
+										<Key className='h-4 w-4 mr-2' />
+										Manage Credentials →
+									</div>
+								</div>
+							</div>
+						</Link>
 					</div>
 				</div>
 
 				{/* Quick Actions */}
-				<div className='glass-card'>
+				{/* <div className='glass-card'>
 					<h3 className='text-2xl font-bold text-primary mb-6'>
 						Quick Actions
 					</h3>
-					<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
 						<Link
 							href='/dashboard/infrastructure/create'
 							className='interactive-element'
@@ -227,6 +255,25 @@ export default function DashboardPage() {
 									</div>
 									<div className='text-sm text-secondary'>
 										Build infrastructure using visual canvas
+									</div>
+								</div>
+							</Button>
+						</Link>
+
+						<Link href='/dashboard/credentials' className='interactive-element'>
+							<Button
+								variant='ghost'
+								className='h-auto p-6 text-left justify-start bg-white/5 hover:bg-white/10 border border-white/10 group interactive-element w-full transition-all duration-300'
+							>
+								<div className='p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-yellow-500/10 mr-4'>
+									<Key className='h-6 w-6 text-orange-400 group-hover:scale-110 transition-transform' />
+								</div>
+								<div>
+									<div className='font-semibold text-primary text-lg mb-1'>
+										Manage Credentials
+									</div>
+									<div className='text-sm text-secondary'>
+										Add SSH keys, certificates, and API tokens
 									</div>
 								</div>
 							</Button>
@@ -268,7 +315,7 @@ export default function DashboardPage() {
 							</Button>
 						</Link>
 					</div>
-				</div>
+				</div> */}
 			</div>
 		</DashboardLayout>
 	)
