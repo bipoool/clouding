@@ -8,7 +8,7 @@ import (
 
 type HostGroupService interface {
 	GetHostGroupByID(ctx context.Context, id int) (*hostgroup.HostGroup, error)
-	GetAllHostGroups(ctx context.Context, userId int) ([]*hostgroup.HostGroup, error)
+	GetAllHostGroups(ctx context.Context, userId string) ([]*hostgroup.HostGroup, error)
 	CreateHostGroup(ctx context.Context, h *hostgroup.HostGroup) error
 	UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup, groupID int) error
 	AddHostsToGroup(ctx context.Context, groupID int, newHosts []int) error
@@ -29,7 +29,7 @@ func (s *hostGroupService) GetHostGroupByID(ctx context.Context, id int) (*hostg
 	return s.repo.GetHostGroupByID(ctx, id)
 }
 
-func (s *hostGroupService) GetAllHostGroups(ctx context.Context, userId int) ([]*hostgroup.HostGroup, error) {
+func (s *hostGroupService) GetAllHostGroups(ctx context.Context, userId string) ([]*hostgroup.HostGroup, error) {
 	return s.repo.GetAllHostGroups(ctx, userId)
 }
 
