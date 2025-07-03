@@ -10,7 +10,7 @@ type HostGroupService interface {
 	GetHostGroupByID(ctx context.Context, id int) (*hostgroup.HostGroup, error)
 	GetAllHostGroups(ctx context.Context, userId int) ([]*hostgroup.HostGroup, error)
 	CreateHostGroup(ctx context.Context, h *hostgroup.HostGroup) error
-	UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup) error
+	UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup, groupID int) error
 	AddHostsToGroup(ctx context.Context, groupID int, newHosts []int) error
 	RemoveHostFromGroup(ctx context.Context, groupID int, hostID int) error
 	DeleteHostGroup(ctx context.Context, id int) error
@@ -37,8 +37,8 @@ func (s *hostGroupService) CreateHostGroup(ctx context.Context, h *hostgroup.Hos
 	return s.repo.CreateHostGroup(ctx, h)
 }
 
-func (s *hostGroupService) UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup) error {
-	return s.repo.UpdateHostGroup(ctx, h)
+func (s *hostGroupService) UpdateHostGroup(ctx context.Context, h *hostgroup.HostGroup, groupID int) error {
+	return s.repo.UpdateHostGroup(ctx, h, groupID)
 }
 
 func (s *hostGroupService) AddHostsToGroup(ctx context.Context, groupID int, newHosts []int) error {

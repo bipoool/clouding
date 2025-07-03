@@ -36,7 +36,6 @@ func (h *HostGroupController) GetHostGroupByID(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.NewSuccessResponse(group))
 }
 
-
 func (h *HostGroupController) GetAllHostGroups(c *gin.Context) {
 	userIdStr := c.Query("userId")
 	if userIdStr == "" {
@@ -59,7 +58,6 @@ func (h *HostGroupController) GetAllHostGroups(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.NewSuccessResponse(groups))
 }
 
-
 func (h *HostGroupController) CreateHostGroup(c *gin.Context) {
 	var group hostgroup.HostGroup
 	if err := c.ShouldBindJSON(&group); err != nil {
@@ -73,14 +71,19 @@ func (h *HostGroupController) CreateHostGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.NewSuccessResponse(group))
 }
 
-
 func (h *HostGroupController) UpdateHostGroup(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.NewWrongParamResponse("Invalid ID"))
+		return
+	}
 	var group hostgroup.HostGroup
 	if err := c.ShouldBindJSON(&group); err != nil {
 		c.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
 		return
 	}
-	if err := h.Service.UpdateHostGroup(c.Request.Context(), &group); err != nil {
+	if err := h.Service.UpdateHostGroup(c.Request.Context(), &group, id); err != nil {
 		c.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
@@ -88,7 +91,7 @@ func (h *HostGroupController) UpdateHostGroup(c *gin.Context) {
 }
 
 func (h *HostGroupController) AddHostsToGroup(c *gin.Context) {
-	
+
 	groupIDStr := c.Param("id")
 	groupID, err := strconv.Atoi(groupIDStr)
 	if err != nil {

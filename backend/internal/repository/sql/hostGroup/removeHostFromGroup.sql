@@ -1,9 +1,10 @@
-
 UPDATE host_group
-SET host_ids = ARRAY(
-    SELECT unnest(host_ids)
-    EXCEPT
-    SELECT :host_id
+SET host_ids = (
+    SELECT array_agg(e) FROM (
+        SELECT unnest(host_ids) AS e
+        EXCEPT
+        SELECT $2
+    ) AS s
 ),
 updated_at = NOW()
-WHERE id = :id;
+WHERE id = $1;

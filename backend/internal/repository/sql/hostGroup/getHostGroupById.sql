@@ -1,7 +1,7 @@
 
 SELECT
-    hg.id AS hostgroup_id,
-    hg.name AS hostgroup_name,
+    hg.id AS id,
+    hg.name AS name,
     hg.user_id,
     hg.created_at,
     hg.updated_at,
@@ -12,5 +12,5 @@ LEFT JOIN LATERAL (
     FROM hosts
     WHERE id = ANY(hg.host_ids)
 ) h ON TRUE
-WHERE hg.id = :id
+WHERE hg.id = $1
 GROUP BY hg.id;
