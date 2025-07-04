@@ -37,7 +37,7 @@ func (h *HostGroupController) GetHostGroupByID(c *gin.Context) {
 }
 
 func (h *HostGroupController) GetAllHostGroups(c *gin.Context) {
-	userId := c.Query("userId")
+		userId := c.GetString("userId")
 	if userId == "" {
 		c.JSON(http.StatusBadRequest, utils.NewWrongParamResponse("Missing userId"))
 		return
@@ -53,11 +53,14 @@ func (h *HostGroupController) GetAllHostGroups(c *gin.Context) {
 }
 
 func (h *HostGroupController) CreateHostGroup(c *gin.Context) {
+	userId := c.GetString("userId")
 	var group hostgroup.HostGroup
 	if err := c.ShouldBindJSON(&group); err != nil {
 		c.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
 		return
 	}
+
+	group.UserID = userId
 	if err := h.Service.CreateHostGroup(c.Request.Context(), &group); err != nil {
 		c.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	host "clouding/backend/internal/model/host"
 	hostgroup "clouding/backend/internal/model/hostGroup"
 	"context"
 	"database/sql"
@@ -46,6 +47,9 @@ var removeHostFromGroupQuery string
 //go:embed sql/hostGroup/deleteHostGroupById.sql
 var deleteHostGroupQuery string
 
+//go:embed sql/host/getHostById.sql
+var getHostsByIDsQuery string
+
 type hostGroupRepository struct {
 	db *sqlx.DB
 }
@@ -61,6 +65,14 @@ func (r *hostGroupRepository) GetHostGroupByID(ctx context.Context, id int) (*ho
 	if err := r.db.GetContext(ctx, &hostGroup, getHostGroupByIDQuery, id); err != nil {
 		return nil, err
 	}
+	if len(hostGroup.HostIDs) > 0 {
+		var hosts []host.Host
+		if err := r.db.SelectContext(ctx, &hosts, getHostsByIDsQuery, pq.Array(hostGroup.HostIDs)); err != nil {
+			return nil, err
+		}
+		hostGroup.Hosts = hosts
+	}
+
 	return &hostGroup, nil
 }
 
@@ -69,6 +81,20 @@ func (r *hostGroupRepository) GetAllHostGroups(ctx context.Context, userId strin
 	if err := r.db.SelectContext(ctx, &hostGroups, getAllHostGroupsQuery, userId); err != nil {
 		return nil, err
 	}
+	for _, g := range hostGroups {
+		if len(g.HostIDs) > 0 {
+			var hosts []host.Host
+
+			ids := make([]int64, len(g.HostIDs))
+			copy(ids, g.HostIDs)
+
+			if err := r.db.SelectContext(ctx, &hosts, getHostsByIDsQuery, pq.Array(ids)); err != nil {
+				return nil, err
+			}
+			g.Hosts = hosts
+		}
+	}
+
 	return hostGroups, nil
 }
 
