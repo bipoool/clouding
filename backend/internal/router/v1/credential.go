@@ -4,7 +4,7 @@ import (
 	v1 "clouding/backend/internal/controller/v1"
 	"clouding/backend/internal/repository"
 	"clouding/backend/internal/service"
-	"clouding/backend/internal/utils"
+	utils "clouding/backend/internal/utils/vaultSecretManager"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
