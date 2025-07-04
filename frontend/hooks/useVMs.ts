@@ -9,10 +9,7 @@ export interface VM {
   health: number
   group?: string
   configId?: string
-  sshCredentials: {
-    username: string
-    port: number
-  }
+  credentialId?: string
   createdAt: string
   lastSeen: string
 }
@@ -36,7 +33,7 @@ const mockVMs: VM[] = [
     health: 98,
     group: 'prod-web',
     configId: 'config-1',
-    sshCredentials: { username: 'ubuntu', port: 22 },
+    credentialId: 'cred-1',
     createdAt: '2024-01-15T10:00:00Z',
     lastSeen: '2024-01-15T14:30:00Z'
   },
@@ -48,7 +45,7 @@ const mockVMs: VM[] = [
     status: 'connected',
     health: 99,
     group: 'db-cluster',
-    sshCredentials: { username: 'ubuntu', port: 22 },
+    credentialId: 'cred-1',
     createdAt: '2024-01-10T09:00:00Z',
     lastSeen: '2024-01-15T14:35:00Z'
   },
@@ -59,7 +56,7 @@ const mockVMs: VM[] = [
     os: 'debian',
     status: 'disconnected',
     health: 0,
-    sshCredentials: { username: 'dev', port: 2222 },
+    credentialId: 'cred-2',
     createdAt: '2024-01-12T11:00:00Z',
     lastSeen: '2024-01-14T16:00:00Z'
   }

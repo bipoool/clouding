@@ -31,8 +31,10 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Server } from 'lucide-react'
+import { Plus, Server, Key, Lock, ExternalLink } from 'lucide-react'
 import type { VM } from '@/hooks/useVMs'
+import { useCredentials } from '@/hooks/useCredentials'
+import Link from 'next/link'
 
 const vmSchema = z.object({
 	name: z.string().min(1, 'VM name is required').max(50, 'Name too long'),
@@ -40,12 +42,7 @@ const vmSchema = z.object({
 	os: z.enum(['ubuntu', 'centos', 'debian', 'alpine', 'windows'], {
 		required_error: 'Please select an operating system',
 	}),
-	sshUsername: z.string().min(1, 'SSH username is required'),
-	sshPort: z.coerce
-		.number()
-		.min(1)
-		.max(65535, 'Invalid port number')
-		.default(22),
+	credentialId: z.string().min(1, 'Please select a credential'),
 })
 
 type VMFormData = z.infer<typeof vmSchema>
@@ -58,6 +55,9 @@ interface AddVMModalProps {
 export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 	const [open, setOpen] = useState(false)
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	const { getSSHCredentials } = useCredentials()
+
+	const sshCredentials = getSSHCredentials()
 
 	const form = useForm<VMFormData>({
 		resolver: zodResolver(vmSchema),
@@ -65,8 +65,7 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 			name: '',
 			ip: '',
 			os: 'ubuntu',
-			sshUsername: 'ubuntu',
-			sshPort: 22,
+			credentialId: '',
 		},
 	})
 
@@ -83,10 +82,7 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 				os: data.os,
 				status: 'connected', // Assume connected for demo
 				health: Math.floor(Math.random() * 20) + 80, // Random health 80-100
-				sshCredentials: {
-					username: data.sshUsername,
-					port: data.sshPort,
-				},
+				credentialId: data.credentialId,
 			}
 
 			onAddVM(newVM)
@@ -116,7 +112,8 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 						Add Virtual Machine
 					</DialogTitle>
 					<DialogDescription className='text-secondary'>
-						Connect an existing VM by providing its connection details.
+						Connect an existing VM by providing its connection details and
+						selecting authentication credentials.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -194,46 +191,80 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 							)}
 						/>
 
-						<div className='grid grid-cols-2 gap-4'>
-							<FormField
-								control={form.control}
-								name='sshUsername'
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel className='text-secondary'>
-											SSH Username
-										</FormLabel>
+						<FormField
+							control={form.control}
+							name='credentialId'
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel className='text-secondary flex items-center gap-2'>
+										SSH Credential
+										<Link
+											href='/dashboard/credentials'
+											className='text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1'
+											onClick={e => e.stopPropagation()}
+										>
+											<ExternalLink className='h-3 w-3' />
+											Manage
+										</Link>
+									</FormLabel>
+									<Select onValueChange={field.onChange} value={field.value}>
 										<FormControl>
-											<Input
-												placeholder='ubuntu'
-												className='glass-input'
-												{...field}
-											/>
+											<SelectTrigger className='glass-input'>
+												<SelectValue placeholder='Select SSH credential' />
+											</SelectTrigger>
 										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name='sshPort'
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel className='text-secondary'>SSH Port</FormLabel>
-										<FormControl>
-											<Input
-												type='number'
-												placeholder='22'
-												className='glass-input'
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
+										<SelectContent className='bg-black/90 backdrop-blur-sm border border-white/10'>
+											{sshCredentials.length === 0 ? (
+												<div className='p-4 text-center text-secondary'>
+													<Key className='h-8 w-8 mx-auto mb-2 text-gray-400' />
+													<p className='text-sm mb-2'>
+														No SSH credentials found
+													</p>
+													<Link href='/dashboard/credentials'>
+														<Button
+															size='sm'
+															className='text-xs'
+															onClick={() => setOpen(false)}
+														>
+															Create Credential
+														</Button>
+													</Link>
+												</div>
+											) : (
+												sshCredentials.map(credential => (
+													<SelectItem key={credential.id} value={credential.id}>
+														<div className='flex items-center gap-2'>
+															{credential.type === 'ssh_key' && (
+																<Key className='h-4 w-4 text-blue-400' />
+															)}
+															{credential.type === 'password' && (
+																<Lock className='h-4 w-4 text-purple-400' />
+															)}
+															<div>
+																<div className='font-medium'>
+																	{credential.name}
+																</div>
+																<div className='text-xs text-gray-400'>
+																	{credential.type === 'ssh_key' &&
+																		'SSH Private Key'}
+																	{credential.type === 'password' &&
+																		credential.username &&
+																		`User: ${credential.username}`}
+																</div>
+															</div>
+														</div>
+													</SelectItem>
+												))
+											)}
+										</SelectContent>
+									</Select>
+									<FormDescription className='text-xs text-gray-500'>
+										Choose an SSH credential to connect to this VM
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
 						<div className='flex gap-3 pt-4'>
 							<Button
@@ -246,7 +277,7 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 							</Button>
 							<Button
 								type='submit'
-								disabled={isSubmitting}
+								disabled={isSubmitting || sshCredentials.length === 0}
 								className='flex-1 gradient-border-btn'
 							>
 								{isSubmitting ? 'Connecting...' : 'Add VM'}

@@ -26,8 +26,13 @@ import {
 	Users,
 	Search,
 	Filter,
+	Key,
+	Lock,
+	Shield,
+	Code,
 } from 'lucide-react'
 import type { VM } from '@/hooks/useVMs'
+import { useCredentials } from '@/hooks/useCredentials'
 
 interface VMTableProps {
 	vms: VM[]
@@ -46,6 +51,8 @@ export function VMTable({
 	const [statusFilter, setStatusFilter] = useState<
 		'all' | 'connected' | 'disconnected' | 'error'
 	>('all')
+
+	const { getCredentialById } = useCredentials()
 
 	const filteredVMs = vms.filter(vm => {
 		const matchesSearch =
@@ -158,6 +165,9 @@ export function VMTable({
 								Health
 							</TableHead>
 							<TableHead className='text-secondary font-medium'>
+								Credential
+							</TableHead>
+							<TableHead className='text-secondary font-medium'>
 								Group
 							</TableHead>
 							<TableHead className='text-secondary font-medium'>
@@ -204,6 +214,64 @@ export function VMTable({
 										</div>
 										<span className='text-sm text-secondary'>{vm.health}%</span>
 									</div>
+								</TableCell>
+								<TableCell>
+									{vm.credentialId ? (
+										(() => {
+											const credential = getCredentialById(vm.credentialId)
+											return credential ? (
+												<div className='flex items-center gap-2'>
+													{credential.type === 'ssh_key' && (
+														<Key className='h-4 w-4 text-blue-400' />
+													)}
+													{credential.type === 'password' && (
+														<Lock className='h-4 w-4 text-purple-400' />
+													)}
+													{credential.type === 'ssl_cert' && (
+														<Shield className='h-4 w-4 text-green-400' />
+													)}
+													{credential.type === 'api_key' && (
+														<Code className='h-4 w-4 text-orange-400' />
+													)}
+													<div>
+														<div className='text-sm font-medium text-primary'>
+															{credential.name}
+														</div>
+														{credential.type === 'password' &&
+															credential.username && (
+																<div className='text-xs text-secondary'>
+																	User: {credential.username}
+																</div>
+															)}
+														{credential.type === 'ssh_key' && (
+															<div className='text-xs text-secondary'>
+																SSH Private Key
+															</div>
+														)}
+														{credential.type === 'ssl_cert' &&
+															credential.certificateFileName && (
+																<div className='text-xs text-secondary'>
+																	{credential.certificateFileName}
+																</div>
+															)}
+														{credential.type === 'api_key' && (
+															<div className='text-xs text-secondary'>
+																API Token
+															</div>
+														)}
+													</div>
+												</div>
+											) : (
+												<Badge className='bg-red-500/20 text-red-400 border-red-500/30'>
+													Invalid Credential
+												</Badge>
+											)
+										})()
+									) : (
+										<div className='text-xs text-gray-400'>
+											No credential assigned
+										</div>
+									)}
 								</TableCell>
 								<TableCell>
 									{vm.group ? (
