@@ -117,10 +117,11 @@ export const getCredentialData = (credential: Credential) => {
 			}
 		case 'api_key':
 			return { apiKey: credential.apiKey }
-		default:
+		default: {
 			// This should never happen with the discriminated union
 			const _exhaustive: never = credential
 			throw new Error(`Unknown credential type: ${JSON.stringify(credential)}`)
+		}
 	}
 }
 

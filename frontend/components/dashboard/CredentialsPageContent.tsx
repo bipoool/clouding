@@ -18,7 +18,7 @@ interface CredentialsPageContentProps {
 	onCreateCredential: (data: CreateCredentialData) => Promise<Credential>
 	onUpdateCredential: (
 		id: string,
-		updates: Partial<Credential>
+		updates: Partial<CreateCredentialData>
 	) => Promise<void>
 	onDeleteCredential: (id: string) => Promise<void>
 	onEditCredential: (credential: Credential) => void
