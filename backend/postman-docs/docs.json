@@ -23,7 +23,7 @@
                             "name": "200 OK",
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"My SSH Key\",\n    \"type\": \"ssh_key\",\n    \"userId\": \"user-uuid\",\n    \"created_at\": \"2024-06-01T12:00:00Z\",\n    \"updated_at\": \"2024-06-01T12:00:00Z\",\n    \"secret\": {\n      \"username\": \"ubuntu\",\n      \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n    }\n  }\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"My SSH Key\",\n    \"type\": \"ssh_key\",\n    \"userId\": \"user-uuid\",\n    \"expireAt\": \"2024-12-31T23:59:59Z\",\n    \"created_at\": \"2024-06-01T12:00:00Z\",\n    \"updated_at\": \"2024-06-01T12:00:00Z\",\n    \"secret\": {\n      \"username\": \"ubuntu\",\n      \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n    }\n  }\n}"
                         }
                     ]
                 },
@@ -42,7 +42,7 @@
                             "name": "200 OK",
                             "status": "OK",
                             "code": 200,
-                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"My SSH Key 1\",\n      \"type\": \"ssh_key\",\n      \"userId\": \"user-uuid\",\n      \"created_at\": \"2024-06-01T12:00:00Z\",\n      \"updated_at\": \"2024-06-01T12:00:00Z\",\n      \"secret\": {\n        \"username\": \"ubuntu\",\n        \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n      }\n    },\n    {\n      \"id\": 2,\n      \"name\": \"My SSH Key 2\",\n      \"type\": \"ssh_key\",\n      \"userId\": \"user-uuid\",\n      \"created_at\": \"2024-06-01T12:00:00Z\",\n      \"updated_at\": \"2024-06-01T12:00:00Z\",\n      \"secret\": {\n        \"username\": \"ubuntu\",\n        \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n      }\n    }\n  ]\n}"
+                            "body": "{\n  \"success\": true,\n  \"error\": null,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"My SSH Key 1\",\n      \"type\": \"ssh_key\",\n      \"userId\": \"user-uuid\",\n      \"expireAt\": \"2024-12-31T23:59:59Z\",\n      \"created_at\": \"2024-06-01T12:00:00Z\",\n      \"updated_at\": \"2024-06-01T12:00:00Z\",\n      \"secret\": {\n        \"username\": \"ubuntu\",\n        \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n      }\n    },\n    {\n      \"id\": 2,\n      \"name\": \"My SSH Key 2\",\n      \"type\": \"ssh_key\",\n      \"userId\": \"user-uuid\",\n      \"expireAt\": null,\n      \"created_at\": \"2024-06-01T12:00:00Z\",\n      \"updated_at\": \"2024-06-01T12:00:00Z\",\n      \"secret\": {\n        \"username\": \"ubuntu\",\n        \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n      }\n    }\n  ]\n}"
                         }
                     ]
                 },
@@ -58,7 +58,7 @@
                         "description": "Add a new SSH credential. The private key will be uploaded to object storage.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"name\": \"My SSH Key\",\n  \"type\": \"ssh_key\",\n  \"secret\": {\n    \"username\": \"ubuntu\",\n    \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n  }\n}"
+                            "raw": "{\n  \"name\": \"My SSH Key\",\n  \"type\": \"ssh_key\",\n  \"expireAt\": \"2024-12-31T23:59:59Z\",\n  \"secret\": {\n    \"username\": \"ubuntu\",\n    \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n  }\n}"
                         }
                     },
                     "response": [
@@ -82,7 +82,7 @@
                         "description": "Update an existing SSH credential by ID. Only type and secret could be updated. Secret will be updated in secret manager.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"type\": \"ssh_key\",\n  \"secret\": {\n    \"anyKey\": \"ValuePair\",\n    \"username\": \"ubuntu\",\n    \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n  }\n}"
+                            "raw": "{\n  \"type\": \"ssh_key\",\n  \"expireAt\": \"2024-12-31T23:59:59Z\",\n  \"secret\": {\n    \"anyKey\": \"ValuePair\",\n    \"username\": \"ubuntu\",\n    \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n  }\n}"
                         }
                     },
                     "response": [

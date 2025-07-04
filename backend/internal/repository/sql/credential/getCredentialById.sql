@@ -1,1 +1,1 @@
-SELECT id, name, type, user_id, created_at, updated_at FROM credentials WHERE id = $1; 
+SELECT id, name, type, user_id, expire_at, created_at, updated_at FROM credentials WHERE id = $1; 

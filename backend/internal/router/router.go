@@ -11,4 +11,5 @@ func SetupRouter(ginRouteGroup *gin.RouterGroup, db *sqlx.DB) {
 	v1.RegisterHostRoutes(ginRouteGroup, db)
 	v1.RegisterUserRoutes(ginRouteGroup, db)
 	v1.RegisterCredentialRoutes(ginRouteGroup, db)
+	v1.RegisterComponentRoutes(ginRouteGroup, db)
 }

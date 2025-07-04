@@ -86,6 +86,10 @@ func (r *credentialRepository) UpdateCredential(ctx context.Context, c *credenti
 		builder = builder.Set("type", *c.Type)
 	}
 
+	if c.ExpireAt != nil {
+		builder = builder.Set("expire_at", *c.ExpireAt)
+	}
+
 	query, args, err := builder.ToSql()
 
 	if err != nil {
