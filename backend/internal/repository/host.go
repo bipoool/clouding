@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -48,7 +49,7 @@ func NewHostRepository(db *sqlx.DB) HostRepository {
 func (r *hostRepository) GetHost(ctx context.Context, id int) (*host.Host, error) {
 	var host host.Host
 
-	err := r.db.GetContext(ctx, &host, getHostByIdQuery, id)
+	err := r.db.GetContext(ctx, &host, getHostByIdQuery, pq.Array([]int{id}))
 
 	if err != nil {
 		return nil, err
