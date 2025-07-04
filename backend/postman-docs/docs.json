@@ -79,7 +79,7 @@
                             { "key": "Authorization", "value": "Bearer {{authToken}}", "type": "text" }
                         ],
                         "url": { "raw": "{{baseUrl}}/credentials/:id", "host": ["{{baseUrl}}"], "path": ["credentials", ":id"] },
-                        "description": "Update an existing SSH credential by ID. Only type and secret could be updated. Secret will be updated in secret manager.",
+                        "description": "Update an existing SSH credential by ID. Only type, expireAt and secret could be updated. Secret will be updated in secret manager.",
                         "body": {
                             "mode": "raw",
                             "raw": "{\n  \"type\": \"ssh_key\",\n  \"expireAt\": \"2024-12-31T23:59:59Z\",\n  \"secret\": {\n    \"anyKey\": \"ValuePair\",\n    \"username\": \"ubuntu\",\n    \"privateKey\": \"<PRIVATE_KEY_CONTENT>\"\n  }\n}"
