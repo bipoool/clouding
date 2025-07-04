@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 )
 
 type ParameterRule struct {
@@ -20,8 +19,8 @@ type FileConfig struct {
 type ValueType string
 
 const (
-	ValueTypeString ValueType = "string"
-	ValueTypeArray  ValueType = "fileList"
+	ValueTypeString   ValueType = "string"
+	ValueTypeFileList ValueType = "fileList"
 )
 
 type UIType string
@@ -51,12 +50,21 @@ type Parameters []Parameter
 func (p *Parameters) Scan(value interface{}) error {
 	bytes, ok := value.([]byte)
 	if !ok {
-		slog.Error("value cannot be converted to Parameters", "value", value)
-		return fmt.Errorf("%v value cannot be converted to Parameters", value)
+		actualType := fmt.Sprintf("%T", value)
+		return fmt.Errorf("cannot scan Parameters: expected []byte, got %s", actualType)
 	}
-	return json.Unmarshal(bytes, p)
+
+	if err := json.Unmarshal(bytes, p); err != nil {
+		return fmt.Errorf("failed to unmarshal Parameters JSON: %w", err)
+	}
+
+	return nil
 }
 
 func (p Parameters) Value() (driver.Value, error) {
-	return json.Marshal(p)
+	bytes, err := json.Marshal(p)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal Parameters: %w", err)
+	}
+	return bytes, nil
 }
