@@ -33,7 +33,7 @@ func (s *credentialService) GetAllByUserId(ctx context.Context, userId string) (
 	}
 
 	for _, cred := range creds {
-		secret, err := s.secretsManager.GetSecret(*cred.Name)
+		secret, err := s.secretsManager.GetSecret(getSecretNameFromCred(cred))
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +52,7 @@ func (s *credentialService) GetById(ctx context.Context, id int) (*credential.Cr
 	if err != nil || cred == nil {
 		return nil, err
 	}
-	secret, err := s.secretsManager.GetSecret(*cred.Name)
+	secret, err := s.secretsManager.GetSecret(getSecretNameFromCred(cred))
 	if err != nil {
 		return cred, err
 	}
@@ -65,14 +65,14 @@ func (s *credentialService) GetById(ctx context.Context, id int) (*credential.Cr
 }
 
 func (s *credentialService) Create(ctx context.Context, cred *credential.Credential) error {
-	if err := s.secretsManager.SetSecret(*cred.Name, cred.Secret); err != nil {
+	if err := s.secretsManager.SetSecret(getSecretNameFromCred(cred), cred.Secret); err != nil {
 		return err
 	}
 	return s.repo.CreateCredential(ctx, cred)
 }
 
 func (s *credentialService) Update(ctx context.Context, cred *credential.Credential) error {
-	if err := s.secretsManager.UpdateSecret(*cred.Name, cred.Secret); err != nil {
+	if err := s.secretsManager.UpdateSecret(getSecretNameFromCred(cred), cred.Secret); err != nil {
 		return err
 	}
 	return s.repo.UpdateCredential(ctx, cred)
@@ -83,9 +83,13 @@ func (s *credentialService) Delete(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
-	err = s.secretsManager.DeleteSecret(*cred.Name)
+	err = s.secretsManager.DeleteSecret(getSecretNameFromCred(cred))
 	if err != nil {
 		return err
 	}
 	return s.repo.DeleteCredential(ctx, id)
+}
+
+func getSecretNameFromCred(cred *credential.Credential) string {
+	return *cred.Name + "-" + *cred.UserID
 }
