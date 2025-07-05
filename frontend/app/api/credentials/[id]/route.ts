@@ -3,6 +3,7 @@ import { withAuth, AuthenticatedRequest } from '@/app/api/auth/middleware'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
 import { logger } from '@/lib/utils/logger'
 import { convertExpiryToUTC, convertExpiryToClient } from '../../utils/date-helpers'
+import { handleApiError } from '@/app/api/utils/error-handler'
 
 // GET /api/credentials/[id] - Get specific credential
 export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { params: { id: string } }) => {
@@ -15,19 +16,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { 
     
     return NextResponse.json(convertedCredential)
   } catch (error) {
-    logger.error('Error getting credential:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'getting credential')
   }
 })
 
@@ -44,19 +33,7 @@ export const PUT = withAuth(async (request: AuthenticatedRequest, { params }: { 
     
     return NextResponse.json(convertedCredential)
   } catch (error) {
-    logger.error('Error updating credential:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'updating credential')
   }
 })
 
@@ -70,18 +47,6 @@ export const DELETE = withAuth(async (request: AuthenticatedRequest, { params }:
     
     return NextResponse.json({ message: 'Credential deleted successfully' })
   } catch (error) {
-    logger.error('Error deleting credential:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'deleting credential')
   }
 }) 

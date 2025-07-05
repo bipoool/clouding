@@ -109,6 +109,13 @@ export function useHostGroups(): HostGroupsHookReturn {
   }, [])
 
   const addHostToGroup = useCallback(async (groupId: string, hostId: string) => {
+    // First check if the hostId already exists in the target group
+    const targetGroup = hostGroups.find(g => g.id === groupId)
+    if (targetGroup && targetGroup.hostIds.includes(hostId)) {
+      // Host already exists in the group, skip addition
+      return
+    }
+
     setIsLoading(true)
     try {
       const res = await fetch(`/api/hostGroup/${groupId}/hosts`, {
@@ -130,7 +137,7 @@ export function useHostGroups(): HostGroupsHookReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [hostGroups])
 
   const removeHostFromGroup = useCallback(async (groupId: string, hostId: string) => {
     setIsLoading(true)

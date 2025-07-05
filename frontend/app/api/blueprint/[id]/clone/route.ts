@@ -7,6 +7,7 @@ import {
 } from '../../../types'
 import { logger } from '@/lib/utils/logger'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
+import { handleApiError } from '@/app/api/utils/error-handler'
 
 // POST /api/blueprint/[id]/clone - Clone specific blueprint
 export const POST = withAuth(async (request: AuthenticatedRequest, { params }: { params: { id: string } }) => {
@@ -29,25 +30,13 @@ export const POST = withAuth(async (request: AuthenticatedRequest, { params }: {
     logger.info(`Cloning blueprint ${id}`)
 
     const clonedBlueprint = await backendClient.post(
-      `/blueprints/${id}/clone`,
+      `/blueprint/${id}/clone`,
       body,
       request
     )
     
     return NextResponse.json(clonedBlueprint, { status: 201 })
   } catch (error) {
-    logger.error('Error cloning blueprint:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'cloning blueprint')
   }
 }) 

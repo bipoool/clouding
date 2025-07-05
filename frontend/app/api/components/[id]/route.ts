@@ -7,6 +7,7 @@ import {
 } from '../../types'
 import { logger } from '@/lib/utils/logger'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
+import { handleApiError } from '@/app/api/utils/error-handler'
 
 // GET /api/components/:id - Get component by ID
 export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { params: { id: string } }) => {
@@ -18,18 +19,6 @@ export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { 
     
     return NextResponse.json(component)
   } catch (error) {
-    logger.error('Error getting component:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'getting component')
   }
 }) 

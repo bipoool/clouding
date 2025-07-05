@@ -37,6 +37,11 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString()
         })}\n\n`))
 
+        // TODO: MOCK IMPLEMENTATION - Replace with actual deployment run logic
+        // This is a placeholder simulation using hardcoded logs and fixed progress increments.
+        // In the future, this should integrate with the actual deployment orchestration system
+        // to execute real deployment plans and provide genuine progress updates and logs.
+        
         // Simulate deployment process
         let progress = 0
         const logs = [

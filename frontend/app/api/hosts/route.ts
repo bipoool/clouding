@@ -8,6 +8,7 @@ import {
 } from '../types'
 import { logger } from '@/lib/utils/logger'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
+import { handleApiError } from '@/app/api/utils/error-handler'
 
 // GET /api/hosts - Get all hosts for authenticated user
 export const GET = withAuth(async (request: AuthenticatedRequest) => {
@@ -18,19 +19,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     
     return NextResponse.json(hosts)
   } catch (error) {
-    logger.error('Error getting hosts:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'getting hosts')
   }
 })
 
@@ -44,18 +33,6 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     
     return NextResponse.json(newHost, { status: 201 })
   } catch (error) {
-    logger.error('Error creating host:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'creating host')
   }
 }) 

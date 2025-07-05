@@ -9,6 +9,32 @@ import {
 } from '../types'
 import { logger } from '@/lib/utils/logger'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
+import { handleApiError } from '@/app/api/utils/error-handler'
+
+// Type for PUT request body that includes id field
+interface UpdateHostGroupWithIdRequest extends UpdateHostGroupRequest {
+  id: string
+}
+
+// Type guard function to validate the request body structure
+function isValidUpdateHostGroupRequest(body: unknown): body is UpdateHostGroupWithIdRequest {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return false
+  }
+
+  const obj = body as Record<string, unknown>
+  
+  return (
+    typeof obj.id === 'string' &&
+    obj.id.trim().length > 0 &&
+    typeof obj.name === 'string' &&
+    obj.name.trim().length > 0 &&
+    typeof obj.userId === 'string' &&
+    obj.userId.trim().length > 0 &&
+    Array.isArray(obj.hosts) &&
+    obj.hosts.every(host => typeof host === 'string')
+  )
+}
 
 // GET /api/hostGroup - Get all host groups
 export const GET = withAuth(async (request: AuthenticatedRequest) => {
@@ -19,19 +45,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     
     return NextResponse.json(hostGroups)
   } catch (error) {
-    logger.error('Error getting host groups:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'getting host groups')
   }
 })
 
@@ -45,31 +59,19 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     
     return NextResponse.json(newHostGroup, { status: 201 })
   } catch (error) {
-    logger.error('Error creating host group:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'creating host group')
   }
 })
 
 // PUT /api/hostGroup - Update a host group
 export const PUT = withAuth(async (request: AuthenticatedRequest) => {
   try {
-    const body: any = await request.json()
+    const body: unknown = await request.json()
     
-    // Basic validation before forwarding to Go backend
-    if (!body.id || !body.name || !body.userId || !body.hosts || !Array.isArray(body.hosts)) {
+    // Type-safe validation using type guard
+    if (!isValidUpdateHostGroupRequest(body)) {
       return NextResponse.json(
-        { error: 'Missing required fields', message: 'id, name, userId, and hosts (array) are required' },
+        { error: 'Invalid request body', message: 'id, name, userId, and hosts (array) are required' },
         { status: 400 }
       )
     }
@@ -80,18 +82,6 @@ export const PUT = withAuth(async (request: AuthenticatedRequest) => {
     
     return NextResponse.json(response)
   } catch (error) {
-    logger.error('Error updating host group:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'updating host group')
   }
 }) 

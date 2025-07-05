@@ -30,7 +30,6 @@ export function useVMs() {
   const enhanceHostData = (host: Host): VM => ({
     ...host,
     status: 'connected', // Default status, could be determined by connectivity check
-    health: Math.floor(Math.random() * 100) + 1, // Mock health data
     lastSeen: new Date().toISOString(),
     group: undefined // Will be set based on host group membership
   })
