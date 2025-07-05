@@ -67,5 +67,9 @@ func createVaultData(m map[string]interface{}) map[string]interface{} {
 }
 
 func getVaultData(m map[string]interface{}) map[string]interface{} {
-	return m["data"].(map[string]interface{})
+	if data, ok := m["data"].(map[string]interface{}); ok {
+		return data
+	}
+	// Return empty map if type assertion fails
+	return make(map[string]interface{})
 }
