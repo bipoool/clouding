@@ -1,18 +1,6 @@
-import { useState, useCallback } from 'react'
-
-export interface VM {
-  id: string
-  name: string
-  ip: string
-  os: 'ubuntu' | 'centos' | 'debian' | 'alpine' | 'windows'
-  status: 'connected' | 'disconnected' | 'error'
-  health: number
-  group?: string
-  configId?: string
-  credentialId?: string
-  createdAt: string
-  lastSeen: string
-}
+import { useState, useCallback, useEffect } from 'react'
+import type { Host as VM } from '@/app/api/types'
+import { getErrorMessage } from '@/lib/utils'
 
 export interface VMGroup {
   id: string
@@ -23,162 +11,111 @@ export interface VMGroup {
   createdAt: string
 }
 
-const mockVMs: VM[] = [
-  {
-    id: 'vm-1',
-    name: 'Production Web Server',
-    ip: '192.168.1.10',
-    os: 'ubuntu',
-    status: 'connected',
-    health: 98,
-    group: 'prod-web',
-    configId: 'config-1',
-    credentialId: 'cred-1',
-    createdAt: '2024-01-15T10:00:00Z',
-    lastSeen: '2024-01-15T14:30:00Z'
-  },
-  {
-    id: 'vm-2',
-    name: 'Database Primary',
-    ip: '192.168.1.20',
-    os: 'ubuntu',
-    status: 'connected',
-    health: 99,
-    group: 'db-cluster',
-    credentialId: 'cred-1',
-    createdAt: '2024-01-10T09:00:00Z',
-    lastSeen: '2024-01-15T14:35:00Z'
-  },
-  {
-    id: 'vm-3',
-    name: 'Dev Environment',
-    ip: '192.168.1.30',
-    os: 'debian',
-    status: 'disconnected',
-    health: 0,
-    credentialId: 'cred-2',
-    createdAt: '2024-01-12T11:00:00Z',
-    lastSeen: '2024-01-14T16:00:00Z'
-  }
-]
-
-const mockGroups: VMGroup[] = [
-  {
-    id: 'prod-web',
-    name: 'Production Web Servers',
-    description: 'Frontend and API servers for production',
-    vmIds: ['vm-1'],
-    configId: 'config-1',
-    createdAt: '2024-01-15T10:00:00Z'
-  },
-  {
-    id: 'db-cluster',
-    name: 'Database Cluster',
-    description: 'Primary and replica database servers',
-    vmIds: ['vm-2'],
-    createdAt: '2024-01-10T09:00:00Z'
-  }
-]
-
 export function useVMs() {
-  const [vms, setVMs] = useState<VM[]>(mockVMs)
-  const [groups, setGroups] = useState<VMGroup[]>(mockGroups)
+  const [vms, setVMs] = useState<VM[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const addVM = useCallback((vm: Omit<VM, 'id' | 'createdAt' | 'lastSeen'>) => {
-    const newVM: VM = {
-      ...vm,
-      id: `vm-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      lastSeen: new Date().toISOString()
+  // Initial fetch
+  useEffect(() => {
+    const fetchVMs = async () => {
+      try {
+        const res = await fetch('/api/hosts', { credentials: 'include' })
+        if (!res.ok) throw new Error('Failed to fetch VMs')
+        const data = await res.json()
+        setVMs(data)
+      } catch (err) {
+        setError(getErrorMessage(err))
+      } finally {
+        setIsLoading(false)
+      }
     }
-    setVMs(prev => [...prev, newVM])
-    return newVM
+
+    fetchVMs()
   }, [])
 
-  const updateVM = useCallback((id: string, updates: Partial<VM>) => {
-    setVMs(prev => prev.map(vm => vm.id === id ? { ...vm, ...updates } : vm))
+  const addVM = useCallback(async (vm: Partial<VM>) => {
+    try {
+      const res = await fetch('/api/hosts', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vm)
+      })
+      if (!res.ok) throw new Error('Failed to create VM')
+      const newVM: VM = await res.json()
+      setVMs(prev => [...prev, newVM])
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
 
-  const deleteVM = useCallback((id: string) => {
-    setVMs(prev => prev.filter(vm => vm.id !== id))
-    // Remove from groups
-    setGroups(prev => prev.map(group => ({
-      ...group,
-      vmIds: group.vmIds.filter(vmId => vmId !== id)
-    })))
+  const updateVM = useCallback(async (id: string, updates: Partial<VM>) => {
+    try {
+      const res = await fetch(`/api/hosts/${id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      })
+      if (!res.ok) throw new Error('Failed to update VM')
+      const updated: VM = await res.json()
+      setVMs(prev => prev.map(vm => (vm.id === id ? updated : vm)))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
 
-  const assignVMToGroup = useCallback((vmId: string, groupId: string) => {
-    setVMs(prev => prev.map(vm => 
-      vm.id === vmId ? { ...vm, group: groupId } : vm
-    ))
-    setGroups(prev => prev.map(group => 
-      group.id === groupId 
-        ? { ...group, vmIds: [...new Set([...group.vmIds, vmId])] }
-        : { ...group, vmIds: group.vmIds.filter(id => id !== vmId) }
-    ))
+  const deleteVM = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/hosts/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      if (!res.ok) throw new Error('Failed to delete VM')
+      setVMs(prev => prev.filter(vm => vm.id !== id))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
 
-  const assignConfigToVM = useCallback((vmId: string, configId: string) => {
-    setVMs(prev => prev.map(vm => 
-      vm.id === vmId ? { ...vm, configId } : vm
-    ))
+  // Placeholder functions for group/ config actions (no API yet)
+  const assignVMToGroup = useCallback((id: string, groupId: string) => {
+    /* TODO: implement via /api/hostGroup */
   }, [])
 
-  return {
-    vms,
-    addVM,
-    updateVM,
-    deleteVM,
-    assignVMToGroup,
-    assignConfigToVM
-  }
+  const assignConfigToVM = useCallback((id: string, configId: string) => {
+    /* TODO: implement via /api/blueprint or configs */
+  }, [])
+
+  return { vms, isLoading, error, addVM, updateVM, deleteVM, assignVMToGroup, assignConfigToVM }
 }
 
 export function useVMGroups() {
-  const [groups, setGroups] = useState<VMGroup[]>(mockGroups)
+  const [groups, setGroups] = useState<VMGroup[]>([])
 
   const createGroup = useCallback((group: Omit<VMGroup, 'id' | 'createdAt' | 'vmIds'>) => {
-    const newGroup: VMGroup = {
-      ...group,
-      id: `group-${Date.now()}`,
-      vmIds: [],
-      createdAt: new Date().toISOString()
-    }
-    setGroups(prev => [...prev, newGroup])
-    return newGroup
+    /* TODO: implement via /api/hostGroup */
   }, [])
 
   const updateGroup = useCallback((id: string, updates: Partial<VMGroup>) => {
-    setGroups(prev => prev.map(group => 
-      group.id === id ? { ...group, ...updates } : group
-    ))
+    /* TODO: implement via /api/hostGroup */
   }, [])
 
   const deleteGroup = useCallback((id: string) => {
-    setGroups(prev => prev.filter(group => group.id !== id))
+    /* TODO: implement via /api/hostGroup */
   }, [])
 
   const addVMToGroup = useCallback((groupId: string, vmId: string) => {
-    setGroups(prev => prev.map(group =>
-      group.id === groupId 
-        ? { ...group, vmIds: [...new Set([...group.vmIds, vmId])] }
-        : group
-    ))
+    /* TODO: implement via /api/hostGroup */
   }, [])
 
   const removeVMFromGroup = useCallback((groupId: string, vmId: string) => {
-    setGroups(prev => prev.map(group =>
-      group.id === groupId 
-        ? { ...group, vmIds: group.vmIds.filter(id => id !== vmId) }
-        : group
-    ))
+    /* TODO: implement via /api/hostGroup */
   }, [])
 
   const assignConfigToGroup = useCallback((groupId: string, configId: string) => {
-    setGroups(prev => prev.map(group =>
-      group.id === groupId ? { ...group, configId } : group
-    ))
+    /* TODO: implement via /api/blueprint or configs */
   }, [])
 
   return {
