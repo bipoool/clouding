@@ -1,3 +1,14 @@
+// Type definitions for objects with expiry metadata
+interface ExpiryMetadata {
+  expiresAt?: string
+  [key: string]: any
+}
+
+interface ObjectWithExpiry {
+  metadata?: ExpiryMetadata
+  [key: string]: any
+}
+
 const toUTCISOString = (dateStr: string): string => {
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return dateStr // fallback – leave unchanged
@@ -12,15 +23,23 @@ const toClientISOString = (utcStr: string): string => {
   return date.toISOString() // client will parse & display in local zone
 }
 
-const convertExpiryToUTC = (payload: any) => {
+const convertExpiryToUTC = (payload: ObjectWithExpiry): void => {
   if (payload?.metadata?.expiresAt) {
     payload.metadata.expiresAt = toUTCISOString(payload.metadata.expiresAt)
   }
 }
 
-const convertExpiryToClient = (obj: any) => {
-  if (obj?.metadata?.expiresAt) {
-    obj.metadata.expiresAt = toClientISOString(obj.metadata.expiresAt)
+const convertExpiryToClient = <T extends ObjectWithExpiry>(obj: T): T => {
+  if (!obj?.metadata?.expiresAt) {
+    return obj
+  }
+  
+  return {
+    ...obj,
+    metadata: {
+      ...obj.metadata,
+      expiresAt: toClientISOString(obj.metadata.expiresAt)
+    }
   }
 }
 

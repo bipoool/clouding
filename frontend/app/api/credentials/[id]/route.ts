@@ -11,9 +11,9 @@ export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { 
     logger.info(`Getting credential ${id} for user: ${request.user.id}`)
     
     const credential = await backendClient.get(`/credentials/${id}`, request)
-    convertExpiryToClient(credential)
+    const convertedCredential = convertExpiryToClient(credential as any)
     
-    return NextResponse.json(credential)
+    return NextResponse.json(convertedCredential)
   } catch (error) {
     logger.error('Error getting credential:', error)
     
@@ -40,9 +40,9 @@ export const PUT = withAuth(async (request: AuthenticatedRequest, { params }: { 
     logger.info(`Updating credential ${id} for user: ${request.user.id}`)
     
     const updatedCredential = await backendClient.put(`/credentials/${id}`, body, request)
-    convertExpiryToClient(updatedCredential)
+    const convertedCredential = convertExpiryToClient(updatedCredential as any)
     
-    return NextResponse.json(updatedCredential)
+    return NextResponse.json(convertedCredential)
   } catch (error) {
     logger.error('Error updating credential:', error)
     
