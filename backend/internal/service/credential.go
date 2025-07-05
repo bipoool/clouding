@@ -49,7 +49,7 @@ func (s *credentialService) GetAllByUserId(ctx context.Context, userId string) (
 
 func (s *credentialService) GetById(ctx context.Context, id int) (*credential.Credential, error) {
 	cred, err := s.repo.GetCredential(ctx, id)
-	if err != nil {
+	if err != nil || cred == nil {
 		return nil, err
 	}
 	secret, err := s.secretsManager.GetSecret(*cred.Name)

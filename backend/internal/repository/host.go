@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed" // Required for embedding
+	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -51,6 +52,9 @@ func (r *hostRepository) GetHost(ctx context.Context, id int) (*host.Host, error
 	err := r.db.GetContext(ctx, &host, getHostByIdQuery, id)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -64,9 +68,6 @@ func (r *hostRepository) GetAllHosts(ctx context.Context, userId string) ([]*hos
 
 	if err != nil {
 		return nil, err
-	}
-	if len(hosts) == 0 {
-		return nil, sql.ErrNoRows
 	}
 
 	return hosts, nil
@@ -82,7 +83,7 @@ func (r *hostRepository) CreateHost(ctx context.Context, h *host.Host) error {
 		return rows.Scan(&h.ID)
 	}
 
-	return sql.ErrNoRows
+	return nil
 }
 func (r *hostRepository) UpdateHost(ctx context.Context, h *host.Host) error {
 

@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -45,6 +46,9 @@ func (r *credentialRepository) GetCredential(ctx context.Context, id int) (*cred
 	var cred credential.Credential
 	err := r.db.GetContext(ctx, &cred, getCredentialByIdQuery, id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &cred, nil
@@ -55,9 +59,6 @@ func (r *credentialRepository) GetAllCredentials(ctx context.Context, userId str
 	err := r.db.SelectContext(ctx, &creds, getCredentialsByUserIdQuery, userId)
 	if err != nil {
 		return nil, err
-	}
-	if len(creds) == 0 {
-		return nil, sql.ErrNoRows
 	}
 	return creds, nil
 }
@@ -71,7 +72,7 @@ func (r *credentialRepository) CreateCredential(ctx context.Context, c *credenti
 	if rows.Next() {
 		return rows.Scan(&c.ID)
 	}
-	return sql.ErrNoRows
+	return nil
 }
 
 func (r *credentialRepository) UpdateCredential(ctx context.Context, c *credential.Credential) error {

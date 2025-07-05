@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"errors"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -33,6 +34,9 @@ func NewComponentRepository(db *sqlx.DB) ComponentRepository {
 func (r *componentRepository) GetComponent(ctx context.Context, id int) (*component.Component, error) {
 	var comp component.Component
 	if err := r.db.GetContext(ctx, &comp, getComponentByIdQuery, id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &comp, nil
@@ -42,9 +46,6 @@ func (r *componentRepository) GetAllComponents(ctx context.Context) ([]*componen
 	var comps []*component.Component
 	if err := r.db.SelectContext(ctx, &comps, getAllComponentsQuery); err != nil {
 		return nil, err
-	}
-	if len(comps) == 0 {
-		return nil, sql.ErrNoRows
 	}
 	return comps, nil
 }

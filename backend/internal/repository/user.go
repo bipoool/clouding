@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed" // Required for embedding
+	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -47,6 +48,9 @@ func (r *userRepository) GetUser(ctx context.Context, id string) (*user.User, er
 	err := r.db.GetContext(ctx, &userObj, getUserByIdQuery, id)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -63,7 +67,7 @@ func (r *userRepository) CreateUser(ctx context.Context, u *user.User) error {
 		return rows.Scan(&u.ID)
 	}
 
-	return sql.ErrNoRows
+	return nil
 }
 
 func (r *userRepository) UpdateUser(ctx context.Context, u *user.User) error {
