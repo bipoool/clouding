@@ -13,12 +13,50 @@ export interface AuthenticatedRequest extends NextRequest {
   }
 }
 
+// Interface for user metadata from different providers
+interface SupabaseUserMetadata {
+  full_name?: string
+  name?: string
+  user_name?: string
+  username?: string
+  avatar_url?: string
+  picture?: string
+  [key: string]: any // Allow additional provider-specific fields
+}
+
+// Interface for user identity/provider information
+interface SupabaseUserIdentity {
+  id: string
+  provider: string
+  user_id: string
+  identity_data?: Record<string, any>
+  last_sign_in_at?: string
+  created_at?: string
+  updated_at?: string
+}
+
+// Interface for Supabase user object
+interface SupabaseUser {
+  id: string
+  email?: string
+  phone?: string
+  created_at?: string
+  updated_at?: string
+  email_confirmed_at?: string
+  phone_confirmed_at?: string
+  last_sign_in_at?: string
+  role?: string
+  user_metadata?: SupabaseUserMetadata
+  identities?: SupabaseUserIdentity[]
+  app_metadata?: Record<string, any>
+}
+
 /**
  * Extract user data from Supabase user object, handling provider-specific metadata
  * @param user Supabase user object
  * @returns Normalized user data
  */
-function extractUserData(user: any) {
+function extractUserData(user: SupabaseUser) {
   const metadata = user.user_metadata || {}
   const identities = user.identities || []
   
@@ -62,12 +100,30 @@ function extractUserData(user: any) {
   }
 }
 
-export async function validateSupabaseJWT(request: NextRequest): Promise<{ response: NextResponse | null; user: any }> {
+export async function validateSupabaseJWT(request: NextRequest): Promise<{ response: NextResponse | null; user: AuthenticatedRequest['user'] | null }> {
   try {
+    // Validate required environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      logger.error('Missing required Supabase environment variables', {
+        hasUrl: !!supabaseUrl,
+        hasAnonKey: !!supabaseAnonKey
+      })
+      return {
+        response: NextResponse.json(
+          { error: 'Server configuration error' },
+          { status: 500 }
+        ),
+        user: null
+      }
+    }
+
     // Create a Supabase client for server-side validation
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
           getAll() {
@@ -135,6 +191,15 @@ export function withAuth(handler: (request: AuthenticatedRequest, context?: any)
     
     if (authError) {
       return authError
+    }
+    
+    // This should never happen if validateSupabaseJWT works correctly,
+    // but we check for type safety
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication failed - no user data' },
+        { status: 401 }
+      )
     }
     
     // Add user information to the request

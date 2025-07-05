@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, AuthenticatedRequest } from '@/app/api/auth/middleware'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
 import { logger } from '@/lib/utils/logger'
+import { handleApiError } from '@/app/api/utils/error-handler'
 
 // POST /api/hostGroup/[id]/hosts - Add host to host group
 export const POST = withAuth(async (request: AuthenticatedRequest, { params }: { params: { id: string } }) => {
@@ -14,18 +15,6 @@ export const POST = withAuth(async (request: AuthenticatedRequest, { params }: {
     
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
-    logger.error('Error adding host to host group:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'adding host to host group')
   }
 }) 

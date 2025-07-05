@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type { Credential } from '@/app/api/types'
 import { getErrorMessage } from '@/lib/utils'
 import { httpClient } from '@/lib/http-client'
@@ -17,60 +17,112 @@ export function useCredentials(): CredentialsHookReturn {
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isMountedRef = useRef(true)
 
   // Initial fetch
   useEffect(() => {
+    const abortController = new AbortController()
+    
     const fetchCredentials = async () => {
       setIsLoading(true)
       try {
-        const { data } = await httpClient.get<Credential[]>('/credentials')
-        setCredentials(data || [])
+        const { data } = await httpClient.get<Credential[]>('/credentials', {
+          signal: abortController.signal
+        })
+        
+        // Check if component is still mounted before updating state
+        if (!abortController.signal.aborted) {
+          setCredentials(data || [])
+        }
       } catch (err) {
-        setError(getErrorMessage(err))
+        // Only update error state if request wasn't cancelled
+        if (!abortController.signal.aborted) {
+          setError(getErrorMessage(err))
+        }
       } finally {
-        setIsLoading(false)
+        // Only update loading state if component is still mounted
+        if (!abortController.signal.aborted) {
+          setIsLoading(false)
+        }
       }
     }
 
     fetchCredentials()
+
+    // Cleanup: abort the fetch request and mark component as unmounted
+    return () => {
+      abortController.abort()
+      isMountedRef.current = false
+    }
   }, [])
 
-  const clearError = useCallback(() => setError(null), [])
+  const clearError = useCallback(() => {
+    if (isMountedRef.current) {
+      setError(null)
+    }
+  }, [])
 
   const createCredential = useCallback(async (data: Partial<Credential>) => {
+    if (!isMountedRef.current) return
+    
     setIsLoading(true)
     try {
       const { data: newCredential } = await httpClient.post<Credential>('/credentials', data)
-      setCredentials(prev => [...prev, newCredential])
+      
+      if (isMountedRef.current) {
+        setCredentials(prev => [...prev, newCredential])
+      }
       return newCredential
     } catch (err) {
-      setError(getErrorMessage(err))
+      if (isMountedRef.current) {
+        setError(getErrorMessage(err))
+      }
     } finally {
-      setIsLoading(false)
+      if (isMountedRef.current) {
+        setIsLoading(false)
+      }
     }
   }, [])
 
   const updateCredential = useCallback(async (id: string, updates: Partial<Credential>) => {
+    if (!isMountedRef.current) return
+    
     setIsLoading(true)
     try {
       const { data: updated } = await httpClient.put<Credential>(`/credentials/${id}`, updates)
-      setCredentials(prev => prev.map(c => (c.id === id ? updated : c)))
+      
+      if (isMountedRef.current) {
+        setCredentials(prev => prev.map(c => (c.id === id ? updated : c)))
+      }
     } catch (err) {
-      setError(getErrorMessage(err))
+      if (isMountedRef.current) {
+        setError(getErrorMessage(err))
+      }
     } finally {
-      setIsLoading(false)
+      if (isMountedRef.current) {
+        setIsLoading(false)
+      }
     }
   }, [])
 
   const deleteCredential = useCallback(async (id: string) => {
+    if (!isMountedRef.current) return
+    
     setIsLoading(true)
     try {
       await httpClient.delete<void>(`/credentials/${id}`)
-      setCredentials(prev => prev.filter(c => c.id !== id))
+      
+      if (isMountedRef.current) {
+        setCredentials(prev => prev.filter(c => c.id !== id))
+      }
     } catch (err) {
-      setError(getErrorMessage(err))
+      if (isMountedRef.current) {
+        setError(getErrorMessage(err))
+      }
     } finally {
-      setIsLoading(false)
+      if (isMountedRef.current) {
+        setIsLoading(false)
+      }
     }
   }, [])
 

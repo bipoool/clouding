@@ -9,6 +9,7 @@ import {
 import { logger } from '@/lib/utils/logger'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
 import { convertExpiryToUTC, convertExpiryToClient } from '../utils/date-helpers'
+import { handleApiError } from '@/app/api/utils/error-handler'
 
 // GET /api/credentials - Get all credentials for authenticated user
 export const GET = withAuth(async (request: AuthenticatedRequest) => {
@@ -26,19 +27,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       return NextResponse.json(convertedCredentials)
     }
   } catch (error) {
-    logger.error('Error getting credentials:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'getting credentials')
   }
 })
 
@@ -58,18 +47,6 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     
     return NextResponse.json(convertedCredential, { status: 201 })
   } catch (error) {
-    logger.error('Error creating credential:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'creating credential')
   }
 }) 

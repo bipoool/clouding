@@ -15,6 +15,13 @@ export async function POST(request: NextRequest) {
       return authError
     }
 
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication failed - no user data' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     
     // Validate required fields
@@ -39,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Create new deployment plan
     const newDeploymentPlan: DeploymentPlan = {
       id: body.id,
-      hostId: body.hostid,
+      hostId: body.hostId,
       blueprintId: body.blueprintId,
       status: 'pending',
       createdAt: new Date().toISOString(),

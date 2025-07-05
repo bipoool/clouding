@@ -1,7 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, AuthenticatedRequest } from '@/app/api/auth/middleware'
+import { 
+  UpdateBlueprintRequest,
+  Blueprint,
+  ApiResponse,
+  ApiError 
+} from '../../types'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
 import { logger } from '@/lib/utils/logger'
+import { handleApiError } from '@/app/api/utils/error-handler'
+import { z } from 'zod'
+
+// Zod schema for UpdateBlueprintRequest validation
+const UpdateBlueprintSchema = z.object({
+  plan: z.array(z.string().min(1, 'Plan items cannot be empty'))
+    .min(1, 'Plan must contain at least one item')
+    .refine(
+      (plan) => plan.every(item => item.trim().length > 0),
+      'All plan items must be non-empty strings'
+    ),
+  description: z.string()
+    .min(1, 'Description is required')
+    .refine(
+      (desc) => desc.trim().length > 0,
+      'Description cannot be empty or whitespace only'
+    )
+})
+
+// Type for validated request body
+type ValidatedUpdateBlueprintRequest = z.infer<typeof UpdateBlueprintSchema>
 
 // GET /api/blueprint/[id] - Get specific blueprint
 export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { params: { id: string } }) => {
@@ -13,19 +40,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { 
     
     return NextResponse.json(blueprint)
   } catch (error) {
-    logger.error('Error getting blueprint:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'getting blueprint')
   }
 })
 
@@ -33,26 +48,33 @@ export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { 
 export const PUT = withAuth(async (request: AuthenticatedRequest, { params }: { params: { id: string } }) => {
   try {
     const { id } = params
-    const body = await request.json()
-    logger.info(`Updating blueprint ${id} for user: ${request.user.id}`)
+    const body: unknown = await request.json()
     
-    const updatedBlueprint = await backendClient.put(`/blueprints/${id}`, body, request)
-    
-    return NextResponse.json(updatedBlueprint)
-  } catch (error) {
-    logger.error('Error updating blueprint:', error)
-    
-    if (error instanceof BackendClientError) {
+    // Validate request body using Zod schema
+    const validationResult = UpdateBlueprintSchema.safeParse(body)
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors.map(err => 
+        `${err.path.join('.')}: ${err.message}`
+      ).join(', ')
+      
       return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
+        { 
+          error: 'Validation failed', 
+          message: `Invalid request body: ${errors}`,
+          details: validationResult.error.errors
+        },
+        { status: 400 }
       )
     }
     
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    const validatedBody = validationResult.data
+    logger.info(`Updating blueprint ${id} for user: ${request.user.id}`)
+    
+    const updatedBlueprint = await backendClient.put(`/blueprints/${id}`, validatedBody, request)
+    
+    return NextResponse.json(updatedBlueprint)
+  } catch (error) {
+    return handleApiError(error, 'updating blueprint')
   }
 })
 
@@ -66,18 +88,6 @@ export const DELETE = withAuth(async (request: AuthenticatedRequest, { params }:
     
     return NextResponse.json({ message: 'Blueprint deleted successfully' })
   } catch (error) {
-    logger.error('Error deleting blueprint:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'deleting blueprint')
   }
 }) 

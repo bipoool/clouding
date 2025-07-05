@@ -32,7 +32,15 @@ export class BackendClient {
   private baseUrl: string
 
   private constructor() {
-    this.baseUrl = process.env.BACKEND_URL as string
+    const backendUrl = process.env.BACKEND_URL
+    
+    if (!backendUrl) {
+      throw new Error(
+        'BACKEND_URL environment variable is not set. Please configure it in your environment variables.'
+      )
+    }
+    
+    this.baseUrl = backendUrl
   }
 
   public static getInstance(): BackendClient {
@@ -44,9 +52,20 @@ export class BackendClient {
 
   private async getSupabaseAccessToken(request: NextRequest): Promise<string | null> {
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        logger.error('Missing required Supabase environment variables', {
+          hasUrl: !!supabaseUrl,
+          hasAnonKey: !!supabaseAnonKey
+        })
+        return null
+      }
+
       const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        supabaseUrl,
+        supabaseAnonKey,
         {
           cookies: {
             getAll() {

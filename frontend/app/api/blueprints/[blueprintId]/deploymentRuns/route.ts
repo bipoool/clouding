@@ -7,16 +7,20 @@ import {
 } from '../../../types'
 import { logger } from '@/lib/utils/logger'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
+import { handleApiError } from '@/app/api/utils/error-handler'
 
 // GET /api/blueprints/[blueprintId]/deploymentRuns - Get deployment runs for blueprint
 export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { params: { blueprintId: string } }) => {
   try {
     const { blueprintId } = params
 
-    // Validate blueprintId format (assuming UUID or safe slug)
-    if (!blueprintId || !/^[a-zA-Z0-9-_]+$/.test(blueprintId)) {
+    // Validate blueprintId format (UUID or safe slug)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const safeSlugRegex = /^[a-zA-Z0-9-_]+$/
+    
+    if (!blueprintId || !(uuidRegex.test(blueprintId) || safeSlugRegex.test(blueprintId))) {
       return NextResponse.json(
-        { error: 'Invalid blueprint ID format' },
+        { error: 'Invalid blueprint ID format. Must be a valid UUID or safe slug (alphanumeric, dashes, underscores)' },
         { status: 400 }
       )
     }
@@ -29,18 +33,6 @@ export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { 
     )
     return NextResponse.json(deploymentRuns)
   } catch (error) {
-    logger.error('Error getting deployment runs:', error)
-    
-    if (error instanceof BackendClientError) {
-      return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.status }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'getting deployment runs')
   }
 }) 

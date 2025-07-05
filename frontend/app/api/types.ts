@@ -111,9 +111,8 @@ export interface CreateHostGroupRequest {
 }
 
 export interface UpdateHostGroupRequest {
-  userId: string
-  name: string
-  hosts: string[]
+  name?: string
+  hostIds?: string[]
 }
 
 export interface AddHostsToGroupRequest {
