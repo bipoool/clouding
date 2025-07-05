@@ -8,6 +8,7 @@ export type VM = Host & {
   health?: number
   lastSeen?: string
   group?: string
+  configId?: string
 }
 
 export interface VMGroup {
