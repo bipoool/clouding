@@ -273,15 +273,36 @@ export function VMTable({
 									)}
 								</TableCell>
 								<TableCell>
-									<Button
-										variant='ghost'
-										size='sm'
-										onClick={() => onAssignConfig(vm.id)}
-										className='text-xs text-gray-400 hover:text-cyan-400'
-									>
-										<Settings className='h-3 w-3 mr-1' />
-										Assign
-									</Button>
+									{vm.configId ? (
+										<div className='flex items-center gap-2'>
+											<Badge
+												variant='outline'
+												className='bg-green-500/10 text-green-400 border-green-500/30'
+											>
+												<Settings className='h-3 w-3 mr-1' />
+												Configured
+											</Badge>
+											<Button
+												variant='ghost'
+												size='sm'
+												onClick={() => onAssignConfig(vm.id)}
+												className='text-xs text-gray-400 hover:text-cyan-400'
+												title='Change configuration'
+											>
+												<Settings className='h-3 w-3' />
+											</Button>
+										</div>
+									) : (
+										<Button
+											variant='ghost'
+											size='sm'
+											onClick={() => onAssignConfig(vm.id)}
+											className='text-xs text-gray-400 hover:text-cyan-400'
+										>
+											<Settings className='h-3 w-3 mr-1' />
+											Assign
+										</Button>
+									)}
 								</TableCell>
 								<TableCell className='text-secondary text-sm'>
 									{vm.lastSeen ? formatLastSeen(vm.lastSeen) : 'Never'}
