@@ -10,16 +10,19 @@ export interface CredentialStats {
 	expiring: Credential[]
 }
 
-export function useCredentialsStats(credentials: Credential[]): CredentialStats {
+export function useCredentialsStats(credentials: Credential[] | null): CredentialStats {
 	return useMemo(() => {
-		const sshCredentials = credentials.filter(
+		// Handle null/undefined credentials by defaulting to empty array
+		const safeCredentials = credentials || []
+		
+		const sshCredentials = safeCredentials.filter(
 			cred => cred.type === 'ssh_key' || cred.type === 'password'
 		)
-		const sslCredentials = credentials.filter(cred => cred.type === 'ssl_cert')
-		const apiCredentials = credentials.filter(cred => cred.type === 'api_key')
+		const sslCredentials = safeCredentials.filter(cred => cred.type === 'ssl_cert')
+		const apiCredentials = safeCredentials.filter(cred => cred.type === 'api_key')
 
 		// Check for credentials expiring soon (within configured warning period)
-		const expiringCredentials = credentials.filter(cred => {
+		const expiringCredentials = safeCredentials.filter(cred => {
 			if (!cred.metadata?.expiresAt) return false
 			const expiryDate = new Date(cred.metadata.expiresAt)
 			const warningDate = new Date()
@@ -28,7 +31,7 @@ export function useCredentialsStats(credentials: Credential[]): CredentialStats 
 		})
 
 		return {
-			total: credentials.length,
+			total: safeCredentials.length,
 			ssh: sshCredentials.length,
 			ssl: sslCredentials.length,
 			api: apiCredentials.length,

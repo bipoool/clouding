@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { VMTable } from '@/components/dashboard/VMTable'
 import { AddVMModal } from '@/components/dashboard/AddVMModal'
+import { VmsPageSkeleton } from '@/components/dashboard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useVMs } from '@/hooks/useVMs'
@@ -20,7 +21,15 @@ import {
 } from 'lucide-react'
 
 export default function VMsPage() {
-	const { vms, addVM, deleteVM, assignVMToGroup, assignConfigToVM } = useVMs()
+	const {
+		vms,
+		isLoading,
+		error,
+		addVM,
+		deleteVM,
+		assignVMToGroup,
+		assignConfigToVM,
+	} = useVMs()
 	const [selectedVMForGroup, setSelectedVMForGroup] = useState<string | null>(
 		null
 	)
@@ -33,7 +42,9 @@ export default function VMsPage() {
 	const errorVMs = vms.filter(vm => vm.status === 'error')
 	const avgHealth =
 		vms.length > 0
-			? Math.round(vms.reduce((sum, vm) => sum + vm.health, 0) / vms.length)
+			? Math.round(
+					vms.reduce((sum, vm) => sum + (vm.health || 0), 0) / vms.length
+				)
 			: 0
 
 	const handleAssignToGroup = (vmId: string) => {
@@ -46,6 +57,30 @@ export default function VMsPage() {
 		setSelectedVMForConfig(vmId)
 		// In a real app, this would open a dialog to select a config
 		logger.log('Assign config to VM:', vmId)
+	}
+
+	if (isLoading) {
+		return (
+			<DashboardLayout>
+				<VmsPageSkeleton />
+			</DashboardLayout>
+		)
+	}
+
+	if (error) {
+		return (
+			<DashboardLayout>
+				<div className='space-y-8'>
+					<div className='glass-card'>
+						<div className='flex items-center justify-center py-12'>
+							<div className='text-lg text-red-400'>
+								Error loading VMs: {error}
+							</div>
+						</div>
+					</div>
+				</div>
+			</DashboardLayout>
+		)
 	}
 
 	return (

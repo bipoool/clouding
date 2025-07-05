@@ -79,9 +79,10 @@ export function CredentialsTable({
 	const [typeFilter, setTypeFilter] = useState<CredentialType | 'all'>('all')
 
 	const filteredCredentials = credentials.filter(credential => {
-		const matchesSearch =
-			credential.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			credential.type.includes(searchTerm.toLowerCase())
+		const name = credential.name?.toLowerCase() ?? ''
+		const search = searchTerm.toLowerCase()
+		const type = credential.type.toLowerCase()
+		const matchesSearch = name.includes(search) || type.includes(search)
 		const matchesType = typeFilter === 'all' || credential.type === typeFilter
 		return matchesSearch && matchesType
 	})
@@ -119,8 +120,11 @@ export function CredentialsTable({
 		return <IconComponent className={iconClasses} />
 	}
 
-	const formatDate = (dateString: string) => {
-		return formatDistanceToNow(new Date(dateString), { addSuffix: true })
+	const formatDate = (dateString?: string) => {
+		if (!dateString) return '-'
+		const date = new Date(dateString)
+		if (isNaN(date.getTime())) return '-'
+		return formatDistanceToNow(date, { addSuffix: true })
 	}
 
 	return (
