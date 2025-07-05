@@ -24,7 +24,7 @@ export function useCredentials(): CredentialsHookReturn {
       setIsLoading(true)
       try {
         const { data } = await httpClient.get<Credential[]>('/credentials')
-        setCredentials(data)
+        setCredentials(data || [])
       } catch (err) {
         setError(getErrorMessage(err))
       } finally {

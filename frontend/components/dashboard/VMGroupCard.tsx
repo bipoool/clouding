@@ -41,7 +41,8 @@ export function VMGroupCard({
 	const avgHealth =
 		groupVMs.length > 0
 			? Math.round(
-					groupVMs.reduce((sum, vm) => sum + vm.health, 0) / groupVMs.length
+					groupVMs.reduce((sum, vm) => sum + (vm.health || 0), 0) /
+						groupVMs.length
 				)
 			: 0
 
