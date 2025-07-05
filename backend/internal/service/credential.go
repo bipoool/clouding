@@ -3,7 +3,7 @@ package service
 import (
 	"clouding/backend/internal/model/credential"
 	"clouding/backend/internal/repository"
-	"clouding/backend/internal/utils"
+	secretmanager "clouding/backend/internal/utils/secretManager"
 	"context"
 	"encoding/json"
 )
@@ -18,10 +18,10 @@ type CredentialService interface {
 
 type credentialService struct {
 	repo           repository.CredentialRepository
-	secretsManager utils.SecretsManager
+	secretsManager secretmanager.SecretsManager
 }
 
-func NewCredentialService(repo repository.CredentialRepository, secretsManager utils.SecretsManager) CredentialService {
+func NewCredentialService(repo repository.CredentialRepository, secretsManager secretmanager.SecretsManager) CredentialService {
 	return &credentialService{repo: repo, secretsManager: secretsManager}
 }
 

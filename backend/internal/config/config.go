@@ -26,6 +26,10 @@ type CloudingConfig struct {
 	SupabaseAuth struct {
 		JwtSecret []byte `mapstructure:"jwtSecret" description:"Supabase JWT Secret"`
 	} `mapstructure:"supabaseAuth" description:"the supabase auth configuration"`
+
+	Vault struct {
+		VaultSecretEnginePath string `mapstructure:"vaultSecretEnginePath" description:"Vault Secret Engine Path"`
+	}
 }
 
 var Config *CloudingConfig
@@ -49,4 +53,6 @@ func LoadCloudingConfig(path string) {
 	Config.Server.Port = os.Getenv("SERVER.PORT")
 
 	Config.SupabaseAuth.JwtSecret = []byte(os.Getenv("SUPABASE.JWT.SECRET"))
+
+	Config.Vault.VaultSecretEnginePath = os.Getenv("VAULT_SECRET_ENGINE")
 }
