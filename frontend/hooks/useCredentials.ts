@@ -11,6 +11,8 @@ export interface CredentialsHookReturn {
   createCredential: (data: Partial<Credential>) => Promise<Credential | undefined>
   updateCredential: (id: string, updates: Partial<Credential>) => Promise<void>
   deleteCredential: (id: string) => Promise<void>
+  getCredentialById: (id: string) => Credential | undefined
+  getSSHCredentials: () => Credential[]
 }
 
 export function useCredentials(): CredentialsHookReturn {
@@ -126,5 +128,27 @@ export function useCredentials(): CredentialsHookReturn {
     }
   }, [])
 
-  return { credentials, isLoading, error, clearError, createCredential, updateCredential, deleteCredential }
+  // Helper method to get credential by ID
+  const getCredentialById = useCallback((id: string) => {
+    return credentials.find(credential => credential.id === id)
+  }, [credentials])
+
+  // Helper method to get SSH credentials (both ssh_key and password types)
+  const getSSHCredentials = useCallback(() => {
+    return credentials.filter(credential => 
+      credential.type === 'ssh_key' || credential.type === 'password'
+    )
+  }, [credentials])
+
+  return { 
+    credentials, 
+    isLoading, 
+    error, 
+    clearError, 
+    createCredential, 
+    updateCredential, 
+    deleteCredential,
+    getCredentialById,
+    getSSHCredentials
+  }
 } 

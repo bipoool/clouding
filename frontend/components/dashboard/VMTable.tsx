@@ -52,12 +52,7 @@ export function VMTable({
 		'all' | 'connected' | 'disconnected' | 'error'
 	>('all')
 
-	const { credentials } = useCredentials()
-
-	// Helper function to get credential by ID
-	const getCredentialById = (credentialId: string) => {
-		return credentials.find(c => c.id === credentialId)
-	}
+	const { getCredentialById } = useCredentials()
 
 	const filteredVMs = vms.filter(vm => {
 		const matchesSearch =

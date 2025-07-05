@@ -125,17 +125,7 @@ export const getCredentialData = (credential: Credential) => {
 	}
 }
 
-export interface CredentialsHookReturn {
-	credentials: Credential[]
-	isLoading: boolean
-	error: string | null
-	createCredential: (data: CreateCredentialData) => Promise<Credential>
-	updateCredential: (id: string, updates: Partial<CreateCredentialData>) => Promise<void>
-	deleteCredential: (id: string) => Promise<void>
-	getCredentialById: (id: string) => Credential | undefined
-	getSSHCredentials: () => Credential[]
-	clearError: () => void
-}
+
 
 export const CREDENTIAL_TYPE_CONFIG = {
 	ssh_key: {
