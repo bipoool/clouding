@@ -4,7 +4,7 @@ import (
 	v1 "clouding/backend/internal/controller/v1"
 	"clouding/backend/internal/repository"
 	"clouding/backend/internal/service"
-	utils "clouding/backend/internal/utils/vaultSecretManager"
+	secretmanager "clouding/backend/internal/utils/secretManager"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -12,7 +12,7 @@ import (
 
 func RegisterCredentialRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
 	repo := repository.NewCredentialRepository(db)
-	secretsManager := utils.NewSecretManager()
+	secretsManager := secretmanager.NewSecretManager()
 	service := service.NewCredentialService(repo, secretsManager)
 	controller := v1.NewCredentialController(service)
 

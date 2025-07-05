@@ -3,7 +3,7 @@ package service
 import (
 	"clouding/backend/internal/model/credential"
 	"clouding/backend/internal/repository"
-	utils "clouding/backend/internal/utils/vaultSecretManager"
+	secretmanager "clouding/backend/internal/utils/secretManager"
 	"context"
 	"encoding/json"
 )
@@ -18,10 +18,10 @@ type CredentialService interface {
 
 type credentialService struct {
 	repo           repository.CredentialRepository
-	secretsManager utils.SecretsManager
+	secretsManager secretmanager.SecretsManager
 }
 
-func NewCredentialService(repo repository.CredentialRepository, secretsManager utils.SecretsManager) CredentialService {
+func NewCredentialService(repo repository.CredentialRepository, secretsManager secretmanager.SecretsManager) CredentialService {
 	return &credentialService{repo: repo, secretsManager: secretsManager}
 }
 
@@ -65,23 +65,14 @@ func (s *credentialService) GetById(ctx context.Context, id int) (*credential.Cr
 }
 
 func (s *credentialService) Create(ctx context.Context, cred *credential.Credential) error {
-	converted := make(map[string]interface{})
-	for k, v := range cred.Secret {
-		converted[k] = v
-	}
-
-	if err := s.secretsManager.SetSecret(*cred.Name, converted); err != nil {
+	if err := s.secretsManager.SetSecret(*cred.Name, cred.Secret); err != nil {
 		return err
 	}
 	return s.repo.CreateCredential(ctx, cred)
 }
 
 func (s *credentialService) Update(ctx context.Context, cred *credential.Credential) error {
-	converted := make(map[string]interface{})
-	for k, v := range cred.Secret {
-		converted[k] = v
-	}
-	if err := s.secretsManager.UpdateSecret(*cred.Name, converted); err != nil {
+	if err := s.secretsManager.UpdateSecret(*cred.Name, cred.Secret); err != nil {
 		return err
 	}
 	return s.repo.UpdateCredential(ctx, cred)

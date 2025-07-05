@@ -1,36 +1,30 @@
-package vaultSecretManager
+package secretmanager
 
 import (
+	"clouding/backend/internal/config"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 
 	vault "github.com/hashicorp/vault/api"
 )
-
-type SecretsManager interface {
-	GetSecret(secretName string) (string, error)
-	SetSecret(secretName string, secretMap map[string]interface{}) error
-	UpdateSecret(secretName string, secretMap map[string]interface{}) error
-	DeleteSecret(secretName string) error
-}
 
 type VaultSecretsManager struct {
 	client *vault.Client
 	path   string
 }
 
-func NewSecretManager() SecretsManager {
-	config := vault.DefaultConfig() 
-	client, err := vault.NewClient(config)
+func NewVaultSecretManager() SecretsManager {
+	vaultConfig := vault.DefaultConfig()
+	client, err := vault.NewClient(vaultConfig)
 	if err != nil {
-		log.Fatalf("Failed to create Vault client: %v", err)
+		slog.Error("Failed to create Vault client")
+		panic(err)
 	}
 
-	
 	return &VaultSecretsManager{
 		client: client,
-		path:   "secret/data/", 
+		path:   config.Config.Vault.VaultSecretEnginePath,
 	}
 }
 
@@ -40,14 +34,10 @@ func (v *VaultSecretsManager) GetSecret(secretName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if secret == nil || secret.Data["data"] == nil {
-		return "", fmt.Errorf("no secret found at path: %s", fullPath)
+	if secret == nil || secret.Data == nil || secret.Data["data"] == nil {
+		return "", fmt.Errorf("secret not found %s", secretName)
 	}
-	data, ok := secret.Data["data"].(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("invalid secret data format at path: %s", fullPath)
-	}
-	jsonData, err := json.Marshal(data)
+	jsonData, err := json.Marshal(getVaultData(secret.Data))
 	if err != nil {
 		return "", err
 	}
@@ -56,9 +46,7 @@ func (v *VaultSecretsManager) GetSecret(secretName string) (string, error) {
 
 func (v *VaultSecretsManager) SetSecret(secretName string, secretMap map[string]interface{}) error {
 	fullPath := v.path + secretName
-	_, err := v.client.Logical().Write(fullPath, map[string]interface{}{
-		"data": secretMap,
-	})
+	_, err := v.client.Logical().Write(fullPath, createVaultData(secretMap))
 	return err
 }
 
@@ -70,4 +58,14 @@ func (v *VaultSecretsManager) DeleteSecret(secretName string) error {
 	fullPath := v.path + secretName
 	_, err := v.client.Logical().Delete(fullPath)
 	return err
+}
+
+func createVaultData(m map[string]interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"data": m,
+	}
+}
+
+func getVaultData(m map[string]interface{}) map[string]interface{} {
+	return m["data"].(map[string]interface{})
 }

@@ -1,4 +1,4 @@
-package awsSecretManager
+package secretmanager
 
 import (
 	"context"
@@ -9,18 +9,11 @@ import (
 	awsSecretManagerCore "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-type SecretsManager interface {
-	GetSecret(secretName string) (string, error)
-	SetSecret(secretName string, secretMap map[string]string) error
-	UpdateSecret(secretName string, secretMap map[string]string) error
-	DeleteSecret(secretName string) error
-}
-
 type AwsSecretsManager struct {
 	secretsmanagerClient *awsSecretManagerCore.Client
 }
 
-func NewSecretManager() SecretsManager {
+func NewAwsSecretManager() SecretsManager {
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		slog.Error("Error creating secrets manager")
@@ -49,7 +42,7 @@ func (aws *AwsSecretsManager) GetSecret(secretName string) (string, error) {
 	return *secretOutput.SecretString, nil
 }
 
-func (aws *AwsSecretsManager) SetSecret(secretName string, secretMap map[string]string) error {
+func (aws *AwsSecretsManager) SetSecret(secretName string, secretMap map[string]interface{}) error {
 
 	secret, err := json.Marshal(secretMap)
 	if err != nil {
@@ -80,7 +73,7 @@ func (aws *AwsSecretsManager) DeleteSecret(secretName string) error {
 	return err
 }
 
-func (aws *AwsSecretsManager) UpdateSecret(secretName string, secretMap map[string]string) error {
+func (aws *AwsSecretsManager) UpdateSecret(secretName string, secretMap map[string]interface{}) error {
 	secret, err := json.Marshal(secretMap)
 	if err != nil {
 		return err
