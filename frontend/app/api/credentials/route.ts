@@ -19,12 +19,12 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     
     // map expiry on each credential back to local time
     if (Array.isArray(credentials)) {
-      credentials.forEach(convertExpiryToClient)
+      const convertedCredentials = (credentials as any[]).map(convertExpiryToClient)
+      return NextResponse.json(convertedCredentials)
     } else {
-      convertExpiryToClient(credentials)
+      const convertedCredentials = convertExpiryToClient(credentials as any)
+      return NextResponse.json(convertedCredentials)
     }
-    
-    return NextResponse.json(credentials)
   } catch (error) {
     logger.error('Error getting credentials:', error)
     
@@ -54,9 +54,9 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     const newCredential = await backendClient.post(`/credentials`, body, request)
     
     // convert expiry back to local for the client
-    convertExpiryToClient(newCredential)
+    const convertedCredential = convertExpiryToClient(newCredential as any)
     
-    return NextResponse.json(newCredential, { status: 201 })
+    return NextResponse.json(convertedCredential, { status: 201 })
   } catch (error) {
     logger.error('Error creating credential:', error)
     
