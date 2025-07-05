@@ -1,6 +1,14 @@
 import { useState, useCallback, useEffect } from 'react'
-import type { Host as VM } from '@/app/api/types'
+import type { Host, HostGroup } from '@/app/api/types'
 import { getErrorMessage } from '@/lib/utils'
+
+// Type alias for backward compatibility
+export type VM = Host & {
+  status?: 'connected' | 'disconnected' | 'error'
+  health?: number
+  lastSeen?: string
+  group?: string
+}
 
 export interface VMGroup {
   id: string
@@ -9,6 +17,7 @@ export interface VMGroup {
   vmIds: string[]
   configId?: string
   createdAt: string
+  updatedAt: string
 }
 
 export function useVMs() {
@@ -16,14 +25,29 @@ export function useVMs() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Helper function to enhance Host data with VM-specific fields
+  const enhanceHostData = (host: Host): VM => ({
+    ...host,
+    status: 'connected', // Default status, could be determined by connectivity check
+    health: Math.floor(Math.random() * 100) + 1, // Mock health data
+    lastSeen: new Date().toISOString(),
+    group: undefined // Will be set based on host group membership
+  })
+
   // Initial fetch
   useEffect(() => {
     const fetchVMs = async () => {
       try {
+        setIsLoading(true)
+        setError(null)
         const res = await fetch('/api/hosts', { credentials: 'include' })
-        if (!res.ok) throw new Error('Failed to fetch VMs')
-        const data = await res.json()
-        setVMs(data)
+        if (!res.ok) {
+          const errorData = await res.json()
+          throw new Error(errorData.error || 'Failed to fetch VMs')
+        }
+        const hosts: Host[] = await res.json()
+        const enhancedVMs = (hosts || []).map(enhanceHostData)
+        setVMs(enhancedVMs)
       } catch (err) {
         setError(getErrorMessage(err))
       } finally {
@@ -36,14 +60,19 @@ export function useVMs() {
 
   const addVM = useCallback(async (vm: Partial<VM>) => {
     try {
+      setError(null)
       const res = await fetch('/api/hosts', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(vm)
       })
-      if (!res.ok) throw new Error('Failed to create VM')
-      const newVM: VM = await res.json()
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to create VM')
+      }
+      const newHost: Host = await res.json()
+      const newVM = enhanceHostData(newHost)
       setVMs(prev => [...prev, newVM])
     } catch (err) {
       setError(getErrorMessage(err))
@@ -52,15 +81,20 @@ export function useVMs() {
 
   const updateVM = useCallback(async (id: string, updates: Partial<VM>) => {
     try {
+      setError(null)
       const res = await fetch(`/api/hosts/${id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       })
-      if (!res.ok) throw new Error('Failed to update VM')
-      const updated: VM = await res.json()
-      setVMs(prev => prev.map(vm => (vm.id === id ? updated : vm)))
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to update VM')
+      }
+      const updatedHost: Host = await res.json()
+      const updatedVM = enhanceHostData(updatedHost)
+      setVMs(prev => prev.map(vm => (vm.id === id ? updatedVM : vm)))
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -68,58 +102,240 @@ export function useVMs() {
 
   const deleteVM = useCallback(async (id: string) => {
     try {
+      setError(null)
       const res = await fetch(`/api/hosts/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       })
-      if (!res.ok) throw new Error('Failed to delete VM')
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to delete VM')
+      }
       setVMs(prev => prev.filter(vm => vm.id !== id))
     } catch (err) {
       setError(getErrorMessage(err))
     }
   }, [])
 
-  // Placeholder functions for group/ config actions (no API yet)
-  const assignVMToGroup = useCallback((id: string, groupId: string) => {
-    /* TODO: implement via /api/hostGroup */
+  const assignVMToGroup = useCallback(async (vmId: string, groupId: string) => {
+    try {
+      setError(null)
+      const res = await fetch(`/api/hostGroup/${groupId}/hosts`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hostIds: [vmId] })
+      })
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to assign VM to group')
+      }
+      // Update the VM's group property
+      setVMs(prev => prev.map(vm => 
+        vm.id === vmId ? { ...vm, group: groupId } : vm
+      ))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
 
-  const assignConfigToVM = useCallback((id: string, configId: string) => {
-    /* TODO: implement via /api/blueprint or configs */
+  const assignConfigToVM = useCallback(async (id: string, configId: string) => {
+    try {
+      setError(null)
+      // TODO: Implement via /api/blueprint or configs when available
+      console.log('Assigning config', configId, 'to VM', id)
+      // For now, just update the VM in state
+      setVMs(prev => prev.map(vm => 
+        vm.id === id ? { ...vm, configId } : vm
+      ))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
 
-  return { vms, isLoading, error, addVM, updateVM, deleteVM, assignVMToGroup, assignConfigToVM }
+  const clearError = useCallback(() => setError(null), [])
+
+  return { 
+    vms, 
+    isLoading, 
+    error, 
+    clearError,
+    addVM, 
+    updateVM, 
+    deleteVM, 
+    assignVMToGroup, 
+    assignConfigToVM 
+  }
 }
 
 export function useVMGroups() {
   const [groups, setGroups] = useState<VMGroup[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const createGroup = useCallback((group: Omit<VMGroup, 'id' | 'createdAt' | 'vmIds'>) => {
-    /* TODO: implement via /api/hostGroup */
+  // Helper function to convert HostGroup to VMGroup
+  const convertHostGroupToVMGroup = (hostGroup: HostGroup): VMGroup => ({
+    id: hostGroup.id,
+    name: hostGroup.name,
+    description: undefined, // HostGroup doesn't have description
+    vmIds: hostGroup.hostIds,
+    configId: undefined, // Will be added later when blueprint integration is available
+    createdAt: hostGroup.createdAt,
+    updatedAt: hostGroup.updatedAt
+  })
+
+  // Initial fetch
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const res = await fetch('/api/hostGroup', { credentials: 'include' })
+        if (!res.ok) {
+          const errorData = await res.json()
+          throw new Error(errorData.error || 'Failed to fetch groups')
+        }
+        const hostGroups: HostGroup[] = await res.json()
+        const vmGroups = (hostGroups || []).map(convertHostGroupToVMGroup)
+        setGroups(vmGroups)
+      } catch (err) {
+        setError(getErrorMessage(err))
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchGroups()
   }, [])
 
-  const updateGroup = useCallback((id: string, updates: Partial<VMGroup>) => {
-    /* TODO: implement via /api/hostGroup */
+  const createGroup = useCallback(async (group: Omit<VMGroup, 'id' | 'createdAt' | 'updatedAt' | 'vmIds'>) => {
+    try {
+      setError(null)
+      const res = await fetch('/api/hostGroup', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: group.name,
+          hostIds: []
+        })
+      })
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to create group')
+      }
+      const newHostGroup: HostGroup = await res.json()
+      const newVMGroup = convertHostGroupToVMGroup(newHostGroup)
+      setGroups(prev => [...prev, newVMGroup])
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
 
-  const deleteGroup = useCallback((id: string) => {
-    /* TODO: implement via /api/hostGroup */
+  const updateGroup = useCallback(async (id: string, updates: Partial<VMGroup>) => {
+    try {
+      setError(null)
+      const res = await fetch(`/api/hostGroup/${id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: updates.name,
+          hostIds: updates.vmIds
+        })
+      })
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to update group')
+      }
+      const updatedHostGroup: HostGroup = await res.json()
+      const updatedVMGroup = convertHostGroupToVMGroup(updatedHostGroup)
+      setGroups(prev => prev.map(g => (g.id === id ? updatedVMGroup : g)))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
 
-  const addVMToGroup = useCallback((groupId: string, vmId: string) => {
-    /* TODO: implement via /api/hostGroup */
+  const deleteGroup = useCallback(async (id: string) => {
+    try {
+      setError(null)
+      const res = await fetch(`/api/hostGroup/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to delete group')
+      }
+      setGroups(prev => prev.filter(g => g.id !== id))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
 
-  const removeVMFromGroup = useCallback((groupId: string, vmId: string) => {
-    /* TODO: implement via /api/hostGroup */
+  const addVMToGroup = useCallback(async (groupId: string, vmId: string) => {
+    try {
+      setError(null)
+      const res = await fetch(`/api/hostGroup/${groupId}/hosts`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hostIds: [vmId] })
+      })
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to add VM to group')
+      }
+      // Update the group's vmIds
+      setGroups(prev => prev.map(g => 
+        g.id === groupId ? { ...g, vmIds: [...g.vmIds, vmId] } : g
+      ))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
 
-  const assignConfigToGroup = useCallback((groupId: string, configId: string) => {
-    /* TODO: implement via /api/blueprint or configs */
+  const removeVMFromGroup = useCallback(async (groupId: string, vmId: string) => {
+    try {
+      setError(null)
+      const res = await fetch(`/api/hostGroup/${groupId}/hosts/${vmId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to remove VM from group')
+      }
+      // Update the group's vmIds
+      setGroups(prev => prev.map(g => 
+        g.id === groupId ? { ...g, vmIds: g.vmIds.filter(id => id !== vmId) } : g
+      ))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }, [])
+
+  const assignConfigToGroup = useCallback(async (groupId: string, configId: string) => {
+    try {
+      setError(null)
+      // TODO: Implement via /api/blueprint or configs when available
+      console.log('Assigning config', configId, 'to group', groupId)
+      // For now, just update the group in state
+      setGroups(prev => prev.map(g => 
+        g.id === groupId ? { ...g, configId } : g
+      ))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }, [])
+
+  const clearError = useCallback(() => setError(null), [])
 
   return {
     groups,
+    isLoading,
+    error,
+    clearError,
     createGroup,
     updateGroup,
     deleteGroup,
