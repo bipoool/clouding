@@ -5,7 +5,7 @@ meta {
 }
 
 delete {
-  url: {{baseUrl}}/blueprint/:id
+  url: {{baseUrl}}/blueprints/:id
   body: none
   auth: none
 }
@@ -15,5 +15,14 @@ headers {
 }
 
 docs {
-  Delete a blueprint.
+  Delete a blueprint by its ID.
+  
+  Response example:
+  {
+    "data": {
+      "id": 33
+    },
+    "error": null,
+    "success": true
+  }
 }

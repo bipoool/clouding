@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/blueprint
+  url: {{baseUrl}}/blueprints
   body: json
   auth: none
 }
@@ -17,15 +17,50 @@ headers {
 
 body:json {
   {
-    "plan": [
-      "component1",
-      "component2"
-    ],
-    "description": "My setup",
-    "userId": "user-uuid"
+    "name": "Web Server Stack",
+    "description": "NGINX and Docker setup",
+    "status": "draft",
+    "components": [
+      {
+        "componentId": 10,
+        "position": 1,
+        "parameters": [
+          { "id": "d7b1f2d9-14ab-4dff-86b0-4f637c3f7b5f", "value": "1.24.0", "name": "version" },
+          { "id": "0f3f43b7-7d25-4f7c-a3c5-361ee7a66379", "value": "opensource", "name": "nginx_type" }
+        ]
+      },
+      {
+        "componentId": 11,
+        "position": 2,
+        "parameters": [
+          { "id": "145a8bc9-b9ef-4f2b-a96b-54e5ee309d17", "value": "latest", "name": "version" }
+        ]
+      }
+    ]
   }
 }
 
 docs {
-  Create a new blueprint.
+  Create a new blueprint (combination of install_nginx and install_docker components).
+  
+  Response example:
+  {
+    "data": {
+      "id": 35,
+      "components": [
+        {
+          "id": 3,
+          "componentId": 10,
+          "position": 1
+        },
+        {
+          "id": 4,
+          "componentId": 11,
+          "position": 2
+        }
+      ]
+    },
+    "error": null,
+    "success": true
+  }
 }

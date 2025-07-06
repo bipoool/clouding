@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/blueprint/:id
+  url: {{baseUrl}}/blueprints/:id
   body: none
   auth: none
 }
@@ -15,5 +15,20 @@ headers {
 }
 
 docs {
-  Get blueprint details.
+  Get blueprint details by ID.
+  
+  Response example:
+  {
+    "data": {
+      "id": 33,
+      "name": "Web Server Stack",
+      "description": "NGINX and Docker setup",
+      "userId": "e234ff41-62bc-49fa-8fbf-fbed2defbe1b",
+      "status": "draft",
+      "createdAt": "2025-07-06T01:18:00.852766Z",
+      "updatedAt": "2025-07-06T01:18:00.852766Z"
+    },
+    "error": null,
+    "success": true
+  }
 }
