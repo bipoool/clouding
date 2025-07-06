@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -85,10 +86,14 @@ func (r *blueprintRepository) CreateBlueprint(ctx context.Context, b *blueprint.
 	}
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
 			panic(p)
 		} else if err != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
 		}
 	}()
 
@@ -151,10 +156,14 @@ func (r *blueprintRepository) UpdateBlueprint(ctx context.Context, b *blueprint.
 	}
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
 			panic(p)
 		} else if err != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
 		}
 	}()
 

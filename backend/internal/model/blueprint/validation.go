@@ -72,9 +72,9 @@ func ValidateBlueprintParametersUsingComponentParameters(
 				if err := json.Unmarshal(valBytes, &fileList); err != nil {
 					return fmt.Errorf("parameter %s expects file list structure, got: %v", componentParam.Name, val)
 				}
-				// optional: validate each file entry
+
 				for _, f := range fileList {
-					if f.Filename == nil || f.URL == nil {
+					if f.Filename == nil && f.URL == nil {
 						return fmt.Errorf("parameter %s has invalid file list entry: missing filename or URL", componentParam.Name)
 					}
 				}
@@ -94,6 +94,13 @@ func ValidateBlueprintParametersUsingComponentParameters(
 					return fmt.Errorf("parameter %s has invalid value: %v", componentParam.Name, val)
 				}
 			}
+		}
+	}
+
+	// Validate that all blueprint parameters are defined in component
+	for id, blueprintParam := range blueprintParamMap {
+		if _, exists := componentParamMap[id]; !exists {
+			return fmt.Errorf("unknown parameter: %s (id: %s)", blueprintParam.Name, id)
 		}
 	}
 

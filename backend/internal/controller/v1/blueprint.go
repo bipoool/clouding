@@ -102,7 +102,7 @@ func (c *BlueprintController) Update(ctx *gin.Context) {
 
 	if err := c.Service.Update(ctx.Request.Context(), &req.Blueprint, req.Components); err != nil {
 		slog.Error(err.Error())
-		ctx.JSON(http.StatusBadRequest, utils.NewInternalErrorResponse(err.Error()))
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
 
