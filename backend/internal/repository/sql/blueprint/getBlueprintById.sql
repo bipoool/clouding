@@ -1,0 +1,1 @@
+SELECT * FROM blueprints WHERE id = $1; 

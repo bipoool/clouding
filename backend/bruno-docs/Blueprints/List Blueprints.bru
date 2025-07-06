@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/blueprint
+  url: {{baseUrl}}/blueprints
   body: none
   auth: none
 }
@@ -16,4 +16,30 @@ headers {
 
 docs {
   List all blueprints for current user.
+  
+  Response example:
+  {
+    "data": [
+      {
+        "id": 33,
+        "name": "Web Server Stack",
+        "description": "NGINX and Docker setup",
+        "userId": "e234ff41-62bc-49fa-8fbf-fbed2defbe1b",
+        "status": "draft",
+        "createdAt": "2025-07-06T01:18:00.852766Z",
+        "updatedAt": "2025-07-06T01:18:00.852766Z"
+      },
+      {
+        "id": 35,
+        "name": "Web Server Stack 2",
+        "description": "NGINX and Docker setup",
+        "userId": "e234ff41-62bc-49fa-8fbf-fbed2defbe1b",
+        "status": "draft",
+        "createdAt": "2025-07-06T01:19:30.55771Z",
+        "updatedAt": "2025-07-06T01:19:30.55771Z"
+      }
+    ],
+    "error": null,
+    "success": true
+  }
 }

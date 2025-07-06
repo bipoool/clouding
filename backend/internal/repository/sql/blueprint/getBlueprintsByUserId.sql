@@ -1,0 +1,1 @@
+SELECT id, name, description, user_id, status, created_at, updated_at FROM blueprints WHERE user_id = $1; 

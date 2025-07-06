@@ -51,6 +51,12 @@ func (v *VaultSecretsManager) SetSecret(secretName string, secretMap map[string]
 }
 
 func (v *VaultSecretsManager) UpdateSecret(secretName string, secretMap map[string]interface{}) error {
+	_, err := v.GetSecret(secretName)
+
+	if err != nil {
+		return err
+	}
+
 	return v.SetSecret(secretName, secretMap)
 }
 
