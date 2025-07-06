@@ -265,7 +265,10 @@ func (r *blueprintRepository) DeleteBlueprint(ctx context.Context, id int) error
 	if err != nil {
 		return err
 	}
-	rows, _ := result.RowsAffected()
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rows == 0 {
 		return sql.ErrNoRows
 	}
