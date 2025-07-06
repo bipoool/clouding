@@ -6,6 +6,7 @@ import (
 	secretmanager "clouding/backend/internal/utils/secretManager"
 	"context"
 	"encoding/json"
+	"log/slog"
 )
 
 type CredentialService interface {
@@ -68,7 +69,17 @@ func (s *credentialService) Create(ctx context.Context, cred *credential.Credent
 	if err := s.secretsManager.SetSecret(getSecretNameFromCred(cred), cred.Secret); err != nil {
 		return err
 	}
-	return s.repo.CreateCredential(ctx, cred)
+
+	 if err := s.repo.CreateCredential(ctx, cred); err != nil {
+        
+        _ = s.secretsManager.DeleteSecret(getSecretNameFromCred(cred))
+        slog.Error("DB insert failed, secret rolled back from Vault",
+            "secretName", *cred.Name,
+            "error", err.Error(),
+        )
+        return err
+    }
+	return nil
 }
 
 func (s *credentialService) Update(ctx context.Context, cred *credential.Credential) error {
@@ -83,11 +94,29 @@ func (s *credentialService) Delete(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
-	err = s.secretsManager.DeleteSecret(getSecretNameFromCred(cred))
+
+	secretJson, err := s.secretsManager.GetSecret(getSecretNameFromCred(cred))
 	if err != nil {
 		return err
 	}
-	return s.repo.DeleteCredential(ctx, id)
+
+	if err := s.secretsManager.DeleteSecret(getSecretNameFromCred(cred)); err != nil {
+		return err
+	}
+
+	if err := s.repo.DeleteCredential(ctx, id); err != nil {
+		var secretData map[string]interface{}
+		_ = json.Unmarshal([]byte(secretJson), &secretData)
+		_ = s.secretsManager.SetSecret(*cred.Name, secretData)
+
+		slog.Error("DB delete failed, secret rollback attempted",
+			"secretName", *cred.Name,
+			"error", err.Error(),
+		)
+		return err
+	}
+
+	return nil
 }
 
 func getSecretNameFromCred(cred *credential.Credential) string {

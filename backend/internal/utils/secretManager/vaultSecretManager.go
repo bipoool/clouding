@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	vault "github.com/hashicorp/vault/api"
 )
@@ -62,7 +63,8 @@ func (v *VaultSecretsManager) UpdateSecret(secretName string, secretMap map[stri
 
 func (v *VaultSecretsManager) DeleteSecret(secretName string) error {
 	fullPath := v.path + secretName
-	_, err := v.client.Logical().Delete(fullPath)
+	metadataPath := strings.Replace(fullPath, "/data/", "/metadata/", 1)
+	_, err := v.client.Logical().Delete(metadataPath)
 	return err
 }
 
@@ -76,6 +78,5 @@ func getVaultData(m map[string]interface{}) map[string]interface{} {
 	if data, ok := m["data"].(map[string]interface{}); ok {
 		return data
 	}
-	// Return empty map if type assertion fails
 	return make(map[string]interface{})
 }
