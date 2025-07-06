@@ -36,7 +36,7 @@ const (
 )
 
 type BlueprintParameter struct {
-	Id    string      `json:"id"`
+	ID    string      `json:"id"`
 	Value interface{} `json:"value"`
 	Name  string      `json:"name"`
 }
@@ -78,4 +78,21 @@ type CreateBlueprintResponse struct {
 type CreateBlueprintComponentResponse struct {
 	BlueprintComponentID *int `json:"id"`
 	ComponentID          *int `json:"componentId"`
+	Position             *int `json:"position"`
+}
+
+type UpdateBlueprintRequest struct {
+	Blueprint  Blueprint             `json:"blueprint"`
+	Components []*BlueprintComponent `json:"components"`
+}
+
+type UpdateBlueprintResponse struct {
+	ID           *int                               `json:"id"`
+	ComponentIds []UpdateBlueprintComponentResponse `json:"components"`
+}
+
+type UpdateBlueprintComponentResponse struct {
+	BlueprintComponentID *int `json:"id"`
+	ComponentID          *int `json:"componentId"`
+	Position             *int `json:"position"`
 }

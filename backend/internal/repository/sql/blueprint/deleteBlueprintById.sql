@@ -1,0 +1,1 @@
+DELETE FROM blueprints WHERE id = $1; 

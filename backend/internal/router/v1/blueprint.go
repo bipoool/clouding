@@ -18,5 +18,7 @@ func RegisterBlueprintRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
 	rg.GET("/blueprints", controller.GetAll)
 	rg.GET("/blueprints/:id", controller.GetById)
 	rg.POST("/blueprints", controller.Create)
+	rg.PUT("/blueprints/:id", controller.Update)
+	rg.DELETE("/blueprints/:id", controller.Delete)
 	rg.GET("/blueprints/:id/components", controller.GetComponents)
 }

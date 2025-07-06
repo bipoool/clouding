@@ -47,7 +47,7 @@ const (
 )
 
 type ComponentParameter struct {
-	Id          string        `json:"id"`
+	ID          string        `json:"id"`
 	Name        string        `json:"name"`
 	ValueType   ValueType     `json:"valueType"`
 	UIType      UIType        `json:"uiType"`

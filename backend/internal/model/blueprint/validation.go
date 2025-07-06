@@ -16,14 +16,16 @@ func ValidateBlueprintParametersUsingComponentParameters(
 
 	// build a map of component parameter definitions for easy lookup
 	componentParamMap := make(map[string]component.ComponentParameter)
+	nameToIdMap := make(map[string]string)
 	for _, p := range *componentParams {
-		componentParamMap[p.Id] = p
+		componentParamMap[p.ID] = p
+		nameToIdMap[p.Name] = p.ID
 	}
 
 	// map user-supplied blueprint parameters by id
 	blueprintParamMap := make(map[string]BlueprintParameter)
 	for _, bp := range *blueprintParams {
-		blueprintParamMap[bp.Id] = bp
+		blueprintParamMap[bp.ID] = bp
 	}
 
 	// validation loop
@@ -38,7 +40,8 @@ func ValidateBlueprintParametersUsingComponentParameters(
 		// conditional required_if
 		if componentParam.Rules.RequiredIf != nil {
 			for otherParam, expectedValue := range componentParam.Rules.RequiredIf {
-				otherValue, ok := blueprintParamMap[otherParam]
+				otherParamId := nameToIdMap[otherParam]
+				otherValue, ok := blueprintParamMap[otherParamId]
 				if ok && fmt.Sprintf("%v", otherValue.Value) == expectedValue {
 					if !exists {
 						return fmt.Errorf(

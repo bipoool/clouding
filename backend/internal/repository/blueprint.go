@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"errors"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -14,6 +15,8 @@ type BlueprintRepository interface {
 	GetBlueprint(ctx context.Context, id int) (*blueprint.Blueprint, error)
 	GetAllBlueprints(ctx context.Context, userId string) ([]*blueprint.Blueprint, error)
 	CreateBlueprint(ctx context.Context, b *blueprint.Blueprint, components []*blueprint.BlueprintComponent) error
+	UpdateBlueprint(ctx context.Context, b *blueprint.Blueprint, components []*blueprint.BlueprintComponent) error
+	DeleteBlueprint(ctx context.Context, id int) error
 	GetComponentsByBlueprintID(ctx context.Context, blueprintId int) ([]*blueprint.BlueprintComponent, error)
 }
 
@@ -33,6 +36,18 @@ var getComponentsByBlueprintIdQuery string
 
 //go:embed sql/blueprint/createBlueprintComponent.sql
 var createBlueprintComponentQuery string
+
+//go:embed sql/blueprint/updateBlueprint.sql
+var updateBlueprintQuery string
+
+//go:embed sql/blueprint/updateBlueprintComponent.sql
+var updateBlueprintComponentQuery string
+
+//go:embed sql/blueprint/deleteBlueprintComponent.sql
+var deleteBlueprintComponentQuery string
+
+//go:embed sql/blueprint/deleteBlueprintById.sql
+var deleteBlueprintByIdQuery string
 
 type blueprintRepository struct {
 	db *sqlx.DB
@@ -127,4 +142,123 @@ func (r *blueprintRepository) GetComponentsByBlueprintID(ctx context.Context, bl
 		return nil, err
 	}
 	return comps, nil
+}
+
+func (r *blueprintRepository) UpdateBlueprint(ctx context.Context, b *blueprint.Blueprint, components []*blueprint.BlueprintComponent) (err error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Update blueprint using static SQL
+	updateBlueprintStmt, err := tx.PrepareNamedContext(ctx, updateBlueprintQuery)
+	if err != nil {
+		return err
+	}
+	defer updateBlueprintStmt.Close()
+
+	var updatedAt time.Time
+	rows, err := updateBlueprintStmt.QueryContext(ctx, b)
+	if err != nil {
+		return err
+	}
+	if rows.Next() {
+		if err = rows.Scan(&updatedAt); err != nil {
+			rows.Close()
+			return err
+		}
+	}
+	rows.Close()
+	b.UpdatedAt = &updatedAt
+
+	existingComponents, err := r.GetComponentsByBlueprintID(ctx, *b.ID)
+	if err != nil {
+		return err
+	}
+	existingComponentMap := make(map[int]*blueprint.BlueprintComponent)
+	for _, comp := range existingComponents {
+		if comp.ID != nil {
+			existingComponentMap[*comp.ID] = comp
+		}
+	}
+	newComponentMap := make(map[int]*blueprint.BlueprintComponent)
+	for _, comp := range components {
+		if comp.ID != nil {
+			newComponentMap[*comp.ID] = comp
+		}
+	}
+
+	for id := range existingComponentMap {
+		if _, exists := newComponentMap[id]; !exists {
+			_, err = tx.ExecContext(ctx, deleteBlueprintComponentQuery, id)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	updateComponentStmt, err := tx.PrepareNamedContext(ctx, updateBlueprintComponentQuery)
+	if err != nil {
+		return err
+	}
+	defer updateComponentStmt.Close()
+
+	createComponentStmt, err := tx.PrepareNamedContext(ctx, createBlueprintComponentQuery)
+	if err != nil {
+		return err
+	}
+	defer createComponentStmt.Close()
+
+	for _, comp := range components {
+		comp.BlueprintID = b.ID
+		if comp.ID != nil && existingComponentMap[*comp.ID] != nil {
+			var compUpdatedAt time.Time
+			compRows, err := updateComponentStmt.QueryContext(ctx, comp)
+			if err != nil {
+				return err
+			}
+			if compRows.Next() {
+				if err = compRows.Scan(&compUpdatedAt); err != nil {
+					compRows.Close()
+					return err
+				}
+			}
+			compRows.Close()
+			comp.UpdatedAt = &compUpdatedAt
+		} else {
+			compRows, err := createComponentStmt.QueryContext(ctx, comp)
+			if err != nil {
+				return err
+			}
+			if compRows.Next() {
+				if err = compRows.Scan(&comp.ID); err != nil {
+					compRows.Close()
+					return err
+				}
+			}
+			compRows.Close()
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (r *blueprintRepository) DeleteBlueprint(ctx context.Context, id int) error {
+	result, err := r.db.ExecContext(ctx, deleteBlueprintByIdQuery, id)
+	if err != nil {
+		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
