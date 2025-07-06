@@ -1,0 +1,62 @@
+meta {
+  name: Get Blueprint Components
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/blueprints/:id/components
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Get all components for a blueprint by blueprint ID.
+  
+  Response: 
+    {
+    "data": [
+        {
+        "id": 1,
+        "blueprintId": 33,
+        "componentId": 10,
+        "position": 1,
+        "parameters": [
+            {
+            "id": "d7b1f2d9-14ab-4dff-86b0-4f637c3f7b5f",
+            "value": "1.24.0",
+            "name": "version"
+            },
+            {
+            "id": "0f3f43b7-7d25-4f7c-a3c5-361ee7a66379",
+            "value": "opensource",
+            "name": "nginx_type"
+            }
+        ],
+        "createdAt": "2025-07-06T01:18:00.852766Z",
+        "updatedAt": "2025-07-06T01:18:00.852766Z"
+        },
+        {
+        "id": 2,
+        "blueprintId": 33,
+        "componentId": 11,
+        "position": 2,
+        "parameters": [
+            {
+            "id": "145a8bc9-b9ef-4f2b-a96b-54e5ee309d17",
+            "value": "latest",
+            "name": "version"
+            }
+        ],
+        "createdAt": "2025-07-06T01:18:00.852766Z",
+        "updatedAt": "2025-07-06T01:18:00.852766Z"
+        }
+    ],
+    "error": null,
+    "success": true
+    }
+} 

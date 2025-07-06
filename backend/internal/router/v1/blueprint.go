@@ -1,0 +1,22 @@
+package v1
+
+import (
+	v1 "clouding/backend/internal/controller/v1"
+	"clouding/backend/internal/repository"
+	"clouding/backend/internal/service"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
+)
+
+func RegisterBlueprintRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
+	blueprintRepo := repository.NewBlueprintRepository(db)
+	componentRepo := repository.NewComponentRepository(db)
+	service := service.NewBlueprintService(blueprintRepo, componentRepo)
+	controller := v1.NewBlueprintController(service)
+
+	rg.GET("/blueprints", controller.GetAll)
+	rg.GET("/blueprints/:id", controller.GetById)
+	rg.POST("/blueprints", controller.Create)
+	rg.GET("/blueprints/:id/components", controller.GetComponents)
+}
