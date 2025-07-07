@@ -16,9 +16,9 @@ type Credential struct {
 	Name      *string                `db:"name" json:"name"`
 	Type      *CredentialType        `db:"type" json:"type"`
 	UserID    *string                `db:"user_id" json:"userId"`
-	ExpireAt  *time.Time             `db:"expire_at" json:"expireAt"`
-	CreatedAt *time.Time             `db:"created_at" json:"created_at"`
-	UpdatedAt *time.Time             `db:"updated_at" json:"updated_at"`
+	ExpiresAt *time.Time             `db:"expires_at" json:"expiresAt"`
+	CreatedAt *time.Time             `db:"created_at" json:"createdAt"`
+	UpdatedAt *time.Time             `db:"updated_at" json:"updatedAt"`
 	Secret    map[string]interface{} `json:"secret"`
 }
 
