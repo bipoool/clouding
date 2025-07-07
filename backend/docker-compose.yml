@@ -2,15 +2,15 @@ version: "3.9"
 
 services:
   app:
-    build: .
+    image: vipuldockerhub/clouding-backend:${SERVER.VERSION}
     depends_on:
       - postgres
     env_file: .env
     ports:
       - "8080:8080"
     volumes:
-      - ./.env:/.env
-      - postgres_data:/var/lib/postgresql/data
+      - ./.env:/.env:ro
+    restart: always
 
   postgres:
     image: postgres:16

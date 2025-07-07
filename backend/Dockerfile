@@ -11,7 +11,7 @@ RUN go mod download
 COPY . .
 
 # build the binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o app .
 
 # Final stage using distroless
 FROM gcr.io/distroless/static-debian12
