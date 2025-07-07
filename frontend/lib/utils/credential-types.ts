@@ -7,35 +7,41 @@ interface BaseCredential {
 	id: string
 	name: string
 	userId: string
-	metadata?: {
-		description?: string
-		expiresAt?: string
-	}
 	createdAt: string
 	updatedAt: string
+	description?: string
+	expiresAt?: string
 }
 
 // Specific credential type interfaces
 interface SSHKeyCredential extends BaseCredential {
 	type: 'ssh_key'
-	sshKey: string
+	secret: {
+		sshKey: string
+	}
 }
 
 interface PasswordCredential extends BaseCredential {
 	type: 'password'
-	username: string
-	password: string
+	secret: {
+		username: string
+		password: string
+	}
 }
 
 interface SSLCertificateCredential extends BaseCredential {
-	type: 'ssl_cert'
-	certificateFile: string // Base64 encoded file content or file path
-	certificateFileName: string
+	type: 'ssl_cert'	
+	secret: {
+		certificateFile: string // Base64 encoded file content or file path
+		certificateFileName: string
+	}
 }
 
 interface APIKeyCredential extends BaseCredential {
 	type: 'api_key'
-	apiKey: string
+	secret: {
+		apiKey: string
+	}
 }
 
 // Discriminated union type for Credential
@@ -50,33 +56,39 @@ export type Credential =
 // This prevents users from creating credentials for other users (security best practice)
 interface BaseCreateCredentialData {
 	name: string
-	metadata?: {
-		description?: string
-		expiresAt?: string
-	}
+	description?: string
+	expiresAt?: string
 }
 
 // Specific create credential data interfaces
 interface CreateSSHKeyCredentialData extends BaseCreateCredentialData {
 	type: 'ssh_key'
-	sshKey: string
+	secret: {
+		sshKey: string
+	}
 }
 
 interface CreatePasswordCredentialData extends BaseCreateCredentialData {
 	type: 'password'
-	username: string
-	password: string
+	secret: {
+		username: string
+		password: string
+	}
 }
 
 interface CreateSSLCertificateCredentialData extends BaseCreateCredentialData {
 	type: 'ssl_cert'
-	certificateFile: string
-	certificateFileName: string
+	secret: {
+		certificateFile: string
+		certificateFileName: string
+	}
 }
 
 interface CreateAPIKeyCredentialData extends BaseCreateCredentialData {
 	type: 'api_key'
-	apiKey: string
+	secret: {
+		apiKey: string
+	}
 }
 
 // Discriminated union type for CreateCredentialData
@@ -102,30 +114,6 @@ export const isSSLCertificateCredential = (credential: Credential): credential i
 export const isAPIKeyCredential = (credential: Credential): credential is APIKeyCredential => {
 	return credential.type === 'api_key'
 }
-
-// Utility function to get credential-specific data in a type-safe way
-export const getCredentialData = (credential: Credential) => {
-	switch (credential.type) {
-		case 'ssh_key':
-			return { sshKey: credential.sshKey }
-		case 'password':
-			return { username: credential.username, password: credential.password }
-		case 'ssl_cert':
-			return { 
-				certificateFile: credential.certificateFile, 
-				certificateFileName: credential.certificateFileName 
-			}
-		case 'api_key':
-			return { apiKey: credential.apiKey }
-		default: {
-			// This should never happen with the discriminated union
-			const _exhaustive: never = credential
-			throw new Error(`Unknown credential type: ${JSON.stringify(credential)}`)
-		}
-	}
-}
-
-
 
 export const CREDENTIAL_TYPE_CONFIG = {
 	ssh_key: {
