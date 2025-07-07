@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS credentials (
     name TEXT NOT NULL,
     type credential_type NOT NULL,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    expire_at TIMESTAMP,
+    expires_at TIMESTAMP,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(user_id, name)
