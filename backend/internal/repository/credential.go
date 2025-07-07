@@ -8,7 +8,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -135,10 +134,9 @@ func (r *credentialRepository) CreateCredential(ctx context.Context, c *credenti
 
 func (r *credentialRepository) UpdateCredential(ctx context.Context, c *credential.Credential) error {
 	secretName := getSecretNameFromCred(c)
-	fmt.Printf(secretName)
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
+		return err
 	}
 	defer tx.Rollback()
 
@@ -168,8 +166,6 @@ func (r *credentialRepository) UpdateCredential(ctx context.Context, c *credenti
 		return err
 	}
 	c.UpdatedAt = &updatedAt
-	secretJSON, _ := json.MarshalIndent(c.Secret, "", "  ")
-	fmt.Println("Secret Payload:", string(secretJSON))
 	if err := r.secretsManager.UpdateSecret(secretName, c.Secret); err != nil {
 		return err
 	}
@@ -185,7 +181,7 @@ func (r *credentialRepository) UpdateCredential(ctx context.Context, c *credenti
 func (r *credentialRepository) DeleteCredential(ctx context.Context, id int) error {
 	cred, err := r.GetCredential(ctx, id)
 	if err != nil {
-		return fmt.Errorf("fetch credential: %w", err)
+		return err
 	}
 	if cred == nil {
 		return sql.ErrNoRows
@@ -214,12 +210,12 @@ func (r *credentialRepository) DeleteCredential(ctx context.Context, id int) err
 			"secretName", *cred.Name,
 			"error", err.Error(),
 		)
-		return fmt.Errorf("commit failed after secret delete: %w", err)
+		return err
 	}
 
 	return nil
 }
 
 func getSecretNameFromCred(cred *credential.Credential) string {
-	return *cred.Name  + "-" + *cred.UserID
+	return *cred.Name + "-" + *cred.UserID
 }
