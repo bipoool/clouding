@@ -12,7 +12,7 @@ import (
 
 type VaultSecretsManager struct {
 	client *vault.Client
-	path   string
+	path   string 
 }
 
 func NewVaultSecretManager() SecretsManager {
@@ -22,6 +22,8 @@ func NewVaultSecretManager() SecretsManager {
 		slog.Error("Failed to create Vault client")
 		panic(err)
 	}
+
+	slog.Info("Loaded Vault path", "value", config.Config.Vault.VaultSecretEnginePath)
 
 	return &VaultSecretsManager{
 		client: client,
