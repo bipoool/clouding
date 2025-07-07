@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - 'backend/**'       # only trigger when backend changes
-      - '.github/workflows/docker.yml'
 
 jobs:
   build:
