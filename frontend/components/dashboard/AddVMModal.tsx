@@ -33,7 +33,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Server, Key, Lock, ExternalLink } from 'lucide-react'
 import type { VM } from '@/hooks/useVMs'
-import { useCredentials } from '@/hooks/useCredentials'
+import { useCredentialsContext } from '@/lib/contexts/credentials-context'
 import Link from 'next/link'
 
 const vmSchema = z.object({
@@ -48,14 +48,14 @@ const vmSchema = z.object({
 type VMFormData = z.infer<typeof vmSchema>
 
 interface AddVMModalProps {
-	onAddVM: (vm: Omit<VM, 'id' | 'createdAt' | 'lastSeen'>) => void
+	onAddVM: (vm: Partial<VM>) => void
 	trigger?: React.ReactNode
 }
 
 export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 	const [open, setOpen] = useState(false)
 	const [isSubmitting, setIsSubmitting] = useState(false)
-	const { getSSHCredentials } = useCredentials()
+	const { getSSHCredentials } = useCredentialsContext()
 
 	const sshCredentials = getSSHCredentials()
 
@@ -76,7 +76,7 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 			// Simulate connection test
 			await new Promise(resolve => setTimeout(resolve, 1000))
 
-			const newVM: Omit<VM, 'id' | 'createdAt' | 'lastSeen'> = {
+			const newVM: Partial<VM> = {
 				name: data.name,
 				ip: data.ip,
 				os: data.os,

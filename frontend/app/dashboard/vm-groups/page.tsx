@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { VMGroupCard } from '@/components/dashboard/VMGroupCard'
 import { CreateGroupModal } from '@/components/dashboard/CreateGroupModal'
+import { VmGroupsPageSkeleton } from '@/components/dashboard'
 import { Button } from '@/components/ui/button'
 import { useVMs, useVMGroups } from '@/hooks/useVMs'
 import { logger } from '@/lib/utils/logger'
@@ -18,8 +19,14 @@ import {
 } from 'lucide-react'
 
 export default function VMGroupsPage() {
-	const { vms } = useVMs()
-	const { groups, createGroup, deleteGroup } = useVMGroups()
+	const { vms, isLoading: vmsLoading, error: vmsError } = useVMs()
+	const {
+		groups,
+		isLoading: groupsLoading,
+		error: groupsError,
+		createGroup,
+		deleteGroup,
+	} = useVMGroups()
 	const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
 
 	const totalVMsInGroups = groups.reduce(
@@ -43,6 +50,30 @@ export default function VMGroupsPage() {
 	const handleManageVMs = (groupId: string) => {
 		// In a real app, this would open a management dialog
 		logger.log('Manage VMs in group:', groupId)
+	}
+
+	if (vmsLoading || groupsLoading) {
+		return (
+			<DashboardLayout>
+				<VmGroupsPageSkeleton />
+			</DashboardLayout>
+		)
+	}
+
+	if (vmsError || groupsError) {
+		return (
+			<DashboardLayout>
+				<div className='space-y-8'>
+					<div className='glass-card'>
+						<div className='flex items-center justify-center py-12'>
+							<div className='text-lg text-red-400'>
+								Error loading data: {vmsError || groupsError}
+							</div>
+						</div>
+					</div>
+				</div>
+			</DashboardLayout>
+		)
 	}
 
 	return (

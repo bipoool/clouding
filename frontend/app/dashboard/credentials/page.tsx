@@ -7,9 +7,12 @@ import {
 	CredentialsPageSkeleton,
 	ErrorAlert,
 } from '@/components/dashboard'
-import { useCredentials } from '@/hooks/useCredentials'
+import { useCredentialsContext } from '@/lib/contexts/credentials-context'
 import { useCredentialsStats } from '@/hooks/useCredentialsStats'
-import type { Credential } from '@/lib/utils/credential-types'
+import type {
+	Credential,
+	CreateCredentialData,
+} from '@/lib/utils/credential-types'
 
 export default function CredentialsPage() {
 	const {
@@ -20,7 +23,7 @@ export default function CredentialsPage() {
 		updateCredential,
 		deleteCredential,
 		clearError,
-	} = useCredentials()
+	} = useCredentialsContext()
 	const stats = useCredentialsStats(credentials)
 
 	const [editingCredential, setEditingCredential] = useState<Credential | null>(
@@ -35,13 +38,21 @@ export default function CredentialsPage() {
 		setEditingCredential(null)
 	}, [])
 
+	// Wrapper function to convert createCredential to void return type
+	const handleCreateCredential = useCallback(
+		async (data: CreateCredentialData) => {
+			await createCredential(data)
+		},
+		[createCredential]
+	)
+
 	// Memoize content props to prevent unnecessary re-renders
 	const contentProps = useMemo(
 		() => ({
 			credentials,
 			stats,
 			editingCredential,
-			onCreateCredential: createCredential,
+			onCreateCredential: handleCreateCredential,
 			onUpdateCredential: updateCredential,
 			onDeleteCredential: deleteCredential,
 			onEditCredential: handleEditCredential,
@@ -51,7 +62,7 @@ export default function CredentialsPage() {
 			credentials,
 			stats,
 			editingCredential,
-			createCredential,
+			handleCreateCredential,
 			updateCredential,
 			deleteCredential,
 			handleEditCredential,

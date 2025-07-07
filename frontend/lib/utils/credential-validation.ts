@@ -53,7 +53,7 @@ export const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
 	return btoa(binary)
 }
 
-// Zod schema for credential validation
+// Zod schema for credential validation with conditional requirements
 export const credentialSchema = z.object({
 	name: z
 		.string()
@@ -63,12 +63,7 @@ export const credentialSchema = z.object({
 		required_error: 'Please select a credential type',
 	}),
 	// SSH Key fields with format validation
-	sshKey: z
-		.string()
-		.optional()
-		.refine(validateSSHKey, {
-			message: 'Invalid SSH key format. Please provide a valid private key (OpenSSH, RSA, DSA, ECDSA, or Ed25519 format)',
-		}),
+	sshKey: z.string().optional(),
 	// Password fields
 	username: z.string().optional(),
 	password: z.string().optional(),
@@ -76,15 +71,76 @@ export const credentialSchema = z.object({
 	certificateFile: z.string().optional(),
 	certificateFileName: z.string().optional(),
 	// API Key fields with format validation
-	apiKey: z
-		.string()
-		.optional()
-		.refine(validateAPIKey, {
-			message: 'Invalid API key format. Must be at least 16 characters and contain only alphanumeric characters, hyphens, underscores, and dots',
-		}),
+	apiKey: z.string().optional(),
 	// Common fields
 	description: z.string().optional(),
 	expiresAt: z.string().optional(),
+}).superRefine((data, ctx) => {
+	// Conditional validation based on credential type
+	switch (data.type) {
+		case 'ssh_key':
+			if (!data.sshKey?.trim()) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'SSH key is required',
+					path: ['sshKey'],
+				})
+			} else if (!validateSSHKey(data.sshKey.trim())) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Invalid SSH key format. Please provide a valid private key (OpenSSH, RSA, DSA, ECDSA, or Ed25519 format)',
+					path: ['sshKey'],
+				})
+			}
+			break
+		case 'password':
+			if (!data.username?.trim()) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Username is required',
+					path: ['username'],
+				})
+			}
+			if (!data.password?.trim()) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Password is required',
+					path: ['password'],
+				})
+			}
+			break
+		case 'ssl_cert':
+			if (!data.certificateFile) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Certificate file is required',
+					path: ['certificateFile'],
+				})
+			}
+			if (!data.certificateFileName?.trim()) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Certificate filename is required',
+					path: ['certificateFileName'],
+				})
+			}
+			break
+		case 'api_key':
+			if (!data.apiKey?.trim()) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'API key is required',
+					path: ['apiKey'],
+				})
+			} else if (!validateAPIKey(data.apiKey.trim())) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Invalid API key format. Must be at least 16 characters and contain only alphanumeric characters, hyphens, underscores, and dots',
+					path: ['apiKey'],
+				})
+			}
+			break
+	}
 })
 
 export type CredentialFormData = z.infer<typeof credentialSchema> 

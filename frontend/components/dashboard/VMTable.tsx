@@ -32,7 +32,7 @@ import {
 	Code,
 } from 'lucide-react'
 import type { VM } from '@/hooks/useVMs'
-import { useCredentials } from '@/hooks/useCredentials'
+import { useCredentialsContext } from '@/lib/contexts/credentials-context'
 
 interface VMTableProps {
 	vms: VM[]
@@ -52,7 +52,7 @@ export function VMTable({
 		'all' | 'connected' | 'disconnected' | 'error'
 	>('all')
 
-	const { getCredentialById } = useCredentials()
+	const { getCredentialById } = useCredentialsContext()
 
 	const filteredVMs = vms.filter(vm => {
 		const matchesSearch =
@@ -203,16 +203,18 @@ export function VMTable({
 										<div className='w-20 bg-white/10 rounded-full h-2'>
 											<div
 												className={`h-2 rounded-full transition-all duration-500 ${
-													vm.health > 80
+													(vm.health || 0) > 80
 														? 'bg-green-500'
-														: vm.health > 50
+														: (vm.health || 0) > 50
 															? 'bg-yellow-500'
 															: 'bg-red-500'
 												}`}
-												style={{ width: `${vm.health}%` }}
+												style={{ width: `${vm.health || 0}%` }}
 											/>
 										</div>
-										<span className='text-sm text-secondary'>{vm.health}%</span>
+										<span className='text-sm text-secondary'>
+											{vm.health || 0}%
+										</span>
 									</div>
 								</TableCell>
 								<TableCell>
@@ -221,44 +223,16 @@ export function VMTable({
 											const credential = getCredentialById(vm.credentialId)
 											return credential ? (
 												<div className='flex items-center gap-2'>
-													{credential.type === 'ssh_key' && (
-														<Key className='h-4 w-4 text-blue-400' />
-													)}
-													{credential.type === 'password' && (
-														<Lock className='h-4 w-4 text-purple-400' />
-													)}
-													{credential.type === 'ssl_cert' && (
-														<Shield className='h-4 w-4 text-green-400' />
-													)}
-													{credential.type === 'api_key' && (
-														<Code className='h-4 w-4 text-orange-400' />
-													)}
+													<Key className='h-4 w-4 text-blue-400' />
 													<div>
 														<div className='text-sm font-medium text-primary'>
 															{credential.name}
 														</div>
-														{credential.type === 'password' &&
-															credential.username && (
-																<div className='text-xs text-secondary'>
-																	User: {credential.username}
-																</div>
-															)}
-														{credential.type === 'ssh_key' && (
-															<div className='text-xs text-secondary'>
-																SSH Private Key
-															</div>
-														)}
-														{credential.type === 'ssl_cert' &&
-															credential.certificateFileName && (
-																<div className='text-xs text-secondary'>
-																	{credential.certificateFileName}
-																</div>
-															)}
-														{credential.type === 'api_key' && (
-															<div className='text-xs text-secondary'>
-																API Token
-															</div>
-														)}
+														<div className='text-xs text-secondary'>
+															{credential.type === 'ssh_key'
+																? 'SSH Private Key'
+																: credential.type}
+														</div>
 													</div>
 												</div>
 											) : (
@@ -295,12 +269,24 @@ export function VMTable({
 								</TableCell>
 								<TableCell>
 									{vm.configId ? (
-										<Badge
-											variant='outline'
-											className='bg-purple-500/10 text-purple-400 border-purple-500/30'
-										>
-											Configured
-										</Badge>
+										<div className='flex items-center gap-2'>
+											<Badge
+												variant='outline'
+												className='bg-green-500/10 text-green-400 border-green-500/30'
+											>
+												<Settings className='h-3 w-3 mr-1' />
+												Configured
+											</Badge>
+											<Button
+												variant='ghost'
+												size='sm'
+												onClick={() => onAssignConfig(vm.id)}
+												className='text-xs text-gray-400 hover:text-cyan-400'
+												title='Change configuration'
+											>
+												<Settings className='h-3 w-3' />
+											</Button>
+										</div>
 									) : (
 										<Button
 											variant='ghost'
@@ -314,7 +300,7 @@ export function VMTable({
 									)}
 								</TableCell>
 								<TableCell className='text-secondary text-sm'>
-									{formatLastSeen(vm.lastSeen)}
+									{vm.lastSeen ? formatLastSeen(vm.lastSeen) : 'Never'}
 								</TableCell>
 								<TableCell>
 									<DropdownMenu>

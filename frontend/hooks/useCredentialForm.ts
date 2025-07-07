@@ -16,8 +16,8 @@ import type {
 } from '@/lib/utils/credential-types'
 
 interface UseCredentialFormProps {
-	onAddCredential: (credential: CreateCredentialData) => void
-	onUpdateCredential?: (id: string, credential: Partial<CreateCredentialData>) => void
+	onAddCredential: (credential: CreateCredentialData) => Promise<void>
+	onUpdateCredential?: (id: string, credential: Partial<CreateCredentialData>) => Promise<void>
 	editCredential?: Credential | null
 	onClose: () => void
 }
@@ -60,25 +60,25 @@ export const useCredentialForm = ({
 				certificateFile: '',
 				certificateFileName: '',
 				apiKey: '',
-				description: editCredential.metadata?.description || '',
-				expiresAt: editCredential.metadata?.expiresAt?.split('T')[0] || '',
+				description: editCredential?.description || '',
+				expiresAt: editCredential?.expiresAt?.split('T')[0] || '',
 			}
 
 			// Set type-specific fields based on credential type
 			switch (editCredential.type) {
 				case 'ssh_key':
-					formData.sshKey = editCredential.sshKey
+					formData.sshKey = editCredential.secret.sshKey
 					break
 				case 'password':
-					formData.username = editCredential.username
-					formData.password = editCredential.password
+					formData.username = editCredential.secret.username
+					formData.password = editCredential.secret.password
 					break
 				case 'ssl_cert':
-					formData.certificateFile = editCredential.certificateFile
-					formData.certificateFileName = editCredential.certificateFileName
+					formData.certificateFile = editCredential.secret.certificateFile
+					formData.certificateFileName = editCredential.secret.certificateFileName
 					break
 				case 'api_key':
-					formData.apiKey = editCredential.apiKey
+					formData.apiKey = editCredential.secret.apiKey
 					break
 			}
 
@@ -139,8 +139,10 @@ export const useCredentialForm = ({
 				return {
 					type: 'ssh_key',
 					name: data.name,
-					sshKey: normalizedKey,
-					metadata: baseMetadata,
+					secret: {
+						sshKey: normalizedKey,
+					},
+					...baseMetadata,
 				}
 			}
 			case 'password': {
@@ -150,9 +152,11 @@ export const useCredentialForm = ({
 				return {
 					type: 'password',
 					name: data.name,
-					username: data.username.trim(),
-					password: data.password.trim(),
-					metadata: baseMetadata,
+					secret: {
+						username: data.username.trim(),
+						password: data.password.trim(),
+					},
+					...baseMetadata,
 				}
 			}
 			case 'ssl_cert': {
@@ -162,9 +166,11 @@ export const useCredentialForm = ({
 				return {
 					type: 'ssl_cert',
 					name: data.name,
-					certificateFile: data.certificateFile,
-					certificateFileName: data.certificateFileName.trim(),
-					metadata: baseMetadata,
+					secret: {
+						certificateFile: data.certificateFile,
+						certificateFileName: data.certificateFileName.trim(),
+					},
+					...baseMetadata,
 				}
 			}
 			case 'api_key': {
@@ -178,8 +184,10 @@ export const useCredentialForm = ({
 				return {
 					type: 'api_key',
 					name: data.name,
-					apiKey: trimmedKey,
-					metadata: baseMetadata,
+					secret: {
+						apiKey: trimmedKey,
+					},
+					...baseMetadata,
 				}
 			}
 			default: {

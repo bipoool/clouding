@@ -79,9 +79,10 @@ export function CredentialsTable({
 	const [typeFilter, setTypeFilter] = useState<CredentialType | 'all'>('all')
 
 	const filteredCredentials = credentials.filter(credential => {
-		const matchesSearch =
-			credential.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			credential.type.includes(searchTerm.toLowerCase())
+		const name = credential.name?.toLowerCase() ?? ''
+		const search = searchTerm.toLowerCase()
+		const type = credential.type?.toLowerCase() ?? ''
+		const matchesSearch = name.includes(search) || type.includes(search)
 		const matchesType = typeFilter === 'all' || credential.type === typeFilter
 		return matchesSearch && matchesType
 	})
@@ -119,8 +120,11 @@ export function CredentialsTable({
 		return <IconComponent className={iconClasses} />
 	}
 
-	const formatDate = (dateString: string) => {
-		return formatDistanceToNow(new Date(dateString), { addSuffix: true })
+	const formatDate = (dateString?: string) => {
+		if (!dateString) return '-'
+		const date = new Date(dateString)
+		if (isNaN(date.getTime())) return '-'
+		return formatDistanceToNow(date, { addSuffix: true })
 	}
 
 	return (
@@ -217,21 +221,22 @@ export function CredentialsTable({
 								</TableCell>
 								<TableCell>{getTypeBadge(credential.type)}</TableCell>
 								<TableCell>
-									{credential.type === 'ssh_key' && credential.sshKey && (
-										<div className='text-sm'>
-											<div className='text-primary font-mono text-xs bg-black/30 px-2 py-1 rounded'>
-												{credential.sshKey.substring(0, 40)}...
+									{credential.type === 'ssh_key' &&
+										credential.secret.sshKey && (
+											<div className='text-sm'>
+												<div className='text-primary font-mono text-xs bg-black/30 px-2 py-1 rounded'>
+													{credential.secret.sshKey.substring(0, 40)}...
+												</div>
+												<div className='text-xs text-secondary mt-1'>
+													SSH Private Key
+												</div>
 											</div>
-											<div className='text-xs text-secondary mt-1'>
-												SSH Private Key
-											</div>
-										</div>
-									)}
+										)}
 									{credential.type === 'password' && (
 										<div className='text-sm'>
-											{credential.username && (
+											{credential.secret.username && (
 												<div className='text-primary'>
-													User: {credential.username}
+													User: {credential.secret.username}
 												</div>
 											)}
 											<div className='text-xs text-secondary'>
@@ -241,34 +246,35 @@ export function CredentialsTable({
 									)}
 									{credential.type === 'ssl_cert' && (
 										<div className='text-sm'>
-											{credential.certificateFileName && (
+											{credential.secret.certificateFileName && (
 												<div className='text-primary'>
-													File: {credential.certificateFileName}
+													File: {credential.secret.certificateFileName}
 												</div>
 											)}
-											{credential.metadata?.expiresAt && (
+											{credential.expiresAt && (
 												<div className='text-secondary'>
-													Expires: {formatDate(credential.metadata.expiresAt)}
+													Expires: {formatDate(credential.expiresAt)}
 												</div>
 											)}
 										</div>
 									)}
-									{credential.type === 'api_key' && credential.apiKey && (
-										<div className='text-sm'>
-											<div className='text-primary font-mono text-xs bg-black/30 px-2 py-1 rounded'>
-												{credential.apiKey.substring(0, 20)}...
+									{credential.type === 'api_key' &&
+										credential.secret.apiKey && (
+											<div className='text-sm'>
+												<div className='text-primary font-mono text-xs bg-black/30 px-2 py-1 rounded'>
+													{credential.secret.apiKey.substring(0, 12)}...
+												</div>
+												{credential.expiresAt && (
+													<div className='text-xs text-secondary mt-1'>
+														Expires: {formatDate(credential.expiresAt)}
+													</div>
+												)}
 											</div>
-											{credential.metadata?.expiresAt && (
-												<div className='text-xs text-secondary mt-1'>
-													Expires: {formatDate(credential.metadata.expiresAt)}
-												</div>
-											)}
-										</div>
-									)}
+										)}
 								</TableCell>
 								<TableCell>
 									<div className='text-sm text-secondary max-w-xs truncate'>
-										{credential.metadata?.description || '-'}
+										{credential.description || '-'}
 									</div>
 								</TableCell>
 								<TableCell>
