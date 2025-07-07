@@ -32,7 +32,7 @@ import {
 	Code,
 } from 'lucide-react'
 import type { VM } from '@/hooks/useVMs'
-import { useCredentials } from '@/hooks/useCredentials'
+import { useCredentialsContext } from '@/lib/contexts/credentials-context'
 
 interface VMTableProps {
 	vms: VM[]
@@ -52,7 +52,7 @@ export function VMTable({
 		'all' | 'connected' | 'disconnected' | 'error'
 	>('all')
 
-	const { getCredentialById } = useCredentials()
+	const { getCredentialById } = useCredentialsContext()
 
 	const filteredVMs = vms.filter(vm => {
 		const matchesSearch =

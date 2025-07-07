@@ -45,7 +45,8 @@ export function useVMs() {
           const errorData = await res.json()
           throw new Error(errorData.error || 'Failed to fetch VMs')
         }
-        const hosts: Host[] = await res.json()
+        const response = await res.json()
+        const hosts: Host[] = response.data || []
         const enhancedVMs = (hosts || []).map(enhanceHostData)
         setVMs(enhancedVMs)
       } catch (err) {
@@ -71,7 +72,8 @@ export function useVMs() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to create VM')
       }
-      const newHost: Host = await res.json()
+      const response = await res.json()
+      const newHost: Host = response.data
       const newVM = enhanceHostData(newHost)
       setVMs(prev => [...prev, newVM])
     } catch (err) {
@@ -92,7 +94,8 @@ export function useVMs() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to update VM')
       }
-      const updatedHost: Host = await res.json()
+      const response = await res.json()
+      const updatedHost: Host = response.data
       const updatedVM = enhanceHostData(updatedHost)
       setVMs(prev => prev.map(vm => (vm.id === id ? updatedVM : vm)))
     } catch (err) {
@@ -143,7 +146,6 @@ export function useVMs() {
     try {
       setError(null)
       // TODO: Implement via /api/blueprint or configs when available
-      console.log('Assigning config', configId, 'to VM', id)
       // For now, just update the VM in state
       setVMs(prev => prev.map(vm => 
         vm.id === id ? { ...vm, configId } : vm
@@ -195,7 +197,8 @@ export function useVMGroups() {
           const errorData = await res.json()
           throw new Error(errorData.error || 'Failed to fetch groups')
         }
-        const hostGroups: HostGroup[] = await res.json()
+        const response = await res.json()
+        const hostGroups: HostGroup[] = response.data || []
         const vmGroups = (hostGroups || []).map(convertHostGroupToVMGroup)
         setGroups(vmGroups)
       } catch (err) {
@@ -224,7 +227,8 @@ export function useVMGroups() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to create group')
       }
-      const newHostGroup: HostGroup = await res.json()
+      const response = await res.json()
+      const newHostGroup: HostGroup = response.data
       const newVMGroup = convertHostGroupToVMGroup(newHostGroup)
       setGroups(prev => [...prev, newVMGroup])
     } catch (err) {
@@ -248,7 +252,8 @@ export function useVMGroups() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to update group')
       }
-      const updatedHostGroup: HostGroup = await res.json()
+      const response = await res.json()
+      const updatedHostGroup: HostGroup = response.data
       const updatedVMGroup = convertHostGroupToVMGroup(updatedHostGroup)
       setGroups(prev => prev.map(g => (g.id === id ? updatedVMGroup : g)))
     } catch (err) {
@@ -319,7 +324,6 @@ export function useVMGroups() {
     try {
       setError(null)
       // TODO: Implement via /api/blueprint or configs when available
-      console.log('Assigning config', configId, 'to group', groupId)
       // For now, just update the group in state
       setGroups(prev => prev.map(g => 
         g.id === groupId ? { ...g, configId } : g

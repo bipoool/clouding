@@ -42,11 +42,11 @@ import type {
 } from '@/lib/utils/credential-types'
 
 interface AddCredentialModalProps {
-	onAddCredential: (credential: CreateCredentialData) => void
+	onAddCredential: (credential: CreateCredentialData) => Promise<void>
 	onUpdateCredential?: (
 		id: string,
 		credential: Partial<CreateCredentialData>
-	) => void
+	) => Promise<void>
 	editCredential?: Credential | null
 	trigger?: React.ReactNode
 }

@@ -81,7 +81,7 @@ export function CredentialsTable({
 	const filteredCredentials = credentials.filter(credential => {
 		const name = credential.name?.toLowerCase() ?? ''
 		const search = searchTerm.toLowerCase()
-		const type = credential.type.toLowerCase()
+		const type = credential.type?.toLowerCase() ?? ''
 		const matchesSearch = name.includes(search) || type.includes(search)
 		const matchesType = typeFilter === 'all' || credential.type === typeFilter
 		return matchesSearch && matchesType

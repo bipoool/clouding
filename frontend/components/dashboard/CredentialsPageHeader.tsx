@@ -8,11 +8,11 @@ import type {
 } from '@/lib/utils/credential-types'
 
 interface CredentialsPageHeaderProps {
-	onCreateCredential: (data: CreateCredentialData) => void
+	onCreateCredential: (data: CreateCredentialData) => Promise<void>
 	onUpdateCredential: (
 		id: string,
 		updates: Partial<CreateCredentialData>
-	) => void
+	) => Promise<void>
 	editingCredential: Credential | null
 	onEditComplete: () => void
 }
@@ -23,11 +23,11 @@ export function CredentialsPageHeader({
 	editingCredential,
 	onEditComplete,
 }: CredentialsPageHeaderProps) {
-	const handleUpdateCredential = (
+	const handleUpdateCredential = async (
 		id: string,
 		updates: Partial<CreateCredentialData>
 	) => {
-		onUpdateCredential(id, updates)
+		await onUpdateCredential(id, updates)
 		onEditComplete()
 	}
 

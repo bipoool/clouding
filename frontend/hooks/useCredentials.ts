@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import type { Credential } from '@/app/api/types'
+import type { Credential, CreateCredentialData } from '@/lib/utils/credential-types'
 import { getErrorMessage } from '@/lib/utils'
 import { httpClient } from '@/lib/http-client'
 
@@ -8,8 +8,8 @@ export interface CredentialsHookReturn {
   isLoading: boolean
   error: string | null
   clearError: () => void
-  createCredential: (data: Partial<Credential>) => Promise<Credential | undefined>
-  updateCredential: (id: string, updates: Partial<Credential>) => Promise<void>
+  createCredential: (data: CreateCredentialData) => Promise<Credential | undefined>
+  updateCredential: (id: string, updates: Partial<CreateCredentialData>) => Promise<void>
   deleteCredential: (id: string) => Promise<void>
   getCredentialById: (id: string) => Credential | undefined
   getSSHCredentials: () => Credential[]
@@ -64,7 +64,7 @@ export function useCredentials(): CredentialsHookReturn {
     }
   }, [])
 
-  const createCredential = useCallback(async (data: Partial<Credential>) => {
+  const createCredential = useCallback(async (data: CreateCredentialData) => {
     if (!isMountedRef.current) return
     
     setIsLoading(true)
@@ -86,7 +86,7 @@ export function useCredentials(): CredentialsHookReturn {
     }
   }, [])
 
-  const updateCredential = useCallback(async (id: string, updates: Partial<Credential>) => {
+  const updateCredential = useCallback(async (id: string, updates: Partial<CreateCredentialData>) => {
     if (!isMountedRef.current) return
     
     setIsLoading(true)

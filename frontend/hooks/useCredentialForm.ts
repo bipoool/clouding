@@ -16,8 +16,8 @@ import type {
 } from '@/lib/utils/credential-types'
 
 interface UseCredentialFormProps {
-	onAddCredential: (credential: CreateCredentialData) => void
-	onUpdateCredential?: (id: string, credential: Partial<CreateCredentialData>) => void
+	onAddCredential: (credential: CreateCredentialData) => Promise<void>
+	onUpdateCredential?: (id: string, credential: Partial<CreateCredentialData>) => Promise<void>
 	editCredential?: Credential | null
 	onClose: () => void
 }
