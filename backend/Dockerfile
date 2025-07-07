@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.23.4 AS builder
+FROM --platform=linux/arm64 golang:1.23.4 AS builder
 
 WORKDIR /app
 
@@ -11,10 +11,10 @@ RUN go mod download
 COPY . .
 
 # build the binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o app .
 
 # Final stage using distroless
-FROM gcr.io/distroless/static-debian12
+FROM --platform=linux/arm64 gcr.io/distroless/static-debian12
 
 # copy the binary
 COPY --from=builder /app/app /app
