@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -89,7 +90,6 @@ func (r *credentialRepository) GetAllCredentials(ctx context.Context, userId str
 }
 
 func (r *credentialRepository) CreateCredential(ctx context.Context, c *credential.Credential) error {
-	secretName := getSecretNameFromCred(c)
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -108,6 +108,9 @@ func (r *credentialRepository) CreateCredential(ctx context.Context, c *credenti
 		return err
 	}
 	c.ID = &id
+
+	secretName := getSecretNameFromCred(c)
+
 	if err := r.secretsManager.SetSecret(secretName, c.Secret); err != nil {
 		return err
 	}
@@ -217,5 +220,5 @@ func (r *credentialRepository) DeleteCredential(ctx context.Context, id int) err
 }
 
 func getSecretNameFromCred(cred *credential.Credential) string {
-	return *cred.Name + "-" + *cred.UserID
+	return *cred.Name + "-" + strconv.Itoa(*cred.ID) + "-" + *cred.UserID
 }
