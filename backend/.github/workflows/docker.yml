@@ -25,11 +25,13 @@ jobs:
       - name: Read version from VERSION file
         id: version
         run: |
-          VERSION=$(cat VERSION)
+          VERSION=$(cat backend/VERSION)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           push: true
+          context: ./backend
+          file: ./backend/Dockerfile
           tags: vipuldockerhub/clouding-backend:${{ steps.version.outputs.version }}
