@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	vault "github.com/hashicorp/vault/api"
 )
@@ -13,6 +12,7 @@ import (
 type VaultSecretsManager struct {
 	client *vault.Client
 	path   string
+	metadataPath string
 }
 
 func NewVaultSecretManager() SecretsManager {
@@ -23,11 +23,10 @@ func NewVaultSecretManager() SecretsManager {
 		panic(err)
 	}
 
-	slog.Info("Loaded Vault path", "value", config.Config.Vault.VaultSecretEnginePath)
-
 	return &VaultSecretsManager{
 		client: client,
 		path:   config.Config.Vault.VaultSecretEnginePath,
+		metadataPath:  config.Config.Vault.VaultSecretEnginePath,
 	}
 }
 
@@ -64,13 +63,10 @@ func (v *VaultSecretsManager) UpdateSecret(secretName string, secretMap map[stri
 }
 
 func (v *VaultSecretsManager) DeleteSecret(secretName string) error {
-	const dataPrefix = "/data/"
-	const metadataPrefix = "/metadata/"
 
-	fullPath := v.path + secretName
-	metadataPath := strings.Replace(fullPath, dataPrefix, metadataPrefix, 1)
+	fullPath := v.metadataPath + secretName
 
-	_, err := v.client.Logical().Delete(metadataPath)
+	_, err := v.client.Logical().Delete(fullPath)
 	return err
 }
 
