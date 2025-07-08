@@ -28,7 +28,8 @@ type CloudingConfig struct {
 	} `mapstructure:"supabaseAuth" description:"the supabase auth configuration"`
 
 	Vault struct {
-		VaultSecretEnginePath string `mapstructure:"vaultSecretEnginePath" description:"Vault Secret Engine Path"`
+		VaultSecretEnginePath     string `mapstructure:"vaultSecretEnginePath" description:"Vault Secret Engine Path"`
+		VaultSecretEngineMetaPath string `mapstructure:"vaultSecretEngineMetaPath" description:"Vault Secret Engine Meta Path"`
 	}
 }
 
@@ -55,4 +56,6 @@ func LoadCloudingConfig(path string) {
 	Config.SupabaseAuth.JwtSecret = []byte(os.Getenv("SUPABASE.JWT.SECRET"))
 
 	Config.Vault.VaultSecretEnginePath = os.Getenv("VAULT_SECRET_ENGINE")
+	Config.Vault.VaultSecretEngineMetaPath = os.Getenv("VAULT_SECRET_ENGINE_METADATA")
+
 }

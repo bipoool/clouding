@@ -12,6 +12,7 @@ import (
 type VaultSecretsManager struct {
 	client *vault.Client
 	path   string
+	metadataPath string
 }
 
 func NewVaultSecretManager() SecretsManager {
@@ -25,6 +26,7 @@ func NewVaultSecretManager() SecretsManager {
 	return &VaultSecretsManager{
 		client: client,
 		path:   config.Config.Vault.VaultSecretEnginePath,
+		metadataPath:  config.Config.Vault.VaultSecretEnginePath,
 	}
 }
 
@@ -61,7 +63,9 @@ func (v *VaultSecretsManager) UpdateSecret(secretName string, secretMap map[stri
 }
 
 func (v *VaultSecretsManager) DeleteSecret(secretName string) error {
-	fullPath := v.path + secretName
+
+	fullPath := v.metadataPath + secretName
+
 	_, err := v.client.Logical().Delete(fullPath)
 	return err
 }
@@ -76,6 +80,5 @@ func getVaultData(m map[string]interface{}) map[string]interface{} {
 	if data, ok := m["data"].(map[string]interface{}); ok {
 		return data
 	}
-	// Return empty map if type assertion fails
 	return make(map[string]interface{})
 }

@@ -11,9 +11,9 @@ import (
 )
 
 func RegisterCredentialRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
-	repo := repository.NewCredentialRepository(db)
 	secretsManager := secretmanager.NewSecretManager()
-	service := service.NewCredentialService(repo, secretsManager)
+	repo := repository.NewCredentialRepository(db, secretsManager)
+	service := service.NewCredentialService(repo)
 	controller := v1.NewCredentialController(service)
 
 	rg.GET("/credentials", controller.GetAllByUserId)
