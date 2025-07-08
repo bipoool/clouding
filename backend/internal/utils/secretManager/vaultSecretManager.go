@@ -12,7 +12,7 @@ import (
 
 type VaultSecretsManager struct {
 	client *vault.Client
-	path   string 
+	path   string
 }
 
 func NewVaultSecretManager() SecretsManager {
@@ -64,8 +64,12 @@ func (v *VaultSecretsManager) UpdateSecret(secretName string, secretMap map[stri
 }
 
 func (v *VaultSecretsManager) DeleteSecret(secretName string) error {
+	const dataPrefix = "/data/"
+	const metadataPrefix = "/metadata/"
+
 	fullPath := v.path + secretName
-	metadataPath := strings.Replace(fullPath, "/data/", "/metadata/", 1)
+	metadataPath := strings.Replace(fullPath, dataPrefix, metadataPrefix, 1)
+
 	_, err := v.client.Logical().Delete(metadataPath)
 	return err
 }

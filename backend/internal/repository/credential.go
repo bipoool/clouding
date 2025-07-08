@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"strconv"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -95,7 +94,18 @@ func (r *credentialRepository) CreateCredential(ctx context.Context, c *credenti
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		if p := recover(); p != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
+			panic(p)
+		} else if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
+		}
+	}()
 
 	stmt, err := tx.PrepareNamedContext(ctx, createCredentialQuery)
 	if err != nil {
@@ -141,12 +151,27 @@ func (r *credentialRepository) UpdateCredential(ctx context.Context, c *credenti
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if p := recover(); p != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
+			panic(p)
+		} else if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
+		}
+	}()
 
 	builder := sq.
 		Update("credentials").
 		Set("updated_at", "NOW()").
-		Where(sq.Eq{"id": c.ID}).
+		Where(sq.And{
+			sq.Eq{"id": c.ID},
+			sq.Eq{"name": c.Name},
+		}).
 		Suffix("RETURNING updated_at").
 		PlaceholderFormat(sq.Dollar)
 
@@ -193,7 +218,19 @@ func (r *credentialRepository) DeleteCredential(ctx context.Context, id int) err
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if p := recover(); p != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
+			panic(p)
+		} else if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
+			}
+		}
+	}()
 
 	result, err := tx.ExecContext(ctx, deleteCredentialByIdQuery, id)
 	if err != nil {
@@ -220,5 +257,5 @@ func (r *credentialRepository) DeleteCredential(ctx context.Context, id int) err
 }
 
 func getSecretNameFromCred(cred *credential.Credential) string {
-	return *cred.Name + "-" + strconv.Itoa(*cred.ID) + "-" + *cred.UserID
+	return *cred.Name + "-" + *cred.UserID
 }
