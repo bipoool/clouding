@@ -15,5 +15,6 @@ func RegisterComponentRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
 	componentController := v1.NewComponentController(componentService)
 
 	rg.GET("/components", componentController.GetAllComponents)
+	rg.GET("/components/ids/:ids", componentController.GetComponentByIds)
 	rg.GET("/components/:id", componentController.GetComponent)
 }

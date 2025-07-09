@@ -71,7 +71,9 @@ CREATE TABLE IF NOT EXISTS blueprint_components (
     position INT NOT NULL,
     parameters JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(blueprint_id, component_id),
+    UNIQUE(blueprint_id, position)
 );
 
 -- index to quickly fetch all components of a blueprint in order

@@ -1,0 +1,1 @@
+DELETE FROM blueprint_components WHERE component_id = $1 AND blueprint_id = $2; 

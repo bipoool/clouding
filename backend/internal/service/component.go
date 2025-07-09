@@ -8,6 +8,7 @@ import (
 
 type ComponentService interface {
 	GetComponent(ctx context.Context, id int) (*component.Component, error)
+	GetComponentByIds(ctx context.Context, ids []int) ([]*component.Component, error)
 	GetAllComponents(ctx context.Context) ([]*component.Component, error)
 }
 
@@ -21,6 +22,10 @@ func NewComponentService(repo repository.ComponentRepository) ComponentService {
 
 func (s *componentService) GetComponent(ctx context.Context, id int) (*component.Component, error) {
 	return s.repo.GetComponent(ctx, id)
+}
+
+func (s *componentService) GetComponentByIds(ctx context.Context, ids []int) ([]*component.Component, error) {
+	return s.repo.GetComponentByIds(ctx, ids)
 }
 
 func (s *componentService) GetAllComponents(ctx context.Context) ([]*component.Component, error) {

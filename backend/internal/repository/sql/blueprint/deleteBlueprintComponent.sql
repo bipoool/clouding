@@ -1,1 +1,0 @@
-DELETE FROM blueprint_components WHERE id = $1; 

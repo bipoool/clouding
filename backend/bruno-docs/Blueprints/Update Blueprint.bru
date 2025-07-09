@@ -16,79 +16,25 @@ headers {
 }
 
 body:json {
-  "blueprint": {
-      "id": 41,
-      "name": "Web Server Stack 5",
-      "description": "Updated NGINX and Docker setup",
-      "status": "draft"
-  },
-  "components": [
-    {
-      "id": 7,
-      "blueprintId": 41,
-      "componentId": 10,
-      "position": 1,
-      "parameters": [
-        {
-          "id": "d7b1f2d9-14ab-4dff-86b0-4f637c3f7b5f",
-          "value": "1.26.0",
-          "name": "version"
-        },
-        {
-          "id": "0f3f43b7-7d25-4f7c-a3c5-361ee7a66379",
-          "value": "opensource",
-          "name": "nginx_type"
-        }
-      ],
-      "createdAt": "2025-07-06T13:01:45.79548Z",
-      "updatedAt": "2025-07-06T13:01:45.79548Z"
-    },
-    {
-      "id": 8,
-      "blueprintId": 41,
-      "componentId": 11,
-      "position": 2,
-      "parameters": [
-        {
-          "id": "145a8bc9-b9ef-4f2b-a96b-54e5ee309d17",
-          "value": "10.0.1",
-          "name": "version"
-        }
-      ],
-      "createdAt": "2025-07-06T13:01:45.79548Z",
-      "updatedAt": "2025-07-06T13:01:45.79548Z"
-    }
-  ],
-  "description": "Updated plan"
+  {
+    "name": "Web Server Stack 5",
+    "description": "Updated NGINX and Docker setup",
+    "status": "draft",
+    "description": "Updated plan"
+  }
 }
 
 docs {
   Update an existing blueprint with new data.
   
   The request body should include:
-  - blueprint: Updated blueprint details (name, description, status)
-  - components: Array of blueprint components to update/create/delete
-  
-  Components without an "id" field will be created as new components.
-  Components with an "id" field will be updated.
-  Components that exist in the database but are not included in the request will be deleted.
-  
+  - blueprint: Updated blueprint details (name, description, status) all fields are optional
+
   Response example:
   {
     "data": {
       "id": 41,
-      "components": [
-        {
-          "id": 7,
-          "componentId": 10,
-          "position": 1
-        },
-        {
-          "id": 8,
-          "componentId": 11,
-          "position": 2
-        }
-      ]
+      "updatedAt": "2025-07-09T20:02:35.267963Z"
     },
     "error": null,
     "success": true

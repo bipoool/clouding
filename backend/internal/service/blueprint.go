@@ -10,10 +10,11 @@ import (
 type BlueprintService interface {
 	GetByID(ctx context.Context, id int) (*blueprint.Blueprint, error)
 	GetAllByUserID(ctx context.Context, userId string) ([]*blueprint.Blueprint, error)
-	Create(ctx context.Context, bp *blueprint.Blueprint, components []*blueprint.BlueprintComponent) error
-	Update(ctx context.Context, bp *blueprint.Blueprint, components []*blueprint.BlueprintComponent) error
-	Delete(ctx context.Context, id int) error
 	GetComponentsByBlueprintID(ctx context.Context, blueprintId int) ([]*blueprint.BlueprintComponent, error)
+	Create(ctx context.Context, bp *blueprint.Blueprint) error
+	Update(ctx context.Context, bp *blueprint.Blueprint) error
+	UpdateBlueprintComponents(ctx context.Context, blueprintId int, components []*blueprint.BlueprintComponent) error
+	Delete(ctx context.Context, id int) error
 }
 
 type blueprintService struct {
@@ -33,46 +34,45 @@ func (s *blueprintService) GetAllByUserID(ctx context.Context, userId string) ([
 	return s.blueprintRepo.GetAllBlueprints(ctx, userId)
 }
 
-func (s *blueprintService) Create(ctx context.Context, bp *blueprint.Blueprint, components []*blueprint.BlueprintComponent) error {
-	// Validate parameters for each component
-	for _, comp := range components {
-		if comp.ComponentID == nil {
-			return fmt.Errorf("componentId is required for each blueprint component")
-		}
-		componentModel, err := s.componentRepo.GetComponent(ctx, *comp.ComponentID)
-		if err != nil {
-			return fmt.Errorf("failed to fetch component: %w", err)
-		}
-		err = blueprint.ValidateBlueprintParametersUsingComponentParameters(comp.Parameters, componentModel.Parameters)
-		if err != nil {
-			return fmt.Errorf("parameter validation failed for componentId %d: %w", *comp.ComponentID, err)
-		}
-	}
-	// Create blueprint
-	return s.blueprintRepo.CreateBlueprint(ctx, bp, components)
-}
-
 func (s *blueprintService) GetComponentsByBlueprintID(ctx context.Context, blueprintId int) ([]*blueprint.BlueprintComponent, error) {
 	return s.blueprintRepo.GetComponentsByBlueprintID(ctx, blueprintId)
 }
 
-func (s *blueprintService) Update(ctx context.Context, bp *blueprint.Blueprint, components []*blueprint.BlueprintComponent) error {
-	// Validate parameters for each component
+func (s *blueprintService) Create(ctx context.Context, bp *blueprint.Blueprint) error {
+	return s.blueprintRepo.CreateBlueprint(ctx, bp)
+}
+
+func (s *blueprintService) Update(ctx context.Context, bp *blueprint.Blueprint) error {
+	return s.blueprintRepo.UpdateBlueprint(ctx, bp)
+}
+
+func (s *blueprintService) UpdateBlueprintComponents(ctx context.Context, blueprintId int, components []*blueprint.BlueprintComponent) error {
+	var existingCompIds []int
 	for _, comp := range components {
 		if comp.ComponentID == nil {
 			return fmt.Errorf("componentId is required for each blueprint component")
 		}
-		componentModel, err := s.componentRepo.GetComponent(ctx, *comp.ComponentID)
-		if err != nil {
-			return fmt.Errorf("failed to fetch component: %w", err)
-		}
-		err = blueprint.ValidateBlueprintParametersUsingComponentParameters(comp.Parameters, componentModel.Parameters)
+		existingCompIds = append(existingCompIds, *comp.ComponentID)
+	}
+
+	existingComps, err := s.componentRepo.GetComponentByIds(ctx, existingCompIds)
+
+	if err != nil {
+		return err
+	}
+
+	// Validate parameters for each component
+	for i := range components {
+		existingComp := existingComps[i]
+		comp := components[i]
+		err = blueprint.ValidateBlueprintParametersUsingComponentParameters(comp.Parameters, existingComp.Parameters)
 		if err != nil {
 			return fmt.Errorf("parameter validation failed for componentId %d: %w", *comp.ComponentID, err)
 		}
 	}
+
 	// Update blueprint
-	return s.blueprintRepo.UpdateBlueprint(ctx, bp, components)
+	return s.blueprintRepo.UpdateBlueprintComponents(ctx, blueprintId, components)
 }
 
 func (s *blueprintService) Delete(ctx context.Context, id int) error {
