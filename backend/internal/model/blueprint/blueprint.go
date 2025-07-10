@@ -65,14 +65,8 @@ func (p BlueprintParameters) Value() (driver.Value, error) {
 	return bytes, nil
 }
 
-type CreateBlueprintRequest struct {
-	Blueprint  Blueprint             `json:"blueprint"`
-	Components []*BlueprintComponent `json:"components"`
-}
-
 type CreateBlueprintResponse struct {
-	ID           *int                               `json:"id"`
-	ComponentIds []CreateBlueprintComponentResponse `json:"components"`
+	ID *int `json:"id"`
 }
 
 type CreateBlueprintComponentResponse struct {
@@ -81,14 +75,9 @@ type CreateBlueprintComponentResponse struct {
 	Position             *int `json:"position"`
 }
 
-type UpdateBlueprintRequest struct {
-	Blueprint  Blueprint             `json:"blueprint"`
-	Components []*BlueprintComponent `json:"components"`
-}
-
 type UpdateBlueprintResponse struct {
-	ID           *int                               `json:"id"`
-	ComponentIds []UpdateBlueprintComponentResponse `json:"components"`
+	ID        *int       `json:"id"`
+	UpdatedAt *time.Time `json:"updatedAt"`
 }
 
 type UpdateBlueprintComponentResponse struct {

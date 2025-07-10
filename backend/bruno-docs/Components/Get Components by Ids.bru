@@ -1,0 +1,20 @@
+meta {
+  name: Get Component by IDs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/components/ids/:ids
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Get component details.
+  ids = 1,2,3,4 (comma seprated values)
+}

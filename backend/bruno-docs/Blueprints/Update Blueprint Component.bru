@@ -1,0 +1,77 @@
+meta {
+  name: Update Blueprint
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/blueprints/:id/components
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+body:json {
+    [
+        {
+            "componentId": 10,
+            "position": 1,
+            "parameters": [
+            {
+                "id": "d7b1f2d9-14ab-4dff-86b0-4f637c3f7b5f",
+                "value": "1.28.0",
+                "name": "version"
+            },
+            {
+                "id": "0f3f43b7-7d25-4f7c-a3c5-361ee7a66379",
+                "value": "opensource",
+                "name": "nginx_type"
+            }
+            ]
+        },
+        {
+            "componentId": 11,
+            "position": 2,
+            "parameters": [
+            {
+                "id": "145a8bc9-b9ef-4f2b-a96b-54e5ee309d17",
+                "value": "10.0",
+                "name": "version"
+            }
+            ]
+        }
+    ]
+}
+
+docs {
+  Update an existing blueprint with new data.
+  
+  The request body should include:
+  - Array of blueprint components to update/create/delete
+  
+  ComponentsIds that are not available in the existing componentIds -> Would be Created
+  ComponentsIds that are available in the existing componentIds -> Would be Updated
+  Existing componentsIds that are not available in the request componentIds -> Would be Deleted
+  
+  Response example:
+    {
+    "data": [
+        {
+        "id": 36,
+        "componentId": 10,
+        "position": 1
+        },
+        {
+        "id": 37,
+        "componentId": 11,
+        "position": 2
+        }
+    ],
+    "error": null,
+    "success": true
+    }
+}

@@ -15,10 +15,11 @@ import (
 type BlueprintRepository interface {
 	GetBlueprint(ctx context.Context, id int) (*blueprint.Blueprint, error)
 	GetAllBlueprints(ctx context.Context, userId string) ([]*blueprint.Blueprint, error)
-	CreateBlueprint(ctx context.Context, b *blueprint.Blueprint, components []*blueprint.BlueprintComponent) error
-	UpdateBlueprint(ctx context.Context, b *blueprint.Blueprint, components []*blueprint.BlueprintComponent) error
-	DeleteBlueprint(ctx context.Context, id int) error
 	GetComponentsByBlueprintID(ctx context.Context, blueprintId int) ([]*blueprint.BlueprintComponent, error)
+	CreateBlueprint(ctx context.Context, b *blueprint.Blueprint) error
+	UpdateBlueprint(ctx context.Context, b *blueprint.Blueprint) error
+	UpdateBlueprintComponents(ctx context.Context, bluePrintId int, components []*blueprint.BlueprintComponent) error
+	DeleteBlueprint(ctx context.Context, id int) error
 }
 
 // Queries
@@ -44,11 +45,11 @@ var updateBlueprintQuery string
 //go:embed sql/blueprint/updateBlueprintComponent.sql
 var updateBlueprintComponentQuery string
 
-//go:embed sql/blueprint/deleteBlueprintComponent.sql
-var deleteBlueprintComponentQuery string
-
 //go:embed sql/blueprint/deleteBlueprintById.sql
 var deleteBlueprintByIdQuery string
+
+//go:embed sql/blueprint/deleteBlueprintComponent.sql
+var deleteBlueprintComponentByComponentIdAndBlueprintIdQuery string
 
 type blueprintRepository struct {
 	db *sqlx.DB
@@ -79,67 +80,6 @@ func (r *blueprintRepository) GetAllBlueprints(ctx context.Context, userId strin
 	return bps, nil
 }
 
-func (r *blueprintRepository) CreateBlueprint(ctx context.Context, b *blueprint.Blueprint, components []*blueprint.BlueprintComponent) (err error) {
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if p := recover(); p != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
-			}
-			panic(p)
-		} else if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				slog.Error("Failed to rollback transaction after panic", "error", rollbackErr)
-			}
-		}
-	}()
-
-	// Prepare and insert blueprint
-	createBluePrintstmt, err := tx.PrepareNamedContext(ctx, createBlueprintQuery)
-	if err != nil {
-		return err
-	}
-	defer createBluePrintstmt.Close()
-	rows, err := createBluePrintstmt.QueryContext(ctx, b)
-	if err != nil {
-		return err
-	}
-
-	if rows.Next() {
-		if err = rows.Scan(&b.ID); err != nil {
-			rows.Close()
-			return err
-		}
-	}
-	rows.Close()
-
-	createBlueprintComponentstmt, err := tx.PrepareNamedContext(ctx, createBlueprintComponentQuery)
-	if err != nil {
-		return err
-	}
-	defer createBlueprintComponentstmt.Close()
-	// Prepare component insert
-	for _, comp := range components {
-		comp.BlueprintID = b.ID
-		var compRows *sql.Rows
-		compRows, err = createBlueprintComponentstmt.QueryContext(ctx, comp)
-		if err != nil {
-			return err
-		}
-		if compRows.Next() {
-			if err = compRows.Scan(&comp.ID); err != nil {
-				compRows.Close()
-				return err
-			}
-		}
-		compRows.Close()
-	}
-	return tx.Commit()
-}
-
 func (r *blueprintRepository) GetComponentsByBlueprintID(ctx context.Context, blueprintId int) ([]*blueprint.BlueprintComponent, error) {
 	var comps []*blueprint.BlueprintComponent
 	err := r.db.SelectContext(ctx, &comps, getComponentsByBlueprintIdQuery, blueprintId)
@@ -149,7 +89,46 @@ func (r *blueprintRepository) GetComponentsByBlueprintID(ctx context.Context, bl
 	return comps, nil
 }
 
-func (r *blueprintRepository) UpdateBlueprint(ctx context.Context, b *blueprint.Blueprint, components []*blueprint.BlueprintComponent) (err error) {
+func (r *blueprintRepository) CreateBlueprint(ctx context.Context, b *blueprint.Blueprint) (err error) {
+	// Prepare and insert blueprint
+	rows, err := r.db.NamedQueryContext(ctx, createBlueprintQuery, b)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	if rows.Next() {
+		return rows.Scan(&b.ID)
+	}
+	return nil
+}
+
+func (r *blueprintRepository) UpdateBlueprint(ctx context.Context, blprint *blueprint.Blueprint) (err error) {
+	// Update blueprint using static SQL
+	updateBlueprintStmt, err := r.db.PrepareNamedContext(ctx, updateBlueprintQuery)
+	if err != nil {
+		return err
+	}
+	defer updateBlueprintStmt.Close()
+
+	var updatedAt time.Time
+	rows, err := updateBlueprintStmt.QueryContext(ctx, blprint)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	if rows.Next() {
+		if err = rows.Scan(&updatedAt); err != nil {
+			return err
+		}
+	} else {
+		return sql.ErrNoRows
+	}
+	blprint.UpdatedAt = &updatedAt
+
+	return nil
+}
+
+func (r *blueprintRepository) UpdateBlueprintComponents(ctx context.Context, bluePrintId int, components []*blueprint.BlueprintComponent) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -167,47 +146,22 @@ func (r *blueprintRepository) UpdateBlueprint(ctx context.Context, b *blueprint.
 		}
 	}()
 
-	// Update blueprint using static SQL
-	updateBlueprintStmt, err := tx.PrepareNamedContext(ctx, updateBlueprintQuery)
-	if err != nil {
-		return err
-	}
-	defer updateBlueprintStmt.Close()
-
-	var updatedAt time.Time
-	rows, err := updateBlueprintStmt.QueryContext(ctx, b)
-	if err != nil {
-		return err
-	}
-	if rows.Next() {
-		if err = rows.Scan(&updatedAt); err != nil {
-			rows.Close()
-			return err
-		}
-	}
-	rows.Close()
-	b.UpdatedAt = &updatedAt
-
-	existingComponents, err := r.GetComponentsByBlueprintID(ctx, *b.ID)
+	existingComponents, err := r.GetComponentsByBlueprintID(ctx, bluePrintId)
 	if err != nil {
 		return err
 	}
 	existingComponentMap := make(map[int]*blueprint.BlueprintComponent)
 	for _, comp := range existingComponents {
-		if comp.ID != nil {
-			existingComponentMap[*comp.ID] = comp
-		}
+		existingComponentMap[*comp.ComponentID] = comp
 	}
 	newComponentMap := make(map[int]*blueprint.BlueprintComponent)
 	for _, comp := range components {
-		if comp.ID != nil {
-			newComponentMap[*comp.ID] = comp
-		}
+		newComponentMap[*comp.ComponentID] = comp
 	}
 
 	for id := range existingComponentMap {
 		if _, exists := newComponentMap[id]; !exists {
-			_, err = tx.ExecContext(ctx, deleteBlueprintComponentQuery, id)
+			_, err = tx.ExecContext(ctx, deleteBlueprintComponentByComponentIdAndBlueprintIdQuery, id, bluePrintId)
 			if err != nil {
 				return err
 			}
@@ -227,15 +181,15 @@ func (r *blueprintRepository) UpdateBlueprint(ctx context.Context, b *blueprint.
 	defer createComponentStmt.Close()
 
 	for _, comp := range components {
-		comp.BlueprintID = b.ID
-		if comp.ID != nil && existingComponentMap[*comp.ID] != nil {
+		comp.BlueprintID = &bluePrintId
+		if existingComponentMap[*comp.ComponentID] != nil {
 			var compUpdatedAt time.Time
 			compRows, err := updateComponentStmt.QueryContext(ctx, comp)
 			if err != nil {
 				return err
 			}
 			if compRows.Next() {
-				if err = compRows.Scan(&compUpdatedAt); err != nil {
+				if err = compRows.Scan(&comp.ID); err != nil {
 					compRows.Close()
 					return err
 				}
