@@ -34,6 +34,7 @@ var getAllHostGroupsQuery string
 //go:embed sql/hostGroup/createHostGroup.sql
 var createHostGroupQuery string
 
+//go:embed sql/hostGroup/updateHostGroup.sql
 var updateHostGroupQuery string
 
 //go:embed sql/hostGroup/addNewHostToGroup.sql
@@ -102,12 +103,12 @@ func (r *hostGroupRepository) UpdateHostGroup(ctx context.Context, h *hostgroup.
 		builder = builder.Set("host_ids", pq.Array(h.HostIDs))
 	}
 
-	query, args, err := builder.ToSql()
+	updateHostGroupQuery, args, err := builder.ToSql()
 	if err != nil {
 		return err
 	}
 
-	_, err = r.db.ExecContext(ctx, query, args...)
+	_, err = r.db.ExecContext(ctx, updateHostGroupQuery, args...)
 	return err
 }
 
