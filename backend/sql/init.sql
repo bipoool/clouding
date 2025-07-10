@@ -75,7 +75,3 @@ CREATE TABLE IF NOT EXISTS blueprint_components (
     UNIQUE(blueprint_id, component_id),
     UNIQUE(blueprint_id, position)
 );
-
--- index to quickly fetch all components of a blueprint in order
-CREATE INDEX idx_blueprint_components_blueprint_id_position
-    ON blueprint_components (blueprint_id, position);

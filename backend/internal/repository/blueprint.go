@@ -48,7 +48,7 @@ var updateBlueprintComponentQuery string
 //go:embed sql/blueprint/deleteBlueprintById.sql
 var deleteBlueprintByIdQuery string
 
-//go:embed sql/blueprint/deleteBlueprintComponentByComponentIdAndBlueprintIdQuery.sql
+//go:embed sql/blueprint/deleteBlueprintComponent.sql
 var deleteBlueprintComponentByComponentIdAndBlueprintIdQuery string
 
 type blueprintRepository struct {

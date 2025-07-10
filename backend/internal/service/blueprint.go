@@ -2,6 +2,7 @@ package service
 
 import (
 	"clouding/backend/internal/model/blueprint"
+	"clouding/backend/internal/model/component"
 	"clouding/backend/internal/repository"
 	"context"
 	"fmt"
@@ -60,11 +61,24 @@ func (s *blueprintService) UpdateBlueprintComponents(ctx context.Context, bluepr
 	if err != nil {
 		return err
 	}
+	if len(existingComps) != len(existingCompIds) {
+		return fmt.Errorf("one or more components not found: expected %d, got %d", len(existingCompIds), len(existingComps))
+	}
+
+	// Create a map for efficient lookup
+	existingCompsMap := make(map[int]*component.Component)
+	for _, existingComp := range existingComps {
+		if existingComp.ID != nil {
+			existingCompsMap[*existingComp.ID] = existingComp
+		}
+	}
 
 	// Validate parameters for each component
-	for i := range components {
-		existingComp := existingComps[i]
-		comp := components[i]
+	for _, comp := range components {
+		existingComp := existingCompsMap[*comp.ComponentID]
+		if existingComp == nil {
+			return fmt.Errorf("componentId %d not found", *comp.ComponentID)
+		}
 		err = blueprint.ValidateBlueprintParametersUsingComponentParameters(comp.Parameters, existingComp.Parameters)
 		if err != nil {
 			return fmt.Errorf("parameter validation failed for componentId %d: %w", *comp.ComponentID, err)

@@ -51,6 +51,7 @@ func (c *BlueprintController) GetComponents(ctx *gin.Context) {
 	blueprintIdStr := ctx.Param("id")
 	blueprintId, err := strconv.Atoi(blueprintIdStr)
 	if err != nil {
+		slog.Debug("ID not correct", "ERR", err)
 		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
 		return
 	}
