@@ -75,3 +75,12 @@ CREATE TABLE IF NOT EXISTS blueprint_components (
     UNIQUE(blueprint_id, component_id),
     UNIQUE(blueprint_id, position)
 );
+
+CREATE TABLE IF NOT EXISTS host_group (
+    id SERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    host_ids INTEGER[] DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
