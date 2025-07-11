@@ -1,0 +1,21 @@
+- name: Ensure iptables-persistent is installed
+  ansible.builtin.apt:
+    name: iptables-persistent
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Open TCP port {{ couding_open_port }} using iptables
+  community.general.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ couding_open_port }}"
+    jump: ACCEPT
+    state: present
+    ip_version: 4
+    comment: "Allow TCP port {{ couding_open_port }}"
+  become: true
+
+- name: Save iptables rules to persist across reboots
+  ansible.builtin.command: iptables-save > /etc/iptables/rules.v4
+  become: true
