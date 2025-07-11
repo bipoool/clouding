@@ -52,11 +52,10 @@ def event_generator():
                     event_data = e.get('event_data', {})
                     task = event_data.get('task')
                     changed = event_data.get('res', {}).get('changed', False)
-
-                if changed:
-                    print(f"Changed  - {task}")
-                else:
-                    print(f"Ok  - {task}")
+                    if changed:
+                        print(f"Changed  - {task}")
+                    else:
+                        print(f"Ok  - {task}")
 
                 # if stdout:
                 #     print("event log: ", stdout)
