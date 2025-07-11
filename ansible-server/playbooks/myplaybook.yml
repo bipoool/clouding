@@ -1,6 +1,10 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  gather_facts: yes
+  vars:
+    PORT: 8080
+  roles:
+    - role: clouding.OpenPort
   tasks:
     - debug:
         msg: "Hello from Ansible"
