@@ -6,7 +6,7 @@
   become: true
 
 - name: Open TCP port {{ couding_open_port }} using iptables
-  community.general.iptables:
+  community.builtin.iptables:
     chain: INPUT
     protocol: tcp
     destination_port: "{{ couding_open_port }}"
