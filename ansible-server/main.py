@@ -30,12 +30,11 @@ def event_generator():
         thread, runner = ansible_runner.run_async(
             private_data_dir=".",
             playbook=playbook,
-            
+            cmdline='--check --diff',
             quiet=True
         )
     except Exception as e:
         # yield {"event": "error", "data": f"Failed to start runner: {str(e)}"}
-        #cmdline='--check --diff',
         return
 
     while thread.is_alive():
