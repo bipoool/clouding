@@ -1,0 +1,35 @@
+---
+- name: Ensure iptables is installed
+  ansible.builtin.package:
+    name: iptables
+    state: present
+
+- name: Open port {{ PORT }} in iptables
+  ansible.builtin.command: iptables -A INPUT -p tcp --dport {{ PORT }} -j ACCEPT
+  args:
+    warn: false
+  become: true
+
+- name: Save iptables rules to a file (Debian/Ubuntu)
+  ansible.builtin.command: iptables-save
+  register: iptables_save_output
+  changed_when: false
+  become: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Write iptables rules file with diff (Debian/Ubuntu)
+  ansible.builtin.copy:
+    dest: /etc/iptables/rules.v4
+    content: "{{ iptables_save_output.stdout }}\n"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Save iptables rules (RedHat/CentOS)
+  ansible.builtin.command: service iptables save
+  args:
+    warn: false
+  become: true
+  when: ansible_facts['os_family'] == 'RedHat'
