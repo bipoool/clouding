@@ -48,6 +48,8 @@ def event_generator():
                 stdout = e.get("stdout")
                 event_type = e.get("event")
 
+                if e['event_data'] is None:
+                    continue 
                 task = e['event_data']['task']
                 changed = e['event_data'].get('res', {}).get('changed', False)
                 if changed:
