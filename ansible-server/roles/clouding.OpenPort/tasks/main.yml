@@ -11,7 +11,7 @@
     protocol: tcp
     destination_port: "{{ couding_open_port }}"
     jump: ACCEPT
-    state: absent
+    state: present
     ip_version: ipv4
     comment: "Allow TCP port {{ couding_open_port }}"
   become: true
