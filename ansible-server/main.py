@@ -47,14 +47,22 @@ def event_generator():
                 processed_events.add(event_uuid)
                 stdout = e.get("stdout")
                 event_type = e.get("event")
-                if stdout:
-                    print("event log: ", stdout)
-                    # yield {
-                    #     "event": "log",
-                    #     "data": stdout
-                    # }
-                if event_type:
-                    print("event progress: ", event_type)
+
+                task = e['event_data']['task']
+                changed = e['event_data'].get('res', {}).get('changed', False)
+                if changed:
+                    print(f"Changed  - {task}")
+                else:
+                    print(f"Ok  - {task}")
+
+                # if stdout:
+                #     print("event log: ", stdout)
+                #     # yield {
+                #     #     "event": "log",
+                #     #     "data": stdout
+                #     # }
+                # if event_type:
+                #     print("event progress: ", event_type)
                     # yield {
                     #     "event": "progress",
                     #     "data": event_type
