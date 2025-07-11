@@ -45,13 +45,14 @@ def event_generator():
                 if event_uuid in processed_events:
                     continue
                 processed_events.add(event_uuid)
-                stdout = e.get("stdout")
-                event_type = e.get("event")
+                # stdout = e.get("stdout")
+                # event_type = e.get("event")
 
-                event_data = e.get('event_data')
-                if event_data and 'task' in event_data:
-                    task = event_data['task']
-                changed = e['event_data'].get('res', {}).get('changed', False)
+                if e.get('event') == 'runner_on_ok':
+                    event_data = e.get('event_data', {})
+                    task = event_data.get('task')
+                    changed = event_data.get('res', {}).get('changed', False)
+
                 if changed:
                     print(f"Changed  - {task}")
                 else:
