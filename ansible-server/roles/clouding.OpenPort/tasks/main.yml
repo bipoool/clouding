@@ -16,6 +16,9 @@
     comment: "Allow TCP port {{ couding_open_port }}"
   become: true
 
-- name: Save iptables rules to persist across reboots
-  ansible.builtin.command: iptables-save > /etc/iptables/rules.v4
+- name: Save iptables rules (IPv4) to persist across reboots
+  community.general.iptables_state:
+    path: /etc/iptables/rules.v4
+    ip_version: ipv4
+    state: saved
   become: true
