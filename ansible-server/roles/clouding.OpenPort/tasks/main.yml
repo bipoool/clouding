@@ -6,7 +6,7 @@
   become: true
 
 - name: Open TCP port {{ couding_open_port }} using iptables
-  community.builtin.iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     protocol: tcp
     destination_port: "{{ couding_open_port }}"
