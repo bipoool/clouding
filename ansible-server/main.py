@@ -1,79 +1,72 @@
-from fastapi import FastAPI, Query, HTTPException
-from sse_starlette.sse import EventSourceResponse
-import ansible_runner
 import os
-from ansible_runner.runner import Runner
-from fastapi.middleware.cors import CORSMiddleware
+import uuid
+import yaml
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List, Union
+from handlers import docker, nginx
 
-# app = FastAPI()
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],  # or ["http://localhost:5500"] for stricter
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-# @app.get("/run")
-# def run_playbook(playbook: str = Query(..., description="Path to the Ansible playbook")):
-#     """
-#     SSE endpoint to run the playbook and stream its progress and logs.
-#     Accepts a 'playbook' query parameter for the playbook path.
-#     """
+app = FastAPI()
 
-playbook = "myplaybook.yml"
-# Validate playbook path
-if not os.path.isfile(playbook):
-    raise HTTPException(status_code=400, detail=f"Playbook not found: {playbook}")
 
-def event_generator():
+class Parameter(BaseModel):
+    id: str
+    name: str
+    value: Union[str, dict]
+
+
+class Component(BaseModel):
+    componentId: int
+    position: int
+    ansibleRole: str
+    parameters: List[Parameter]
+
+
+class BlueprintPayload(BaseModel):
+    blueprintId: int
+    userId: str
+    components: List[Component]
+
+
+ROLE_DISPATCH = {
+    "nginxinc.nginx": nginx.build_nginx_task,
+    "community.docker.docker_install": docker.build_docker_task
+}
+
+
+@app.post("/generate-playbook")
+async def generate_playbook(payload: BlueprintPayload):
     try:
-        thread, runner = ansible_runner.run_async(
-            private_data_dir=".",
-            playbook=playbook,
-            cmdline='--check --diff',
-            quiet=True
-        )
+        os.makedirs(payload.userId, exist_ok=True)
+        run_id = str(uuid.uuid4())
+        playbook_path = os.path.join(payload.userId, f"{run_id}.yaml")
+
+        components = sorted(payload.components, key=lambda c: c.position)
+
+        tasks = []
+        for comp in components:
+            role_handler = ROLE_DISPATCH.get(comp.ansibleRole)
+            if not role_handler:
+                raise HTTPException(status_code=400, detail=f"Unsupported role: {comp.ansibleRole}")
+
+            param_dicts = [p.dict() for p in comp.parameters]
+            task = role_handler(param_dicts)
+            tasks.append(task)
+
+        playbook = [{
+            "name": f"Blueprint {payload.blueprintId}",
+            "hosts": "all",
+            "become": True,
+            "tasks": tasks
+        }]
+
+        with open(playbook_path, "w") as f:
+            yaml.dump(playbook, f)
+
+        return {
+            "status": "success",
+            "playbookPath": playbook_path
+        }
+
     except Exception as e:
-        # yield {"event": "error", "data": f"Failed to start runner: {str(e)}"}
-        return
-
-    while thread.is_alive():
-        processed_events = set()
-        if isinstance(runner, Runner):
-            for e in runner.events:
-                event_uuid = e['uuid']
-                if event_uuid in processed_events:
-                    continue
-                processed_events.add(event_uuid)
-                # stdout = e.get("stdout")
-                # event_type = e.get("event")
-
-                if e.get('event') == 'runner_on_ok':
-                    event_data = e.get('event_data', {})
-                    task = event_data.get('task')
-                    changed = event_data.get('res', {}).get('changed', False)
-                    if changed:
-                        print(f"Changed  - {task}")
-                    else:
-                        print(f"Ok  - {task}")
-
-                # if stdout:
-                #     print("event log: ", stdout)
-                #     # yield {
-                #     #     "event": "log",
-                #     #     "data": stdout
-                #     # }
-                # if event_type:
-                #     print("event progress: ", event_type)
-                    # yield {
-                    #     "event": "progress",
-                    #     "data": event_type
-                    # }
-    # yield {
-    #     "event": "end",
-    #     "data": "Playbook finished"
-    # }
-    print("event end: ", "Playbook finished")
-
-event_generator()
-# return EventSourceResponse(event_generator())
+        raise HTTPException(status_code=500, detail=f"Failed to generate playbook: {e}")
