@@ -21,7 +21,6 @@ func NewDeploymentController(s service.DeploymentService) *DeploymentController 
 
 func (c *DeploymentController) CreateDeployment(ctx *gin.Context) {
 	userId := ctx.GetString("userId")
-	fmt.Println(userId, "user")
 	deploymentType := ctx.Param("type")
 
 	var req deployment.Deployment
