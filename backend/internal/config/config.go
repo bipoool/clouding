@@ -31,6 +31,10 @@ type CloudingConfig struct {
 		VaultSecretEnginePath     string `mapstructure:"vaultSecretEnginePath" description:"Vault Secret Engine Path"`
 		VaultSecretEngineMetaPath string `mapstructure:"vaultSecretEngineMetaPath" description:"Vault Secret Engine Meta Path"`
 	}
+   
+	RabbitMQ struct {
+	URL string `mapstructure:"url" description:"RabbitMQ connection URL"`
+   } `mapstructure:"rabbitmq"`
 }
 
 var Config *CloudingConfig
@@ -57,5 +61,7 @@ func LoadCloudingConfig(path string) {
 
 	Config.Vault.VaultSecretEnginePath = os.Getenv("VAULT_SECRET_ENGINE")
 	Config.Vault.VaultSecretEngineMetaPath = os.Getenv("VAULT_SECRET_ENGINE_METADATA")
+
+	Config.RabbitMQ.URL = os.Getenv("RABBITMQ.URL")
 
 }

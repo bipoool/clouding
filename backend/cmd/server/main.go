@@ -6,6 +6,7 @@ import (
 	"clouding/backend/internal/logger"
 	"clouding/backend/internal/middleware"
 	"clouding/backend/internal/router"
+	"clouding/backend/internal/queue"
 	"context"
 	"fmt"
 	"log/slog"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Server struct {
@@ -25,6 +27,7 @@ type Server struct {
 	ginEngine  *gin.Engine
 	httpServer *http.Server
 	db         *sqlx.DB
+	queueConn *amqp.Connection
 }
 
 func Start() {
@@ -44,6 +47,17 @@ func Start() {
 		config.Config.Sql.Db,
 	)
 
+	rmqConn, err := amqp.Dial(config.Config.RabbitMQ.URL)
+	if err != nil {
+		slog.Error(" Failed to connect to RabbitMQ", "error", err)
+		return
+	}
+	publisher, err := queue.NewPublisher(rmqConn, "deployments")
+	if err != nil {
+		slog.Error(" Failed to create publisher", "error", err)
+		return
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
@@ -57,7 +71,7 @@ func Start() {
 	v1RouteGroup := ginEngine.Group("/api/v1")
 
 	//Register routes here
-	router.SetupRouter(v1RouteGroup, db)
+	router.SetupRouter(v1RouteGroup, db, publisher)
 
 	httpServer := &http.Server{
 		Addr:    ":" + config.Config.Server.Port,
@@ -70,6 +84,7 @@ func Start() {
 		ginEngine:  ginEngine,
 		httpServer: httpServer,
 		db:         db,
+		queueConn: rmqConn,
 	}
 
 	// Print banner
@@ -98,6 +113,7 @@ func (s *Server) shutdown() {
 		slog.Error("server forced to shutdown", "Error", err)
 	}
 	s.db.Close()
+	s.queueConn.Close(); 
 	s.wg.Wait()
 }
 
