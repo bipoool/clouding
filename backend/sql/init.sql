@@ -75,3 +75,21 @@ CREATE TABLE IF NOT EXISTS blueprint_components (
     UNIQUE(blueprint_id, component_id),
     UNIQUE(blueprint_id, position)
 );
+
+CREATE TYPE deployment_type AS ENUM ('plan', 'deploy');
+
+CREATE TYPE deployment_status AS ENUM ('pending', 'started', 'completed', 'failed');
+CREATE TABLE deployments (
+  id UUID PRIMARY KEY,
+
+  user_id UUID NOT NULL REFERENCES users(id),
+  host_id INT NOT NULL REFERENCES hosts(id),
+  host_group_id INT NOT NULL REFERENCES host_groups(id),
+  blueprint_id INT NOT NULL REFERENCES blueprints(id),
+
+  type deployment_type NOT NULL,
+  status deployment_status NOT NULL DEFAULT 'pending',
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
