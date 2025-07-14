@@ -47,7 +47,7 @@ func NewDeploymentRepository(db *sqlx.DB) DeploymentRepository {
 func (r *deploymentRepository) Create(ctx context.Context, d *deployment.Deployment) error {
 
 	if d.Status == "" {
-		d.Status = "pending"
+		d.Status = deployment.DeploymentStatus("pending")
 	}
 
 	rows, err := r.db.NamedQueryContext(ctx, createDeploymentQuery, d)
