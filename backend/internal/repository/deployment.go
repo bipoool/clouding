@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 // DeploymentRepository defines data access for deployments
@@ -16,6 +17,7 @@ type DeploymentRepository interface {
 	UpdateStatus(ctx context.Context, id string, status deployment.DeploymentStatus) error
 	GetByID(ctx context.Context, id string) (*deployment.Deployment, error)
 	GetByUserAndType(ctx context.Context, userId string, dType string) ([]*deployment.Deployment, error)
+	GetHostIDsByGroupID(ctx context.Context, groupId int) ([]int, error)
 }
 
 // Embedded SQL queries
@@ -43,12 +45,26 @@ func NewDeploymentRepository(db *sqlx.DB) DeploymentRepository {
 }
 
 func (r *deploymentRepository) Create(ctx context.Context, d *deployment.Deployment) error {
+
 	if d.Status == "" {
 		d.Status = "pending"
 	}
 
-	_, err := r.db.NamedExecContext(ctx, createDeploymentQuery, d)
-	return err
+	rows, err := r.db.NamedQueryContext(ctx, createDeploymentQuery, d)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		if err := rows.StructScan(d); err != nil {
+			return err
+		}
+	} else {
+		// No rows → means conflict occurred and insert was skipped
+	}
+
+	return nil
 }
 
 func (r *deploymentRepository) UpdateStatus(ctx context.Context, id string, status deployment.DeploymentStatus) error {
@@ -77,4 +93,21 @@ func (r *deploymentRepository) GetByUserAndType(ctx context.Context, userId stri
 		return nil, err
 	}
 	return deployments, nil
+}
+
+func (r *deploymentRepository) GetHostIDsByGroupID(ctx context.Context, groupID int) ([]int, error) {
+	query := `SELECT host_ids FROM host_group WHERE id = $1`
+
+	var hostIDs64 []int64
+	err := r.db.QueryRowContext(ctx, query, groupID).Scan(pq.Array(&hostIDs64))
+	if err != nil {
+		return nil, err
+	}
+
+	hostIDs := make([]int, len(hostIDs64))
+	for i, id := range hostIDs64 {
+		hostIDs[i] = int(id)
+	}
+
+	return hostIDs, nil
 }
