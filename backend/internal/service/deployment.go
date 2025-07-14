@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 )
 
 type DeploymentService interface {
@@ -17,35 +18,65 @@ type DeploymentService interface {
 }
 
 type deploymentService struct {
-	repo repository.DeploymentRepository
-	publisher *queue.Publisher 
+	repo      repository.DeploymentRepository
+	publisher *queue.Publisher
 }
 
 func NewDeploymentService(r repository.DeploymentRepository, publisher *queue.Publisher) DeploymentService {
-	return &deploymentService{repo: r, publisher: publisher,}
+	return &deploymentService{repo: r, publisher: publisher}
 }
 
 func (s *deploymentService) CreateDeployment(ctx context.Context, d *deployment.Deployment) error {
 	existing, err := s.repo.GetByID(ctx, d.ID)
 	if err == nil && existing != nil {
-		return nil 
+		log.Println(" Deployment already exists. Skipping creation.")
+		return nil
 	}
 
 	if err := s.repo.Create(ctx, d); err != nil {
-		if errors.Is(err,errors.New("duplicate entry")) {
-			return nil
-		}
 		return err
 	}
 
-	msg, err := json.Marshal(d)
+	groupHostIDs, err := s.repo.GetHostIDsByGroupID(ctx, d.HostGroupID)
 	if err != nil {
+		log.Printf(" Failed to fetch host group IDs: %v", err)
 		return err
 	}
-	if err := s.publisher.Publish(msg); err != nil {
-		return err 
+
+	mergedHostIDs := append([]int{d.HostID}, groupHostIDs...)
+	unique := map[int]struct{}{}
+	for _, id := range mergedHostIDs {
+		unique[id] = struct{}{}
 	}
 
+	dedupedHostIDs := make([]int, 0, len(unique))
+	for id := range unique {
+		dedupedHostIDs = append(dedupedHostIDs, id)
+	}
+
+	msgPayload := deployment.DeploymentMessage{
+		JobID:       d.ID,
+		UserID:      d.UserID,
+		HostIDs:     dedupedHostIDs,
+		BlueprintID: d.BlueprintID,
+		Type:        d.Type,
+		CreatedAt:   d.CreatedAt,
+	}
+
+	msg, err := json.Marshal(msgPayload)
+	if err != nil {
+		log.Printf("Failed to marshal message: %v", err)
+		return err
+	}
+
+	if s.publisher == nil {
+		return errors.New("publisher not initialized")
+	}
+
+
+	if err := s.publisher.Publish(msg); err != nil {
+		return err
+	}
 
 	return nil
 }
