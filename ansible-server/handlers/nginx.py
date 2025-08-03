@@ -1,12 +1,12 @@
 import os
 import requests
 
-def handle_nginx_service_custom(value: dict, user_id: str, role_name: str) -> dict:
+def handle_nginx_service_custom(value: dict, playbook_dir: str, role_name: str) -> dict:
     filepath = value["filepath"]
     url = value["url"]
 
     # Save override file to: ./overrides/{userId}/{roleName}/{filepath}
-    target_path = os.path.join("overrides", user_id, role_name, filepath)
+    target_path = os.path.join(playbook_dir, "overrides", role_name, filepath)
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
     resp = requests.get(url)
@@ -28,7 +28,7 @@ property_handlers = {
 }
 
 
-def build_nginx_role(parameters: list, user_id: str) -> dict:
+def build_nginx_role(parameters: list, playbook_dir: str) -> dict:
     role_name = "nginxinc.nginx"
     vars_dict = {}
 
@@ -37,7 +37,7 @@ def build_nginx_role(parameters: list, user_id: str) -> dict:
         value = param["value"]
 
         if name in property_handlers:
-            vars_dict.update(property_handlers[name](value, user_id, role_name))
+            vars_dict.update(property_handlers[name](value, playbook_dir, role_name))
         else:
             vars_dict[name] = value
 

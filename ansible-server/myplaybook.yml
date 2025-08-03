@@ -1,8 +1,0 @@
-- name: Open port on Ubuntu
-  hosts: localhost
-  become: true
-  roles:
-    - role: clouding.OpenPort
-      vars:
-        couding_open_port: 9000
-        

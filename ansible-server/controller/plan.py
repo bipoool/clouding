@@ -13,9 +13,11 @@ ROLE_DISPATCH = {
     "community.docker.docker_install": docker.build_docker_task
 }
 
+PLAYBOOK_BASE_PATH = "runs"
+
 def generatePlan(payload: plan.Plan):
     try:
-        playbook_dir = "runs/" + payload.userId + "/" + payload.jobId
+        playbook_dir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
         os.makedirs(playbook_dir, exist_ok=True)
         run_id = str(uuid.uuid4())
         playbook_path = os.path.join(playbook_dir, f"{run_id}.yaml")
@@ -53,11 +55,11 @@ def generatePlan(payload: plan.Plan):
                 raise HTTPException(status_code=400, detail=f"Unsupported role: {comp.ansiblerole}")
 
             param_dicts = [p for p in comp.blueprintparameters]
-            task = handler(param_dicts, payload.userId)
+            task = handler(param_dicts, playbook_dir)
             roles.append(task)
 
         playbook = [{
-            "name": f"Blueprint {payload.blueprintId}",
+            "name": f"{blueprint.name} - {run_id}",
             "hosts": "all",
             "become": True,
             "roles": roles
