@@ -11,7 +11,7 @@ type Host struct {
 	Name         *string          `db:"name" json:"name"`
 	IP           *string          `db:"ip" json:"ip"`
 	Os           *string          `db:"os" json:"os"`
-	CredentialID *int             `db:"credential_id" json:"credentialId"`
+	CredentialID *string          `db:"credential_id" json:"credentialId"`
 	MetaData     *json.RawMessage `db:"meta_data" json:"metaData"`
 	CreatedAt    *time.Time       `db:"created_at" json:"createdAt"`
 	UpdatedAt    *time.Time       `db:"updated_at" json:"updatedAt"`
