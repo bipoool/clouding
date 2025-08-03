@@ -2,3 +2,8 @@ fastapi
 uvicorn
 ansible-runner
 sse-starlette
+psycopg2-binary
+python-dotenv
+pyyaml
+pydantic
+pika

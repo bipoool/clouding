@@ -1,63 +1,152 @@
-from fastapi import FastAPI, Query, HTTPException
-from sse_starlette.sse import EventSourceResponse
-import ansible_runner
 import os
-from ansible_runner.runner import Runner
-from fastapi.middleware.cors import CORSMiddleware
+import json
+import logging
+from typing import Dict, Any
+from dotenv import load_dotenv
+import pika
+from pika.exceptions import AMQPConnectionError
 
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # or ["http://localhost:5500"] for stricter
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-@app.get("/run")
-def run_playbook(playbook: str = Query(..., description="Path to the Ansible playbook")):
-    """
-    SSE endpoint to run the playbook and stream its progress and logs.
-    Accepts a 'playbook' query parameter for the playbook path.
-    """
-    playbook = "./playbooks/" + playbook
-    # Validate playbook path
-    if not os.path.isfile(playbook):
-        raise HTTPException(status_code=400, detail=f"Playbook not found: {playbook}")
+from controller import plan as planController
+from models import plan as planModel
 
-    def event_generator():
+# Load environment variables
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class RabbitMQConsumer:
+    def __init__(self):
+        self.connection = None
+        self.channel = None
+        self.queue_name = 'clouding-plan'
+        
+        # RabbitMQ credentials from environment
+        self.rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
+        self.rabbitmq_port = int(os.getenv('RABBITMQ_PORT', '5672'))
+        self.rabbitmq_user = os.getenv('RABBITMQ_USER', 'guest')
+        self.rabbitmq_password = os.getenv('RABBITMQ_PASSWORD', 'guest')
+        self.rabbitmq_vhost = os.getenv('RABBITMQ_VHOST', '/')
+
+    def connect(self):
+        """Establish connection to RabbitMQ"""
         try:
-            thread, runner = ansible_runner.run_async(
-                private_data_dir=".",
-                playbook=playbook,
-                quiet=True
+            credentials = pika.PlainCredentials(self.rabbitmq_user, self.rabbitmq_password)
+            parameters = pika.ConnectionParameters(
+                host=self.rabbitmq_host,
+                port=self.rabbitmq_port,
+                virtual_host=self.rabbitmq_vhost,
+                credentials=credentials
             )
+            self.connection = pika.BlockingConnection(parameters)
+            self.channel = self.connection.channel()
+            
+            # Declare the queue
+            self.channel.queue_declare(queue=self.queue_name, durable=True)
+            logger.info(f"Connected to RabbitMQ and declared queue: {self.queue_name}")
+            
+        except AMQPConnectionError as e:
+            logger.error(f"Failed to connect to RabbitMQ: {e}")
+            raise
+
+    def callback(self, ch, method, properties, body):
+        """Process incoming messages"""
+        try:
+            logger.info(f"Received message: {body}")
+            
+            # TODO: add validation for the message
+            # Parse the message
+            message_data = json.loads(body)
+
+            # Validate required fields
+            if message_data.get('jobId') == None or message_data.get('hostIds') == None or message_data.get('blueprintId') == None or message_data.get('userId') == None:
+                logger.error(f"Invalid message: {message_data}")
+                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+                return
+            
+            # Validate hostIds is a list of integers
+            host_ids = message_data.get('hostIds')
+            if not isinstance(host_ids, list):
+                logger.error("hostIds must be a list")
+                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+                return
+                
+            if not all(isinstance(host_id, int) for host_id in host_ids):
+                logger.error("All hostIds must be integers")
+                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+                return
+            
+            # Convert to Plan model
+            plan_payload = planModel.Plan(
+                jobId=message_data.get('jobId'),
+                hostIds=message_data.get('hostIds'),
+                blueprintId=message_data.get('blueprintId'),
+                userId=message_data.get('userId')
+            )
+            
+            # Fetch hosts with their credentials
+            from repositories import host as hostRepository
+            hosts_with_credentials = hostRepository.getHostsWithCredentials(plan_payload.hostIds)
+            
+            logger.info(f"Fetched {len(hosts_with_credentials)} hosts with credentials")
+            
+            # Process the plan using the existing controller
+            result = planController.generatePlan(plan_payload)
+            
+            logger.info(f"Plan processed successfully: {result}")
+            
+            # Acknowledge the message
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse message as JSON: {e}")
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
         except Exception as e:
-            yield {"event": "error", "data": f"Failed to start runner: {str(e)}"}
-            return
+            logger.error(f"Error processing message: {e}")
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
-        while thread.is_alive():
-            processed_events = set()
-            if isinstance(runner, Runner):
-                for e in runner.events:
-                    event_uuid = e['uuid']
-                    if event_uuid in processed_events:
-                        continue
-                    processed_events.add(event_uuid)
-                    stdout = e.get("stdout")
-                    event_type = e.get("event")
-                    if stdout:
-                        yield {
-                            "event": "log",
-                            "data": stdout
-                        }
-                    if event_type:
-                        yield {
-                            "event": "progress",
-                            "data": event_type
-                        }
-        yield {
-            "event": "end",
-            "data": "Playbook finished"
-        }
+    def start_consuming(self):
+        """Start consuming messages from the queue"""
+        try:
+            # Set up consumer
+            self.channel.basic_qos(prefetch_count=1)
+            self.channel.basic_consume(
+                queue=self.queue_name,
+                on_message_callback=self.callback
+            )
+            
+            logger.info(f"Starting to consume messages from queue: {self.queue_name}")
+            logger.info("Press CTRL+C to stop")
+            
+            # Start consuming
+            self.channel.start_consuming()
+            
+        except KeyboardInterrupt:
+            logger.info("Stopping consumer...")
+            self.stop()
+        except Exception as e:
+            logger.error(f"Error in consumer: {e}")
+            self.stop()
 
-    return EventSourceResponse(event_generator())
+    def stop(self):
+        """Stop the consumer and close connections"""
+        if self.channel:
+            self.channel.stop_consuming()
+        if self.connection:
+            self.connection.close()
+        logger.info("Consumer stopped")
+
+def main():
+    """Main function to start the RabbitMQ consumer"""
+    consumer = RabbitMQConsumer()
+    
+    try:
+        consumer.connect()
+        consumer.start_consuming()
+    except Exception as e:
+        logger.error(f"Failed to start consumer: {e}")
+        consumer.stop()
+
+if __name__ == "__main__":
+    main()
