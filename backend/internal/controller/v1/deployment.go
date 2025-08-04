@@ -1,0 +1,89 @@
+package v1
+
+import (
+	"clouding/backend/internal/model/deployment"
+	"clouding/backend/internal/service"
+	"clouding/backend/internal/utils"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"github.com/gin-gonic/gin"
+)
+
+type DeploymentController struct {
+	Service service.DeploymentService
+}
+
+func NewDeploymentController(s service.DeploymentService) *DeploymentController {
+	return &DeploymentController{Service: s}
+}
+
+func (c *DeploymentController) CreateDeployment(ctx *gin.Context) {
+	userId := ctx.GetString("userId")
+	deploymentType := ctx.Param("type")
+
+	var req deployment.Deployment
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
+		return
+	}
+
+	req.Type = deployment.DeploymentType(deploymentType)
+	req.UserID = userId
+
+	if err := c.Service.CreateDeployment(ctx.Request.Context(), &req); err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, utils.NewSuccessResponse(gin.H{"id": req.ID}))
+}
+
+func (c *DeploymentController) UpdateStatus(ctx *gin.Context) {
+	id := ctx.Param("id")
+   var body deployment.UpdateDeploymentStatusRequest
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
+		return
+	}
+
+	if err := c.Service.UpdateStatus(ctx.Request.Context(), id, body.Status); err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(gin.H{"id": id, "status": body.Status}))
+}
+
+func (c *DeploymentController) GetByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	result, err := c.Service.GetByID(ctx.Request.Context(), id)
+	if err != nil {
+		slog.Error("Error fetching deployment", "err", err)
+		ctx.JSON(http.StatusNotFound, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(result))
+}
+
+func (c *DeploymentController) GetByUserAndType(ctx *gin.Context) {
+	userId := ctx.GetString("userId")
+	dType := ctx.Param("type")
+	fmt.Println(userId, dType)
+
+	if userId == "" || dType == "" {
+		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse("userId and type required"))
+		return
+	}
+
+	results, err := c.Service.GetByUserAndType(ctx.Request.Context(), userId, dType)
+	if err != nil {
+		slog.Error("Error fetching deployments", "err", err)
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(results))
+}
