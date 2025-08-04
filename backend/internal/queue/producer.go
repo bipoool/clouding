@@ -26,7 +26,7 @@ func NewPublisher(conn *amqp091.Connection, queueName string) (*Publisher, error
 		nil,   
 	)
 	if err != nil {
-		slog.Error("Error creating secrets manager")
+		slog.Error("Error declaring queue", "queue", queueName, "error", err)
 		panic(err)
 	}
 
