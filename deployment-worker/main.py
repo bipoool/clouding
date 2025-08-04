@@ -6,13 +6,12 @@ from dotenv import load_dotenv
 import pika
 from pika.exceptions import AMQPConnectionError
 
-from controller import plan as planController
+from ansibleWorker import ansibleNotebookGenerator
+from ansibleWorker.ansibleRunner import AnsibleRunner
 from models import plan as planModel
 
-# Load environment variables
 load_dotenv()
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -28,6 +27,8 @@ class RabbitMQConsumer:
         self.rabbitmq_user = os.getenv('RABBITMQ_USER', 'guest')
         self.rabbitmq_password = os.getenv('RABBITMQ_PASSWORD', 'guest')
         self.rabbitmq_vhost = os.getenv('RABBITMQ_VHOST', '/')
+
+        self.lokiEndPoint = os.getenv('LOKI_ENDPOINT')
 
     def connect(self):
         """Establish connection to RabbitMQ"""
@@ -92,7 +93,9 @@ class RabbitMQConsumer:
             logger.info(f"Fetched {len(hosts_with_credentials)} hosts with credentials")
             
             # Process the plan using the existing controller
-            result = planController.generatePlan(plan_payload)
+            result = ansibleNotebookGenerator.genenrateNotebook(plan_payload)
+            ansibleRunner = AnsibleRunner(self.lokiEndPoint, result.get("jobId"), result.get("playbookPath"), result.get("playbookDir"), True)
+            ansibleRunner.run()
             
             logger.info(f"Plan processed successfully: {result}")
             
