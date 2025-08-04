@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,10 +41,7 @@ func (c *DeploymentController) CreateDeployment(ctx *gin.Context) {
 
 func (c *DeploymentController) UpdateStatus(ctx *gin.Context) {
 	id := ctx.Param("id")
-	var body struct {
-		Status deployment.DeploymentStatus `json:"status"`
-	}
-
+   var body deployment.UpdateDeploymentStatusRequest
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
 		return

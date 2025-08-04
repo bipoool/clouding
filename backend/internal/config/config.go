@@ -33,7 +33,7 @@ type CloudingConfig struct {
 	}
    
 	RabbitMQ struct {
-	URL string `mapstructure:"url" description:"RabbitMQ connection URL"`
+	URL string `mapstructure:"rabbitMqUrl"" description:"RabbitMQ connection URL"`
    } `mapstructure:"rabbitmq"`
 }
 

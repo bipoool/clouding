@@ -22,3 +22,8 @@ type DeploymentMessage struct {
 	Type        DeploymentType `json:"type"`
 	CreatedAt   time.Time      `json:"created_at"`
 }
+
+
+type UpdateDeploymentStatusRequest struct {
+	Status DeploymentStatus `json:"status" binding:"required"`
+}

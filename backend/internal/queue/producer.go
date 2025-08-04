@@ -1,6 +1,8 @@
 package queue
 
 import (
+	"log/slog"
+
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -24,7 +26,8 @@ func NewPublisher(conn *amqp091.Connection, queueName string) (*Publisher, error
 		nil,   
 	)
 	if err != nil {
-		return nil, err
+		slog.Error("Error creating secrets manager")
+		panic(err)
 	}
 
 	return &Publisher{
