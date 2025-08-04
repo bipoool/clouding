@@ -5,7 +5,7 @@ from fastapi import HTTPException
 
 from handlers import docker, nginx
 from models import plan
-from models.blueprint import AnsiblePlan, BlueprintComponent
+from models.blueprint import AnsiblePlan
 from repositories import blueprint as blueprintRepository
 
 ROLE_DISPATCH = {
@@ -15,12 +15,11 @@ ROLE_DISPATCH = {
 
 PLAYBOOK_BASE_PATH = "runs"
 
-def generatePlan(payload: plan.Plan):
+def genenrateNotebook(payload: plan.Plan):
     try:
         playbook_dir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
         os.makedirs(playbook_dir, exist_ok=True)
-        run_id = str(uuid.uuid4())
-        playbook_path = os.path.join(playbook_dir, f"{run_id}.yaml")
+        playbook_path = os.path.join(playbook_dir, f"main.yaml")
 
         blueprintComponents = blueprintRepository.getBlueprintComponents(payload.blueprintId)
         if blueprintComponents:
@@ -59,7 +58,7 @@ def generatePlan(payload: plan.Plan):
             roles.append(task)
 
         playbook = [{
-            "name": f"{blueprint.name} - {run_id}",
+            "name": f"{blueprint.name} - {payload.jobId}",
             "hosts": "all",
             "become": True,
             "roles": roles
@@ -71,6 +70,7 @@ def generatePlan(payload: plan.Plan):
         return {
             "status": "success",
             "playbookPath": playbook_path,
+            "playbookDir": playbook_dir,
             "blueprintId": payload.blueprintId,
             "userId": payload.userId,
             "jobId": payload.jobId

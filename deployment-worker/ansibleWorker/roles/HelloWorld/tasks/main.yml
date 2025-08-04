@@ -1,0 +1,5 @@
+---
+- name: Create or modify a file with some content - 1
+  copy:
+    dest: ./hello1.txt
+    content: "Hello, World from Ansible 1\n"
