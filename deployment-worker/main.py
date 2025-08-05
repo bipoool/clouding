@@ -69,7 +69,7 @@ class RabbitMQConsumer:
                 logger.error(f"Invalid message: {message_data}")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
-            if message_data.get("type") != 'plan' and message_data != 'deploy':
+            if message_data.get("type") != 'plan' and message_data.get("type") != 'deploy':
                 logger.error(f"Invalid message: {message_data}")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
@@ -104,7 +104,7 @@ class RabbitMQConsumer:
             logger.info(f"Fetched {len(hosts_with_credentials)} hosts with credentials")
             
             # Process the plan using the existing controller
-            playbookInfo = ansibleGenerator.genenrateNotebook(plan_payload)
+            playbookInfo = ansibleGenerator.generateNotebook(plan_payload)
             ansibleGenerator.generateInventory(payload=plan_payload, hosts_and_creds=hosts_with_credentials)
             ansibleRunner = AnsibleRunner(self.lokiEndPoint, playbookInfo.get("jobId"), playbookInfo.get("playbookName"), playbookInfo.get("playbookDir"), True)
             thread = threading.Thread(target=ansibleRunner.run)

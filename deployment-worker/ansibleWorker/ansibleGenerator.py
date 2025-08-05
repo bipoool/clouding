@@ -17,7 +17,7 @@ ROLE_DISPATCH = {
 
 PLAYBOOK_BASE_PATH = "runs"
 
-def genenrateNotebook(payload: plan.Plan):
+def generateNotebook(payload: plan.Plan):
     playbook_dir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
     os.makedirs(playbook_dir, exist_ok=True)
     playbook_path = os.path.join(playbook_dir, f"main.yaml")
