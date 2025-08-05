@@ -128,6 +128,7 @@ def generateInventory(payload: plan.Plan, hosts_and_creds: List[Tuple[Host, Cred
                 host_line += f" ansible_ssh_private_key_file={sshKeyName}"
             
             # Handle password if present (and no SSH key)
+            # @TODO This won't work, use host_vars to save username and password
             elif 'password' in credential.value and credential.value['password']:
                 host_line += f" ansible_password={credential.value['password']}"
                 # For password authentication, we might need to disable host key checking
