@@ -31,10 +31,10 @@ type CloudingConfig struct {
 		VaultSecretEnginePath     string `mapstructure:"vaultSecretEnginePath" description:"Vault Secret Engine Path"`
 		VaultSecretEngineMetaPath string `mapstructure:"vaultSecretEngineMetaPath" description:"Vault Secret Engine Meta Path"`
 	}
-   
+
 	RabbitMQ struct {
-	URL string `mapstructure:"rabbitMqUrl"" description:"RabbitMQ connection URL"`
-   } `mapstructure:"rabbitmq"`
+		URL string `mapstructure:"rabbitMqUrl" description:"RabbitMQ connection URL"`
+	} `mapstructure:"rabbitmq"`
 }
 
 var Config *CloudingConfig

@@ -1,7 +1,7 @@
+from typing import Optional, Dict, Any
 from dataclasses import dataclass
-from typing import Optional
-from datetime import datetime
 import uuid
+from datetime import datetime
 
 @dataclass
 class Credential:
@@ -11,4 +11,5 @@ class Credential:
     userid: uuid.UUID
     expiresat: Optional[datetime] = None
     createdat: Optional[datetime] = None
-    updatedat: Optional[datetime] = None 
+    updatedat: Optional[datetime] = None
+    value: Optional[Dict[str, Any]] = None 
