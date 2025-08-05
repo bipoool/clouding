@@ -7,3 +7,4 @@ python-dotenv
 pyyaml
 pydantic
 pika
+hvac==2.3.0

@@ -1,5 +1,4 @@
 import json
-from fastapi import HTTPException
 import ansible_runner
 import requests
 import time
@@ -7,36 +6,36 @@ import json
 
 class AnsibleRunner:
 
-    def __init__(self, lokiEndPoint, jobId, playbookPath, workDir, isPlan = False):
+    def __init__(self, lokiEndPoint, jobId, playbookName, workDir, isPlan = False):
         self.lokiEndPoint = lokiEndPoint
         self.jobId = jobId
-        self.playbookPath = playbookPath
+        self.playbookName = playbookName
         self.isPlan = isPlan
         self.workDir = workDir
 
     def run(self):
-        cmdLine = '-i hosts.ini '
+        cmdLine = ''
         if self.isPlan:
-            cmdLine += '--check --diff '
-
-        ansible_runner.run_async(
+            cmdLine += '--check --diff'
+        ansible_runner.run(
             private_data_dir=self.workDir,
-            playbook=self.playbookPath,
+            playbook=self.playbookName,
             cmdline=cmdLine,
             event_handler=self.handleEvent(),
             quiet=True,
         )
 
     def handleEvent(self):
-        def innerFandleEvent(event):
+        def _handleEvent(event):
             log = {}
-            if event.get('event') == 'runner_on_ok':
+            if event.get('event') == 'runner_on_ok' or event.get('event') == 'runner_on_failed':
                 event_data = event.get('event_data', {})
                 log["task"] = event_data.get('task')
                 log["host"] = event_data.get('host')
                 log["role"] = event_data.get('role')
                 log["res"] = event_data.get('res')
                 log["duration"] = event_data.get('duration')
+                log['event'] = event.get('event')
             elif event.get('event') == 'playbook_on_stats':
                 event_data = event.get('event_data', {})
                 log["changed"] = event_data.get('changed')
@@ -46,8 +45,9 @@ class AnsibleRunner:
                 log["processed"] = event_data.get('processed')
                 log["skipped"] = event_data.get('skipped')
             if log != {}:
+                print(log)
                 self.sendToLoki(log)
-        return innerFandleEvent
+        return _handleEvent
 
     def sendToLoki(self, data):
         timestamp = str(int(time.time() * 1e9))

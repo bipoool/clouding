@@ -1,14 +1,18 @@
 import os
 import json
 import logging
-from typing import Dict, Any
+import threading
 from dotenv import load_dotenv
 import pika
 from pika.exceptions import AMQPConnectionError
 
-from ansibleWorker import ansibleNotebookGenerator
+from ansibleWorker import ansibleGenerator
 from ansibleWorker.ansibleRunner import AnsibleRunner
 from models import plan as planModel
+
+from repositories import host as hostRepository
+from repositories.vault import get_credentials_by_name
+import asyncio
 
 load_dotenv()
 
@@ -61,11 +65,14 @@ class RabbitMQConsumer:
             message_data = json.loads(body)
 
             # Validate required fields
-            if message_data.get('jobId') == None or message_data.get('hostIds') == None or message_data.get('blueprintId') == None or message_data.get('userId') == None:
+            if message_data.get('jobId') == None or message_data.get('hostIds') == None or message_data.get('blueprintId') == None or message_data.get('userId') == None or message_data.get('type') == None:
                 logger.error(f"Invalid message: {message_data}")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
-            
+            if message_data.get("type") != 'plan' and message_data.get("type") != 'deploy':
+                logger.error(f"Invalid message: {message_data}")
+                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+                return
             # Validate hostIds is a list of integers
             host_ids = message_data.get('hostIds')
             if not isinstance(host_ids, list):
@@ -86,18 +93,24 @@ class RabbitMQConsumer:
                 userId=message_data.get('userId')
             )
             
-            # Fetch hosts with their credentials
-            from repositories import host as hostRepository
             hosts_with_credentials = hostRepository.getHostsWithCredentials(plan_payload.hostIds)
+            
+            # Populate credential values from Vault
+            for host, credential in hosts_with_credentials:
+                if credential and credential.name:
+                    vault_value = get_credentials_by_name(f"{credential.name}-{plan_payload.userId}")
+                    credential.value = vault_value
             
             logger.info(f"Fetched {len(hosts_with_credentials)} hosts with credentials")
             
             # Process the plan using the existing controller
-            result = ansibleNotebookGenerator.genenrateNotebook(plan_payload)
-            ansibleRunner = AnsibleRunner(self.lokiEndPoint, result.get("jobId"), result.get("playbookPath"), result.get("playbookDir"), True)
-            ansibleRunner.run()
+            playbookInfo = ansibleGenerator.generateNotebook(plan_payload)
+            ansibleGenerator.generateInventory(payload=plan_payload, hosts_and_creds=hosts_with_credentials)
+            ansibleRunner = AnsibleRunner(self.lokiEndPoint, playbookInfo.get("jobId"), playbookInfo.get("playbookName"), playbookInfo.get("playbookDir"), True)
+            thread = threading.Thread(target=ansibleRunner.run)
+            thread.start()
             
-            logger.info(f"Plan processed successfully: {result}")
+            logger.info(f"Plan processed successfully: {playbookInfo}")
             
             # Acknowledge the message
             ch.basic_ack(delivery_tag=method.delivery_tag)
