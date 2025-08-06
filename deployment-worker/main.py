@@ -107,9 +107,9 @@ class RabbitMQConsumer:
             # Process the deployment using the existing controller
             playbookInfo = ansibleGenerator.generateNotebook(deploymentPlayload)
             ansibleGenerator.generateInventory(payload=deploymentPlayload, hostsAndCreds=hostsWithCredentials)
-            # ansibleRunner = AnsibleRunner(self.lokiEndPoint, playbookInfo.get("jobId"), playbookInfo.get("playbookName"), playbookInfo.get("playbookDir"), deploymentPlayload.dtype == 'plan')
-            # thread = threading.Thread(target=ansibleRunner.run)
-            # thread.start()
+            ansibleRunner = AnsibleRunner(self.lokiEndPoint, playbookInfo.get("jobId"), playbookInfo.get("playbookName"), playbookInfo.get("playbookDir"), deploymentPlayload.dtype == 'plan')
+            thread = threading.Thread(target=ansibleRunner.run)
+            thread.start()
             
             logger.info(f"Deployment processed successfully: {playbookInfo}")
             
