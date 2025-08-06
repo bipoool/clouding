@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS hosts (
     name TEXT NOT NULL,
     ip TEXT NOT NULL,
     os TEXT NOT NULL,
-    credential_id INTEGER NOT NULL REFERENCES credentials(id) ON DELETE CASCADE,
+    credential_id INTEGER NOT NULL REFERENCES credentials(id),
     meta_data JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -79,17 +79,14 @@ CREATE TABLE IF NOT EXISTS blueprint_components (
 CREATE TYPE deployment_type AS ENUM ('plan', 'deploy');
 
 CREATE TYPE deployment_status AS ENUM ('pending', 'started', 'completed', 'failed');
+
 CREATE TABLE deployments (
   id UUID PRIMARY KEY,
-
-  user_id UUID NOT NULL REFERENCES users(id),
-  host_id INT NOT NULL REFERENCES hosts(id),
-  host_group_id INT NOT NULL REFERENCES host_groups(id),
-  blueprint_id INT NOT NULL REFERENCES blueprints(id),
-
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  host_id INT NOT NULL REFERENCES hosts(id) ON DELETE CASCADE,
+  blueprint_id INT NOT NULL REFERENCES blueprints(id) ON DELETE CASCADE,
   type deployment_type NOT NULL,
   status deployment_status NOT NULL DEFAULT 'pending',
-
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

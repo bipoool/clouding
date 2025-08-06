@@ -6,8 +6,7 @@ from models.host import Host
 from models.credential import Credential
 
 from handlers import docker, nginx
-from models import plan
-from models.blueprint import AnsiblePlan
+from models import deployment
 from repositories import blueprint as blueprintRepository
 
 ROLE_DISPATCH = {
@@ -17,7 +16,7 @@ ROLE_DISPATCH = {
 
 PLAYBOOK_BASE_PATH = "runs"
 
-def generateNotebook(payload: plan.Plan):
+def generateNotebook(payload: deployment.Deployment):
     playbookDir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
     os.makedirs(playbookDir, exist_ok=True)
     playbookPath = os.path.join(playbookDir, f"main.yaml")
@@ -39,14 +38,7 @@ def generateNotebook(payload: plan.Plan):
     else:
         raise HTTPException(status_code=400, detail="Blueprint not found")
 
-    plan = AnsiblePlan(
-        name=blueprint.name,
-        status=blueprint.status,
-        blueprintid=blueprint.id,
-        components=blueprintComponents
-    )
-
-    components = sorted(plan.components, key=lambda c: c.position)
+    components = sorted(blueprintComponents, key=lambda c: c.position)
 
     roles = []
     for comp in components:
@@ -77,7 +69,7 @@ def generateNotebook(payload: plan.Plan):
         "jobId": payload.jobId
     }
 
-def generateInventory(payload: plan.Plan, hostsAndCreds: List[Tuple[Host, Credential]]):
+def generateInventory(payload: deployment.Deployment, hostsAndCreds: List[Tuple[Host, Credential]]):
     playbookDir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
     inventoryFolder = os.path.join(playbookDir, "inventory")
     os.makedirs(inventoryFolder, exist_ok=True)

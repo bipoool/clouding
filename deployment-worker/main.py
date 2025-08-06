@@ -8,7 +8,7 @@ from pika.exceptions import AMQPConnectionError
 
 from ansibleWorker import ansibleGenerator
 from ansibleWorker.ansibleRunner import AnsibleRunner
-from models import plan as planModel
+from models import deployment
 
 from repositories import host as hostRepository
 from repositories.vault import getCredentialsByName
@@ -23,7 +23,6 @@ class RabbitMQConsumer:
     def __init__(self):
         self.connection = None
         self.channel = None
-        self.queueName = 'clouding-plan'
         
         # RabbitMQ credentials from environment
         self.rabbitmqHost = os.getenv('RABBITMQ_HOST', 'localhost')
@@ -31,6 +30,7 @@ class RabbitMQConsumer:
         self.rabbitmqUser = os.getenv('RABBITMQ_USER', 'guest')
         self.rabbitmqPassword = os.getenv('RABBITMQ_PASSWORD', 'guest')
         self.rabbitmqVhost = os.getenv('RABBITMQ_VHOST', '/')
+        self.queueName = os.getenv('RABBITMQ_QUEUE_NAME')
 
         self.lokiEndPoint = os.getenv('LOKI_ENDPOINT')
 
@@ -70,7 +70,7 @@ class RabbitMQConsumer:
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
             if messageData.get("type") != 'plan' and messageData.get("type") != 'deploy':
-                logger.error(f"Invalid message: {messageData}")
+                logger.error(f"Invalid type: {messageData}")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
             # Validate hostIds is a list of integers
@@ -85,32 +85,33 @@ class RabbitMQConsumer:
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
             
-            # Convert to Plan model
-            planPayload = planModel.Plan(
+            # Convert to deploymentPlayload model
+            deploymentPlayload = deployment.Deployment(
                 jobId=messageData.get('jobId'),
                 hostIds=messageData.get('hostIds'),
                 blueprintId=messageData.get('blueprintId'),
-                userId=messageData.get('userId')
+                userId=messageData.get('userId'),
+                dtype = messageData.get('type')
             )
             
-            hostsWithCredentials = hostRepository.getHostsWithCredentials(planPayload.hostIds)
+            hostsWithCredentials = hostRepository.getHostsWithCredentials(deploymentPlayload.hostIds)
             
             # Populate credential values from Vault
-            for host, credential in hostsWithCredentials:
+            for _host, credential in hostsWithCredentials:
                 if credential and credential.name:
-                    vaultValue = getCredentialsByName(f"{credential.name}-{planPayload.userId}")
+                    vaultValue = getCredentialsByName(f"{credential.name}-{deploymentPlayload.userId}")
                     credential.value = vaultValue
             
             logger.info(f"Fetched {len(hostsWithCredentials)} hosts with credentials")
             
-            # Process the plan using the existing controller
-            playbookInfo = ansibleGenerator.generateNotebook(planPayload)
-            ansibleGenerator.generateInventory(payload=planPayload, hostsAndCreds=hostsWithCredentials)
-            ansibleRunner = AnsibleRunner(self.lokiEndPoint, playbookInfo.get("jobId"), playbookInfo.get("playbookName"), playbookInfo.get("playbookDir"), True)
-            thread = threading.Thread(target=ansibleRunner.run)
-            thread.start()
+            # Process the deployment using the existing controller
+            playbookInfo = ansibleGenerator.generateNotebook(deploymentPlayload)
+            ansibleGenerator.generateInventory(payload=deploymentPlayload, hostsAndCreds=hostsWithCredentials)
+            # ansibleRunner = AnsibleRunner(self.lokiEndPoint, playbookInfo.get("jobId"), playbookInfo.get("playbookName"), playbookInfo.get("playbookDir"), deploymentPlayload.dtype == 'plan')
+            # thread = threading.Thread(target=ansibleRunner.run)
+            # thread.start()
             
-            logger.info(f"Plan processed successfully: {playbookInfo}")
+            logger.info(f"Deployment processed successfully: {playbookInfo}")
             
             # Acknowledge the message
             ch.basic_ack(delivery_tag=method.delivery_tag)
