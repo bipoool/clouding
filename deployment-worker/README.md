@@ -1,6 +1,6 @@
 # Clouding Ansible Server
 
-This service processes clouding plans via RabbitMQ messages instead of HTTP API calls.
+This service processes clouding Deployment via RabbitMQ messages instead of HTTP API calls.
 
 ## Setup
 
@@ -35,8 +35,8 @@ python main.py
 
 The consumer will:
 1. Connect to RabbitMQ using the credentials from `.env`
-2. Listen to the `clouding-plan` queue
-3. Process incoming messages and generate plans using the existing controller
+2. Listen to the `clouding` queue
+3. Process incoming messages and generate deployments using the existing controller
 
 ### Message Format
 

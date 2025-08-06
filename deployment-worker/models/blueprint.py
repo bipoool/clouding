@@ -108,10 +108,3 @@ class BlueprintComponent:
                 return f"unknown parameter: {bp.name} (id: {bp.id})"
 
         return None  # Success
-
-@dataclass
-class AnsiblePlan:
-    name: str
-    status: str
-    blueprintid: int
-    components: List[BlueprintComponent]
