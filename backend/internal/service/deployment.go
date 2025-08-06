@@ -6,13 +6,12 @@ import (
 	"clouding/backend/internal/repository"
 	"context"
 	"encoding/json"
-	"errors"
-	"log"
+	"fmt"
 )
 
 type DeploymentService interface {
-	CreateDeployment(ctx context.Context, d *deployment.Deployment) error
-	UpdateStatus(ctx context.Context, id string, status deployment.DeploymentStatus) error
+	Create(ctx context.Context, d *deployment.Deployment) error
+	UpdateStatus(ctx context.Context, id string, updateDeploymentStatus *deployment.UpdateDeploymentStatus) error
 	GetByID(ctx context.Context, id string) (*deployment.Deployment, error)
 	GetByUserAndType(ctx context.Context, userId string, dType string) ([]*deployment.Deployment, error)
 }
@@ -26,26 +25,18 @@ func NewDeploymentService(r repository.DeploymentRepository, publisher *queue.Pu
 	return &deploymentService{repo: r, publisher: publisher}
 }
 
-func (s *deploymentService) CreateDeployment(ctx context.Context, d *deployment.Deployment) error {
-	existing, err := s.repo.GetByID(ctx, d.ID)
+func (s *deploymentService) Create(ctx context.Context, d *deployment.Deployment) error {
+	existing, err := s.repo.GetByID(ctx, *d.ID)
 	if err == nil && existing != nil {
-		log.Println(" Deployment already exists. Skipping creation.")
-		return nil
+		return fmt.Errorf("deployment already exists, skipping creation")
 	}
 
 	if err := s.repo.Create(ctx, d); err != nil {
 		return err
 	}
 
-	groupHostIDs, err := s.repo.GetHostIDsByGroupID(ctx, d.HostGroupID)
-	if err != nil {
-		log.Printf(" Failed to fetch host group IDs: %v", err)
-		return err
-	}
-
-	mergedHostIDs := append([]int{d.HostID}, groupHostIDs...)
 	unique := map[int]struct{}{}
-	for _, id := range mergedHostIDs {
+	for _, id := range d.HostIDs {
 		unique[id] = struct{}{}
 	}
 
@@ -65,24 +56,18 @@ func (s *deploymentService) CreateDeployment(ctx context.Context, d *deployment.
 
 	msg, err := json.Marshal(msgPayload)
 	if err != nil {
-		log.Printf("Failed to marshal message: %v", err)
-		return err
+		return fmt.Errorf("failed to marshal message: %v", err)
 	}
-
-	if s.publisher == nil {
-		return errors.New("publisher not initialized")
-	}
-
 
 	if err := s.publisher.Publish(msg); err != nil {
-		return err
+		return fmt.Errorf("failed to publish job: %v", err)
 	}
 
 	return nil
 }
 
-func (s *deploymentService) UpdateStatus(ctx context.Context, id string, status deployment.DeploymentStatus) error {
-	return s.repo.UpdateStatus(ctx, id, status)
+func (s *deploymentService) UpdateStatus(ctx context.Context, id string, updateDeploymentStatus *deployment.UpdateDeploymentStatus) error {
+	return s.repo.UpdateStatus(ctx, id, updateDeploymentStatus)
 }
 
 func (s *deploymentService) GetByID(ctx context.Context, id string) (*deployment.Deployment, error) {

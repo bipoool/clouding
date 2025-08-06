@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +19,7 @@ func NewDeploymentController(s service.DeploymentService) *DeploymentController 
 	return &DeploymentController{Service: s}
 }
 
-func (c *DeploymentController) CreateDeployment(ctx *gin.Context) {
+func (c *DeploymentController) Create(ctx *gin.Context) {
 	userId := ctx.GetString("userId")
 	deploymentType := ctx.Param("type")
 
@@ -29,30 +30,30 @@ func (c *DeploymentController) CreateDeployment(ctx *gin.Context) {
 	}
 
 	req.Type = deployment.DeploymentType(deploymentType)
-	req.UserID = userId
+	req.UserID = &userId
 
-	if err := c.Service.CreateDeployment(ctx.Request.Context(), &req); err != nil {
+	if err := c.Service.Create(ctx.Request.Context(), &req); err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, utils.NewSuccessResponse(gin.H{"id": req.ID}))
+	ctx.JSON(http.StatusCreated, utils.NewSuccessResponse(nil))
 }
 
 func (c *DeploymentController) UpdateStatus(ctx *gin.Context) {
 	id := ctx.Param("id")
-   var body deployment.UpdateDeploymentStatusRequest
+	var body deployment.UpdateDeploymentStatus
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
 		return
 	}
 
-	if err := c.Service.UpdateStatus(ctx.Request.Context(), id, body.Status); err != nil {
+	if err := c.Service.UpdateStatus(ctx.Request.Context(), id, &body); err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(gin.H{"id": id, "status": body.Status}))
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(body))
 }
 
 func (c *DeploymentController) GetByID(ctx *gin.Context) {

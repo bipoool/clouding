@@ -15,7 +15,7 @@ func RegisterDeploymentRoutes(rg *gin.RouterGroup, db *sqlx.DB, publisher *queue
 	deploymentService := service.NewDeploymentService(deploymentRepository, publisher)
 	deploymentController := v1.NewDeploymentController(deploymentService)
 
-	rg.POST("/deployments/type/:type", deploymentController.CreateDeployment)
+	rg.POST("/deployments/type/:type", deploymentController.Create)
 	rg.PUT("/deployments/:id/status", deploymentController.UpdateStatus)
 	rg.GET("/deployments/:id", deploymentController.GetByID)
 	rg.GET("/deployments/type/:type", deploymentController.GetByUserAndType)
