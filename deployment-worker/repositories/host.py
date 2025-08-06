@@ -1,26 +1,26 @@
-from database.connection import get_connection
+from database.connection import getConnection
 from models.host import Host
 from models.credential import Credential
 from typing import List, Tuple
 
-def getHostsWithCredentials(host_ids: List[int]) -> List[Tuple[Host, Credential]]:
+def getHostsWithCredentials(hostIds: List[int]) -> List[Tuple[Host, Credential]]:
     """
     Fetch hosts with their associated credentials by an array of host IDs
     
     Args:
-        host_ids: List of host IDs to fetch
+        hostIds: List of host IDs to fetch
         
     Returns:
         List of tuples containing (Host, Credential) pairs
     """
-    if not host_ids:
+    if not hostIds:
         return []
     
-    conn = get_connection()
+    conn = getConnection()
     try:
         with conn.cursor() as cur:
             # Create placeholders for the IN clause
-            placeholders = ','.join(['%s'] * len(host_ids))
+            placeholders = ','.join(['%s'] * len(hostIds))
             
             cur.execute(f"""
                 SELECT 
@@ -43,13 +43,13 @@ def getHostsWithCredentials(host_ids: List[int]) -> List[Tuple[Host, Credential]
                 FROM hosts h
                 JOIN credentials c ON h.credential_id = c.id
                 WHERE h.id IN ({placeholders})
-            """, tuple(host_ids))
+            """, tuple(hostIds))
             
             rows = cur.fetchall()
             result = []
             for row in rows:
                 # Split the row into host and credential data
-                host_data = {
+                hostData = {
                     'id': row['id'],
                     'userid': row['userid'],
                     'name': row['name'],
@@ -61,7 +61,7 @@ def getHostsWithCredentials(host_ids: List[int]) -> List[Tuple[Host, Credential]
                     'updatedat': row['updatedat']
                 }
                 
-                credential_data = {
+                credentialData = {
                     'id': row['cred_id'],
                     'name': row['cred_name'],
                     'type': row['cred_type'],
@@ -71,8 +71,8 @@ def getHostsWithCredentials(host_ids: List[int]) -> List[Tuple[Host, Credential]
                     'updatedat': row['cred_updatedat']
                 }
                 
-                host = Host(**host_data)
-                credential = Credential(**credential_data)
+                host = Host(**hostData)
+                credential = Credential(**credentialData)
                 result.append((host, credential))
             
             return result

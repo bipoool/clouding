@@ -1,47 +1,47 @@
 import os
 import requests
 
-def handle_nginx_service_custom(value: dict, playbook_dir: str, role_name: str) -> dict:
+def handleNginxServiceCustom(value: dict, playbookDir: str, roleName: str) -> dict:
     filepath = value["filepath"]
     url = value["url"]
 
     # Save override file to: ./overrides/{userId}/{roleName}/{filepath}
-    target_path = os.path.join(playbook_dir, "overrides", role_name, filepath)
-    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    targetPath = os.path.join(playbookDir, "overrides", roleName, filepath)
+    os.makedirs(os.path.dirname(targetPath), exist_ok=True)
 
     resp = requests.get(url)
     if resp.status_code != 200:
         raise Exception(f"Failed to download file from {url}")
     
-    with open(target_path, "wb") as f:
+    with open(targetPath, "wb") as f:
         f.write(resp.content)
 
     return {
         "nginx_service_custom": True,
-        "nginx_service_custom_file": target_path
+        "nginx_service_custom_file": targetPath
     }
 
 
 # Mapping: param name -> handler function
-property_handlers = {
-    "nginx_service_custom": handle_nginx_service_custom
+propertyHandlers = {
+    "nginx_service_custom": handleNginxServiceCustom
 }
 
 
-def build_nginx_role(parameters: list, playbook_dir: str) -> dict:
-    role_name = "nginxinc.nginx"
-    vars_dict = {}
+def buildNginxRole(parameters: list, playbookDir: str) -> dict:
+    roleName = "nginxinc.nginx"
+    varsDict = {}
 
     for param in parameters:
         name = param["name"]
         value = param["value"]
 
-        if name in property_handlers:
-            vars_dict.update(property_handlers[name](value, playbook_dir, role_name))
+        if name in propertyHandlers:
+            varsDict.update(propertyHandlers[name](value, playbookDir, roleName))
         else:
-            vars_dict[name] = value
+            varsDict[name] = value
 
     return {
-        "role": role_name,
-        "vars": vars_dict
+        "role": roleName,
+        "vars": varsDict
     }

@@ -11,7 +11,7 @@ from ansibleWorker.ansibleRunner import AnsibleRunner
 from models import plan as planModel
 
 from repositories import host as hostRepository
-from repositories.vault import get_credentials_by_name
+from repositories.vault import getCredentialsByName
 import asyncio
 
 load_dotenv()
@@ -23,33 +23,33 @@ class RabbitMQConsumer:
     def __init__(self):
         self.connection = None
         self.channel = None
-        self.queue_name = 'clouding-plan'
+        self.queueName = 'clouding-plan'
         
         # RabbitMQ credentials from environment
-        self.rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
-        self.rabbitmq_port = int(os.getenv('RABBITMQ_PORT', '5672'))
-        self.rabbitmq_user = os.getenv('RABBITMQ_USER', 'guest')
-        self.rabbitmq_password = os.getenv('RABBITMQ_PASSWORD', 'guest')
-        self.rabbitmq_vhost = os.getenv('RABBITMQ_VHOST', '/')
+        self.rabbitmqHost = os.getenv('RABBITMQ_HOST', 'localhost')
+        self.rabbitmqPort = int(os.getenv('RABBITMQ_PORT', '5672'))
+        self.rabbitmqUser = os.getenv('RABBITMQ_USER', 'guest')
+        self.rabbitmqPassword = os.getenv('RABBITMQ_PASSWORD', 'guest')
+        self.rabbitmqVhost = os.getenv('RABBITMQ_VHOST', '/')
 
         self.lokiEndPoint = os.getenv('LOKI_ENDPOINT')
 
     def connect(self):
         """Establish connection to RabbitMQ"""
         try:
-            credentials = pika.PlainCredentials(self.rabbitmq_user, self.rabbitmq_password)
+            credentials = pika.PlainCredentials(self.rabbitmqUser, self.rabbitmqPassword)
             parameters = pika.ConnectionParameters(
-                host=self.rabbitmq_host,
-                port=self.rabbitmq_port,
-                virtual_host=self.rabbitmq_vhost,
+                host=self.rabbitmqHost,
+                port=self.rabbitmqPort,
+                virtual_host=self.rabbitmqVhost,
                 credentials=credentials
             )
             self.connection = pika.BlockingConnection(parameters)
             self.channel = self.connection.channel()
             
             # Declare the queue
-            self.channel.queue_declare(queue=self.queue_name, durable=True)
-            logger.info(f"Connected to RabbitMQ and declared queue: {self.queue_name}")
+            self.channel.queue_declare(queue=self.queueName, durable=True)
+            logger.info(f"Connected to RabbitMQ and declared queue: {self.queueName}")
             
         except AMQPConnectionError as e:
             logger.error(f"Failed to connect to RabbitMQ: {e}")
@@ -62,50 +62,50 @@ class RabbitMQConsumer:
             
             # TODO: add validation for the message
             # Parse the message
-            message_data = json.loads(body)
+            messageData = json.loads(body)
 
             # Validate required fields
-            if message_data.get('jobId') == None or message_data.get('hostIds') == None or message_data.get('blueprintId') == None or message_data.get('userId') == None or message_data.get('type') == None:
-                logger.error(f"Invalid message: {message_data}")
+            if messageData.get('jobId') == None or messageData.get('hostIds') == None or messageData.get('blueprintId') == None or messageData.get('userId') == None or messageData.get('type') == None:
+                logger.error(f"Invalid message: {messageData}")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
-            if message_data.get("type") != 'plan' and message_data.get("type") != 'deploy':
-                logger.error(f"Invalid message: {message_data}")
+            if messageData.get("type") != 'plan' and messageData.get("type") != 'deploy':
+                logger.error(f"Invalid message: {messageData}")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
             # Validate hostIds is a list of integers
-            host_ids = message_data.get('hostIds')
-            if not isinstance(host_ids, list):
+            hostIds = messageData.get('hostIds')
+            if not isinstance(hostIds, list):
                 logger.error("hostIds must be a list")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
                 
-            if not all(isinstance(host_id, int) for host_id in host_ids):
+            if not all(isinstance(hostId, int) for hostId in hostIds):
                 logger.error("All hostIds must be integers")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
             
             # Convert to Plan model
-            plan_payload = planModel.Plan(
-                jobId=message_data.get('jobId'),
-                hostIds=message_data.get('hostIds'),
-                blueprintId=message_data.get('blueprintId'),
-                userId=message_data.get('userId')
+            planPayload = planModel.Plan(
+                jobId=messageData.get('jobId'),
+                hostIds=messageData.get('hostIds'),
+                blueprintId=messageData.get('blueprintId'),
+                userId=messageData.get('userId')
             )
             
-            hosts_with_credentials = hostRepository.getHostsWithCredentials(plan_payload.hostIds)
+            hostsWithCredentials = hostRepository.getHostsWithCredentials(planPayload.hostIds)
             
             # Populate credential values from Vault
-            for host, credential in hosts_with_credentials:
+            for host, credential in hostsWithCredentials:
                 if credential and credential.name:
-                    vault_value = get_credentials_by_name(f"{credential.name}-{plan_payload.userId}")
-                    credential.value = vault_value
+                    vaultValue = getCredentialsByName(f"{credential.name}-{planPayload.userId}")
+                    credential.value = vaultValue
             
-            logger.info(f"Fetched {len(hosts_with_credentials)} hosts with credentials")
+            logger.info(f"Fetched {len(hostsWithCredentials)} hosts with credentials")
             
             # Process the plan using the existing controller
-            playbookInfo = ansibleGenerator.generateNotebook(plan_payload)
-            ansibleGenerator.generateInventory(payload=plan_payload, hosts_and_creds=hosts_with_credentials)
+            playbookInfo = ansibleGenerator.generateNotebook(planPayload)
+            ansibleGenerator.generateInventory(payload=planPayload, hostsAndCreds=hostsWithCredentials)
             ansibleRunner = AnsibleRunner(self.lokiEndPoint, playbookInfo.get("jobId"), playbookInfo.get("playbookName"), playbookInfo.get("playbookDir"), True)
             thread = threading.Thread(target=ansibleRunner.run)
             thread.start()
@@ -122,17 +122,17 @@ class RabbitMQConsumer:
             logger.error(f"Error processing message: {e}")
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
-    def start_consuming(self):
+    def startConsuming(self):
         """Start consuming messages from the queue"""
         try:
             # Set up consumer
             self.channel.basic_qos(prefetch_count=1)
             self.channel.basic_consume(
-                queue=self.queue_name,
+                queue=self.queueName,
                 on_message_callback=self.callback
             )
             
-            logger.info(f"Starting to consume messages from queue: {self.queue_name}")
+            logger.info(f"Starting to consume messages from queue: {self.queueName}")
             logger.info("Press CTRL+C to stop")
             
             # Start consuming
@@ -159,7 +159,7 @@ def main():
     
     try:
         consumer.connect()
-        consumer.start_consuming()
+        consumer.startConsuming()
     except Exception as e:
         logger.error(f"Failed to start consumer: {e}")
         consumer.stop()

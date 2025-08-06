@@ -14,5 +14,5 @@ DB_CONFIG = {
     'port': int(os.environ.get('SQL_PORT', 5432)),
 }
 
-def get_connection():
+def getConnection():
     return psycopg2.connect(cursor_factory=RealDictCursor, **DB_CONFIG)

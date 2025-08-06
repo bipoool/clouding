@@ -47,64 +47,64 @@ class BlueprintComponent:
         if not self.blueprintparameters or not self.componentparameters:
             return "parameters cannot be None"
 
-        component_params = [ComponentParameter(**cp) for cp in self.componentparameters]
-        blueprint_params = [BlueprintParameter(**bp) for bp in self.blueprintparameters]
+        componentParams = [ComponentParameter(**cp) for cp in self.componentparameters]
+        blueprintParams = [BlueprintParameter(**bp) for bp in self.blueprintparameters]
 
-        component_param_map = {cp.id: cp for cp in component_params}
-        name_to_id_map = {cp.name: cp.id for cp in component_params}
-        blueprint_param_map = {bp.id: bp for bp in blueprint_params}
+        componentParamMap = {cp.id: cp for cp in componentParams}
+        nameToIdMap = {cp.name: cp.id for cp in componentParams}
+        blueprintParamMap = {bp.id: bp for bp in blueprintParams}
 
-        for cid, component_param in component_param_map.items():
-            user_param = blueprint_param_map.get(cid)
+        for cid, componentParam in componentParamMap.items():
+            userParam = blueprintParamMap.get(cid)
 
             # Unconditional required
-            if component_param.rules.get("required") and user_param is None:
-                return f"missing required parameter: {component_param.name}"
+            if componentParam.rules.get("required") and userParam is None:
+                return f"missing required parameter: {componentParam.name}"
 
             # Conditional required_if
-            required_if = component_param.rules.get("required_if", {})
-            for other_param_name, expected_value in required_if.items():
-                other_param_id = name_to_id_map.get(other_param_name)
-                if not other_param_id:
-                    return f"unknown parameter: {other_param_name}"
-                other_param = blueprint_param_map.get(other_param_id)
-                if not other_param:
-                    return f"unknown parameter: {other_param_name}"
-                if other_param and str(other_param.value) == expected_value:
-                    if user_param is None:
+            requiredIf = componentParam.rules.get("required_if", {})
+            for otherParamName, expectedValue in requiredIf.items():
+                otherParamId = nameToIdMap.get(otherParamName)
+                if not otherParamId:
+                    return f"unknown parameter: {otherParamName}"
+                otherParam = blueprintParamMap.get(otherParamId)
+                if not otherParam:
+                    return f"unknown parameter: {otherParamName}"
+                if otherParam and str(otherParam.value) == expectedValue:
+                    if userParam is None:
                         return (
-                            f"parameter {component_param.name} is required because "
-                            f"{other_param_name} is {expected_value}"
+                            f"parameter {componentParam.name} is required because "
+                            f"{otherParamName} is {expectedValue}"
                         )
 
             # If present, validate value type and options
-            if user_param:
-                val = user_param.value
+            if userParam:
+                val = userParam.value
 
-                if component_param.valueType == "string":
+                if componentParam.valueType == "string":
                     if not isinstance(val, str):
-                        return f"parameter {component_param.name} expects a string value"
+                        return f"parameter {componentParam.name} expects a string value"
 
-                elif component_param.valueType == "file_list":
+                elif componentParam.valueType == "file_list":
                     try:
-                        file_list = json.loads(json.dumps(val))  # simulate deep copy
-                        for f in file_list:
+                        fileList = json.loads(json.dumps(val))  # simulate deep copy
+                        for f in fileList:
                             if not f.get("filename") and not f.get("url"):
                                 return (
-                                    f"parameter {component_param.name} has invalid file list entry: "
+                                    f"parameter {componentParam.name} has invalid file list entry: "
                                     f"missing filename or URL"
                                 )
                     except Exception:
-                        return f"parameter {component_param.name} expects file list structure, got: {val}"
+                        return f"parameter {componentParam.name} expects file list structure, got: {val}"
 
-                if component_param.uiType == "select":
-                    str_val = str(val)
-                    if component_param.options and str_val not in component_param.options:
-                        return f"parameter {component_param.name} has invalid value: {val}"
+                if componentParam.uiType == "select":
+                    strVal = str(val)
+                    if componentParam.options and strVal not in componentParam.options:
+                        return f"parameter {componentParam.name} has invalid value: {val}"
 
         # Validate unknown parameters
-        for bid, bp in blueprint_param_map.items():
-            if bid not in component_param_map:
+        for bid, bp in blueprintParamMap.items():
+            if bid not in componentParamMap:
                 return f"unknown parameter: {bp.name} (id: {bp.id})"
 
         return None  # Success

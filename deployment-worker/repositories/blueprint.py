@@ -1,9 +1,9 @@
-from database.connection import get_connection
+from database.connection import getConnection
 from models.blueprint import BlueprintComponent, Blueprint
 from typing import Optional, List
 
 def getBlueprintComponents(blueprintId: int) -> Optional[List[BlueprintComponent]]:
-    conn = get_connection()
+    conn = getConnection()
     try:
         with conn.cursor() as cur:
             cur.execute("""
@@ -24,7 +24,7 @@ def getBlueprintComponents(blueprintId: int) -> Optional[List[BlueprintComponent
         conn.close()
 
 def getBlueprint(blueprintId: int) -> Optional[Blueprint]:
-    conn = get_connection()
+    conn = getConnection()
     try:
         with conn.cursor() as cur:
             cur.execute("""

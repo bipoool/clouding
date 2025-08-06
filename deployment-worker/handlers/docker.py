@@ -1,4 +1,4 @@
-def build_docker_task(parameters: list, user_id: str) -> dict:
+def buildDockerTask(parameters: list, userId: str) -> dict:
     task = {
         "role": "chusiang.helloworld",
     }

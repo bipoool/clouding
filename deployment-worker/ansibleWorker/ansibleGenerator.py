@@ -11,16 +11,16 @@ from models.blueprint import AnsiblePlan
 from repositories import blueprint as blueprintRepository
 
 ROLE_DISPATCH = {
-    "nginxinc.nginx": nginx.build_nginx_role,
-    "community.docker.docker_install": docker.build_docker_task
+    "nginxinc.nginx": nginx.buildNginxRole,
+    "community.docker.docker_install": docker.buildDockerTask
 }
 
 PLAYBOOK_BASE_PATH = "runs"
 
 def generateNotebook(payload: plan.Plan):
-    playbook_dir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
-    os.makedirs(playbook_dir, exist_ok=True)
-    playbook_path = os.path.join(playbook_dir, f"main.yaml")
+    playbookDir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
+    os.makedirs(playbookDir, exist_ok=True)
+    playbookPath = os.path.join(playbookDir, f"main.yaml")
 
     blueprintComponents = blueprintRepository.getBlueprintComponents(payload.blueprintId)
     if blueprintComponents:
@@ -54,8 +54,8 @@ def generateNotebook(payload: plan.Plan):
         if not handler:
             raise HTTPException(status_code=400, detail=f"Unsupported role: {comp.ansiblerole}")
 
-        param_dicts = [p for p in comp.blueprintparameters]
-        task = handler(param_dicts, playbook_dir)
+        paramDicts = [p for p in comp.blueprintparameters]
+        task = handler(paramDicts, playbookDir)
         roles.append(task)
 
     playbook = [{
@@ -65,26 +65,26 @@ def generateNotebook(payload: plan.Plan):
         "roles": roles
     }]
 
-    with open(playbook_path, "w") as f:
+    with open(playbookPath, "w") as f:
         yaml.dump(playbook, f)
 
     return {
         "status": "success",
         "playbookName": "main.yaml",
-        "playbookDir": playbook_dir,
+        "playbookDir": playbookDir,
         "blueprintId": payload.blueprintId,
         "userId": payload.userId,
         "jobId": payload.jobId
     }
 
-def generateInventory(payload: plan.Plan, hosts_and_creds: List[Tuple[Host, Credential]]):
-    playbook_dir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
-    inventoryFolder = os.path.join(playbook_dir, "inventory")
+def generateInventory(payload: plan.Plan, hostsAndCreds: List[Tuple[Host, Credential]]):
+    playbookDir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
+    inventoryFolder = os.path.join(playbookDir, "inventory")
     os.makedirs(inventoryFolder, exist_ok=True)
     inventoryPath = os.path.join(inventoryFolder, "hosts")
 
     # Validate all credentials upfront
-    for host, credential in hosts_and_creds:
+    for host, credential in hostsAndCreds:
         if not credential.value:
             raise ValueError(f"Credential value is missing for host {host.id} (credential: {credential.name})")
         
@@ -110,21 +110,21 @@ def generateInventory(payload: plan.Plan, hosts_and_creds: List[Tuple[Host, Cred
 
     with open(inventoryPath, "w") as f:
         f.write("[group]\n")
-        for host, credential in hosts_and_creds:
+        for host, credential in hostsAndCreds:
             username = credential.value.get('username')
             host_line = f"host{host.id} ansible_host={host.ip} ansible_user={username}"
             
             # Handle SSH key if present
             if 'sshKey' in credential.value and credential.value['sshKey']:
                 sshKeyName = f"ssh_key_{host.id}_{credential.id}"
-                ssh_key_path = os.path.join(playbook_dir,sshKeyName )
-                with open(ssh_key_path, "w") as key_file:
-                    ssh_key_content = credential.value['sshKey']
+                sshKeyPath = os.path.join(playbookDir,sshKeyName )
+                with open(sshKeyPath, "w") as keyFile:
+                    sshKeyContent = credential.value['sshKey']
                     # Ensure SSH key ends with a newline
-                    if not ssh_key_content.endswith('\n'):
-                        ssh_key_content += '\n'
-                    key_file.write(ssh_key_content)
-                os.chmod(ssh_key_path, 0o600)  # Set permissions to 600
+                    if not sshKeyContent.endswith('\n'):
+                        sshKeyContent += '\n'
+                    keyFile.write(sshKeyContent)
+                os.chmod(sshKeyPath, 0o600)  # Set permissions to 600
                 host_line += f" ansible_ssh_private_key_file={sshKeyName}"
             
             # Handle password if present (and no SSH key)
