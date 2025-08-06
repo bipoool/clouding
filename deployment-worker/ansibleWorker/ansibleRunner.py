@@ -28,22 +28,23 @@ class AnsibleRunner:
     def handleEvent(self):
         def _handleEvent(event):
             log = {}
-            if event.get('event') == 'runner_on_ok' or event.get('event') == 'runner_on_failed':
-                event_data = event.get('event_data', {})
-                log["task"] = event_data.get('task')
-                log["host"] = event_data.get('host')
-                log["role"] = event_data.get('role')
-                log["res"] = event_data.get('res')
-                log["duration"] = event_data.get('duration')
+            if event.get('event') == 'runner_on_ok' or event.get('event') == 'runner_on_failed' or event.get('event') == 'runner_on_unreachable':
+                eventData = event.get('event_data', {})
+                log["task"] = eventData.get('task')
+                log["host"] = eventData.get('host')
+                log["role"] = eventData.get('role')
+                log["res"] = eventData.get('res')
+                log["duration"] = eventData.get('duration')
                 log['event'] = event.get('event')
             elif event.get('event') == 'playbook_on_stats':
-                event_data = event.get('event_data', {})
-                log["changed"] = event_data.get('changed')
-                log["failures"] = event_data.get('failures')
-                log["ignored"] = event_data.get('ignored')
-                log["ok"] = event_data.get('ok')
-                log["processed"] = event_data.get('processed')
-                log["skipped"] = event_data.get('skipped')
+                eventData = event.get('event_data', {})
+                log["changed"] = eventData.get('changed')
+                log["failures"] = eventData.get('failures')
+                log["ignored"] = eventData.get('ignored')
+                log["ok"] = eventData.get('ok')
+                log["processed"] = eventData.get('processed')
+                log["skipped"] = eventData.get('skipped')
+                log['event'] = event.get('event')
             if log != {}:
                 print(log)
                 self.sendToLoki(log)
