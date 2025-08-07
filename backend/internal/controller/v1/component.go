@@ -19,25 +19,8 @@ func NewComponentController(s service.ComponentService) *ComponentController {
 	return &ComponentController{Service: s}
 }
 
-func (c *ComponentController) GetComponent(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		slog.Debug("ComponentId not correct", "ERR", err)
-		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
-		return
-	}
-	comp, err := c.Service.GetComponent(ctx.Request.Context(), id)
-	if err != nil {
-		slog.Error(err.Error())
-		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
-		return
-	}
-	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(comp))
-}
-
 func (c *ComponentController) GetComponentByIds(ctx *gin.Context) {
-	idsStr := ctx.Param("ids")
+	idsStr := ctx.Param("id")
 	idsStrArr := strings.Split(idsStr, ",")
 	var ids []int
 
