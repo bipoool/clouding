@@ -1,0 +1,56 @@
+meta {
+  name: Get Deployments by User and Type
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/deployments/type/{{deploymentType}}
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Get all deployments for the authenticated user by type.
+  
+  **Parameters:**
+  - `deploymentType`: Type of deployments to retrieve ("plan" or "deploy")
+  
+  **Response:**
+  - 200: Deployments found
+    ```json
+    {
+      "data": [
+        {
+          "id": "deployment-uuid-1",
+          "userId": "user-uuid",
+          "hostIds": [1, 2, 3],
+          "hostGroupId": 1,
+          "blueprintId": 1,
+          "type": "plan",
+          "status": "pending",
+          "createdAt": "2024-01-01T00:00:00Z",
+          "updatedAt": "2024-01-01T00:00:00Z"
+        },
+        {
+          "id": "deployment-uuid-2",
+          "userId": "user-uuid",
+          "hostIds": [4, 5, 6],
+          "hostGroupId": 2,
+          "blueprintId": 2,
+          "type": "plan",
+          "status": "completed",
+          "createdAt": "2024-01-02T00:00:00Z",
+          "updatedAt": "2024-01-02T01:00:00Z"
+        }
+      ],
+      "error": null,
+      "success": true
+    }
+    ```
+  - 400: Bad request (type parameter required)
+  - 500: Internal server error
+}

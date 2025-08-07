@@ -1,0 +1,43 @@
+meta {
+  name: Get Deployment by ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/deployments/{{deploymentId}}
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Get a deployment by its ID.
+  
+  **Parameters:**
+  - `deploymentId`: ID of the deployment to retrieve
+  
+  **Response:**
+  - 200: Deployment found
+    ```json
+    {
+    "data": {
+        "id": "3e3f7271-0701-4682-b838-8bbcc525ee08",
+        "userId": "e234ff41-62bc-49fa-8fbf-fbed2defbe1b",
+        "hostId": null,
+        "hostGroupId": null,
+        "blueprintId": 45,
+        "type": "plan",
+        "status": "completed",
+        "createdAt": "2025-08-07T18:07:30.543094Z",
+        "updatedAt": "2025-08-07T18:14:22.094484Z"
+    },
+    "error": null,
+    "success": true
+    }
+    ```
+  - 404: Deployment not found
+  - 500: Internal server error
+}

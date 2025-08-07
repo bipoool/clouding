@@ -20,7 +20,7 @@ type DeploymentRepository interface {
 	UpdateStatus(ctx context.Context, id string, updateDeploymentStatusPayload *deployment.UpdateDeploymentStatusPayload) error
 	GetByID(ctx context.Context, id string) (*deployment.Deployment, error)
 	GetByUserAndType(ctx context.Context, userId string, dType string) ([]*deployment.Deployment, error)
-	GetDeploymentHostMappingByIds(ctx context.Context, ids []int) ([]*deployment.DeploymentHostMapping, error)
+	GetDeploymentHostMappingByIds(ctx context.Context, ids []string) ([]*deployment.DeploymentHostMapping, error)
 }
 
 // Embedded SQL queries
@@ -162,7 +162,7 @@ func (r *deploymentRepository) GetByUserAndType(ctx context.Context, userId stri
 	return deployments, nil
 }
 
-func (r *deploymentRepository) GetDeploymentHostMappingByIds(ctx context.Context, ids []int) ([]*deployment.DeploymentHostMapping, error) {
+func (r *deploymentRepository) GetDeploymentHostMappingByIds(ctx context.Context, ids []string) ([]*deployment.DeploymentHostMapping, error) {
 	var deploymentHostMapping []*deployment.DeploymentHostMapping
 	if err := r.db.SelectContext(ctx, &deploymentHostMapping, getDeploymentHostMapping, pq.Array(ids)); err != nil {
 		return nil, err

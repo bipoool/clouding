@@ -1,0 +1,54 @@
+meta {
+  name: Get Deployment Host Mapping
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/deployments/{{deploymentIds}}/hosts
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Get deployment host mappings by deployment IDs.
+  
+  **Parameters:**
+  - `deploymentIds`: Comma-separated list of deployment IDs (e.g., "1,2,3")
+  
+  **Response:**
+  - 200: Deployment host mappings found
+    ```json
+    {
+    "data": [
+        {
+        "deploymentId": "3e3f7271-0701-4682-b838-8bbcc525ee07",
+        "hostId": 13,
+        "status": "pending"
+        },
+        {
+        "deploymentId": "3e3f7271-0701-4682-b838-8bbcc525ee07",
+        "hostId": 12,
+        "status": "pending"
+        },
+        {
+        "deploymentId": "3e3f7271-0701-4682-b838-8bbcc525ee08",
+        "hostId": 13,
+        "status": "pending"
+        },
+        {
+        "deploymentId": "3e3f7271-0701-4682-b838-8bbcc525ee08",
+        "hostId": 12,
+        "status": "pending"
+        }
+    ],
+    "error": null,
+    "success": true
+    }
+    ```
+  - 400: Bad request (invalid deployment IDs)
+  - 500: Internal server error
+}
