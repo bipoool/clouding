@@ -15,9 +15,9 @@ type Deployment struct {
 }
 
 type DeploymentHostMapping struct {
-	Deployment_id *string          `db:"deployment_id" json:"deploymentId"`
-	Host_id       *int             `db:"host_id" json:"hostId"`
-	Status        DeploymentStatus `db:"status" json:"status"` // "pending", "started", etc.
+	DeploymentID *string          `db:"deployment_id" json:"deploymentId"`
+	HostID       *int             `db:"host_id" json:"hostId"`
+	Status       DeploymentStatus `db:"status" json:"status"` // "pending", "started", etc.
 }
 
 type DeploymentMessage struct {
