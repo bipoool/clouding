@@ -61,9 +61,16 @@ func Start() {
 
 	// Set up Gin
 	ginEngine := gin.New()
+
+	// Add root route for banner
+	ginEngine.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, getBanner())
+	})
+
 	ginEngine.Use(gin.Recovery())
 	ginEngine.Use(middleware.SlogMiddleware())
 	ginEngine.Use(middleware.JWTAuthMiddleware())
+
 	v1RouteGroup := ginEngine.Group("/api/v1")
 
 	//Register routes here
@@ -84,7 +91,7 @@ func Start() {
 	}
 
 	// Print banner
-	server.printBanner()
+	fmt.Println(getBanner())
 
 	go server.runServer()
 
@@ -117,12 +124,13 @@ func (s *Server) shutdown() {
 	s.wg.Wait()
 }
 
-func (s *Server) printBanner() {
-	fmt.Println(`
- ██████╗██╗      ██████╗ ██╗   ██╗██████╗ ██╗███╗   ██╗ ██████╗ 
-██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗██║████╗  ██║██╔════╝ 
-██║     ██║     ██║   ██║██║   ██║██║  ██║██║██╔██╗ ██║██║  ███╗
-██║     ██║     ██║   ██║██║   ██║██║  ██║██║██║╚██╗██║██║   ██║
-╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝██║██║ ╚████║╚██████╔╝
- ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝`)
+func getBanner() string {
+	return `
+ ██████╗██╗      ██████╗ ██╗   ██╗██████╗ ██╗███╗   ██╗ ██████╗      █████╗ ██████╗ ██╗███████╗
+██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗██║████╗  ██║██╔════╝     ██╔══██╗██╔══██╗██║██╔════╝
+██║     ██║     ██║   ██║██║   ██║██║  ██║██║██╔██╗ ██║██║  ███╗    ███████║██████╔╝██║███████╗
+██║     ██║     ██║   ██║██║   ██║██║  ██║██║██║╚██╗██║██║   ██║    ██╔══██║██╔═══╝ ██║╚════██║
+╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝██║██║ ╚████║╚██████╔╝    ██║  ██║██║     ██║███████║
+ ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝     ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝
+`
 }
