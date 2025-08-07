@@ -1,0 +1,44 @@
+meta {
+  name: Create Deployment
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/deployments/type/{{deploymentType}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+    {
+    "id": "3e3f7271-0701-4682-b838-8bbcc525ee08",
+    "hostid": [
+        13,
+        12
+    ],
+    "blueprintId": 45
+    }
+}
+
+docs {
+  Create a new deployment (plan or deploy).
+  
+  **Parameters:**
+  - `deploymentType`: Type of deployment ("plan" or "deploy")
+  
+  **Request Body:**
+  - `id`: deployment ID
+  - `hostIds`: Array of host IDs (optional if hostGroupId is provided)
+  - `blueprintId`: Blueprint ID (required)
+  
+  **Response:**
+  - 201: Deployment created successfully
+  - 400: Bad request (invalid parameters)
+  - 500: Internal server error
+}

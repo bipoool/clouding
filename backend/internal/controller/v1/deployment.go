@@ -6,7 +6,6 @@ import (
 	"clouding/backend/internal/utils"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -90,26 +89,15 @@ func (c *DeploymentController) GetByUserAndType(ctx *gin.Context) {
 }
 
 func (c *DeploymentController) GetDeploymentHostMappingByIds(ctx *gin.Context) {
-	idsStr := ctx.Param("ids")
-	idsStrArr := strings.Split(idsStr, ",")
-	var ids []int
-
+	idsStr := ctx.Param("id")
 	// @ TODO fetch unique values here
-	for _, idStr := range idsStrArr {
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			slog.Debug("ComponentId not correct", "ERR", err)
-			ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
-			return
-		}
-		ids = append(ids, id)
-	}
-
-	result, err := c.Service.GetDeploymentHostMappingByIds(ctx.Request.Context(), ids)
+	idsStrArr := strings.Split(idsStr, ",")
+	result, err := c.Service.GetDeploymentHostMappingByIds(ctx.Request.Context(), idsStrArr)
 	if err != nil {
 		slog.Error("Error fetching deployments hosts mapping", "err", err)
 		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
+
 	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(result))
 }

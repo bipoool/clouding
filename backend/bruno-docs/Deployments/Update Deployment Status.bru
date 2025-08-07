@@ -1,0 +1,51 @@
+meta {
+  name: Update Deployment Status
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/deployments/{{deploymentId}}/status
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "status": "started"
+  }
+}
+
+docs {
+  Update the status of a deployment.
+  
+  **Parameters:**
+  - `deploymentId`: ID of the deployment to update
+  
+  **Request Body:**
+  - `status`: New status for the deployment
+    - `pending`: Deployment is waiting to start
+    - `started`: Deployment has started
+    - `completed`: Deployment completed successfully
+    - `failed`: Deployment failed
+  
+  **Response:**
+  - 200: Status updated successfully
+      ```json
+    {
+    "data": {
+        "status": "completed",
+        "updatedAt": "2025-08-07T18:14:22.094484Z"
+    },
+    "error": null,
+    "success": true
+    }
+    ```
+  - 400: Bad request (invalid status)
+  - 500: Internal server error
+}
