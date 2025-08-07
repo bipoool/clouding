@@ -5,8 +5,8 @@ import (
 	"clouding/backend/internal/database"
 	"clouding/backend/internal/logger"
 	"clouding/backend/internal/middleware"
-	"clouding/backend/internal/router"
 	"clouding/backend/internal/queue"
+	"clouding/backend/internal/router"
 	"context"
 	"fmt"
 	"log/slog"
@@ -18,7 +18,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Server struct {
@@ -27,7 +26,7 @@ type Server struct {
 	ginEngine  *gin.Engine
 	httpServer *http.Server
 	db         *sqlx.DB
-	queueConn *amqp.Connection
+	publisher  *queue.Publisher
 }
 
 func Start() {
@@ -47,16 +46,13 @@ func Start() {
 		config.Config.Sql.Db,
 	)
 
-	rmqConn, err := amqp.Dial(config.Config.RabbitMQ.URL)
-	if err != nil {
-		slog.Error(" Failed to connect to RabbitMQ", "error", err)
-		return
-	}
-	publisher, err := queue.NewPublisher(rmqConn, "deployments")
-	if err != nil {
-		slog.Error(" Failed to create publisher", "error", err)
-		return
-	}
+	publisher := queue.NewPublisher(
+		config.Config.RabbitMQ.URL,
+		config.Config.RabbitMQ.PORT,
+		config.Config.RabbitMQ.Username,
+		config.Config.RabbitMQ.Password,
+		config.Config.RabbitMQ.QueueName,
+	)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
@@ -65,9 +61,16 @@ func Start() {
 
 	// Set up Gin
 	ginEngine := gin.New()
+
+	// Add root route for banner
+	ginEngine.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, getBanner())
+	})
+
 	ginEngine.Use(gin.Recovery())
 	ginEngine.Use(middleware.SlogMiddleware())
 	ginEngine.Use(middleware.JWTAuthMiddleware())
+
 	v1RouteGroup := ginEngine.Group("/api/v1")
 
 	//Register routes here
@@ -84,11 +87,11 @@ func Start() {
 		ginEngine:  ginEngine,
 		httpServer: httpServer,
 		db:         db,
-		queueConn: rmqConn,
+		publisher:  publisher,
 	}
 
 	// Print banner
-	server.printBanner()
+	fmt.Println(getBanner())
 
 	go server.runServer()
 
@@ -112,17 +115,21 @@ func (s *Server) shutdown() {
 	if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
 		slog.Error("server forced to shutdown", "Error", err)
 	}
-	s.db.Close()
-	s.queueConn.Close(); 
+	if err := s.db.Close(); err != nil {
+		slog.Error("DB error on shutdown", "Error", err)
+	}
+	if err := s.publisher.Close(); err != nil {
+		slog.Error("Publisher error on shutdown", "Error", err)
+	}
 	s.wg.Wait()
 }
 
-func (s *Server) printBanner() {
-	fmt.Println(`
- ██████╗██╗      ██████╗ ██╗   ██╗██████╗ ██╗███╗   ██╗ ██████╗ 
-██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗██║████╗  ██║██╔════╝ 
-██║     ██║     ██║   ██║██║   ██║██║  ██║██║██╔██╗ ██║██║  ███╗
-██║     ██║     ██║   ██║██║   ██║██║  ██║██║██║╚██╗██║██║   ██║
-╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝██║██║ ╚████║╚██████╔╝
- ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝`)
+func getBanner() string {
+	return `
+ ██████╗██╗      ██████╗ ██╗   ██╗██████╗ ██╗███╗   ██╗ ██████╗      █████╗ ██████╗ ██╗███████╗
+██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗██║████╗  ██║██╔════╝     ██╔══██╗██╔══██╗██║██╔════╝
+██║     ██║     ██║   ██║██║   ██║██║  ██║██║██╔██╗ ██║██║  ███╗    ███████║██████╔╝██║███████╗
+██║     ██║     ██║   ██║██║   ██║██║  ██║██║██║╚██╗██║██║   ██║    ██╔══██║██╔═══╝ ██║╚════██║
+╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝██║██║ ╚████║╚██████╔╝    ██║  ██║██║     ██║███████║
+ ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝     ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝`
 }

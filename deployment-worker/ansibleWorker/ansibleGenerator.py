@@ -104,7 +104,7 @@ def generateInventory(payload: deployment.Deployment, hostsAndCreds: List[Tuple[
         f.write("[group]\n")
         for host, credential in hostsAndCreds:
             username = credential.value.get('username')
-            host_line = f"host{host.id} ansible_host={host.ip} ansible_user={username}"
+            host_line = f"{host.id} ansible_host={host.ip} ansible_user={username}"
             
             # Handle SSH key if present
             if 'sshKey' in credential.value and credential.value['sshKey']:

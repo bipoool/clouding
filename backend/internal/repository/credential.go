@@ -190,7 +190,7 @@ func (r *credentialRepository) UpdateCredential(ctx context.Context, c *credenti
 	}
 
 	var updatedAt time.Time
-	if err := r.db.GetContext(ctx, &updatedAt, query, args...); err != nil {
+	if err := tx.GetContext(ctx, &updatedAt, query, args...); err != nil {
 		return err
 	}
 	c.UpdatedAt = &updatedAt

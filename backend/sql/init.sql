@@ -83,10 +83,18 @@ CREATE TYPE deployment_status AS ENUM ('pending', 'started', 'completed', 'faile
 CREATE TABLE deployments (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  host_id INT NOT NULL REFERENCES hosts(id) ON DELETE CASCADE,
   blueprint_id INT NOT NULL REFERENCES blueprints(id) ON DELETE CASCADE,
   type deployment_type NOT NULL,
   status deployment_status NOT NULL DEFAULT 'pending',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE TABLE deployment_host_mappings (
+    deployment_id UUID NOT NULL,
+    host_id INTEGER NOT NULL,
+    status deployment_status NOT NULL DEFAULT 'pending',
+    UNIQUE(deployment_id, host_id, status),
+    FOREIGN KEY (deployment_id) REFERENCES deployments(id) ON DELETE CASCADE,
+    FOREIGN KEY (host_id) REFERENCES hosts(id) ON DELETE CASCADE
+)

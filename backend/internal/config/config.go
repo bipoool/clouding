@@ -33,7 +33,11 @@ type CloudingConfig struct {
 	}
 
 	RabbitMQ struct {
-		URL string `mapstructure:"rabbitMqUrl" description:"RabbitMQ connection URL"`
+		URL       string `mapstructure:"url" description:"RabbitMQ connection URL"`
+		PORT      string `mapstructure:"port" description:"RabbitMQ connection PORT"`
+		Username  string `mapstructure:"username" description:"RabbitMQ connection username"`
+		Password  string `mapstructure:"password" description:"RabbitMQ connection password"`
+		QueueName string `mapstructure:"queueName" description:"RabbitMQ Queue name"`
 	} `mapstructure:"rabbitmq"`
 }
 
@@ -63,5 +67,9 @@ func LoadCloudingConfig(path string) {
 	Config.Vault.VaultSecretEngineMetaPath = os.Getenv("VAULT_SECRET_ENGINE_METADATA")
 
 	Config.RabbitMQ.URL = os.Getenv("RABBITMQ.URL")
+	Config.RabbitMQ.PORT = os.Getenv("RABBITMQ.PORT")
+	Config.RabbitMQ.Username = os.Getenv("RABBITMQ.USERNAME")
+	Config.RabbitMQ.Password = os.Getenv("RABBITMQ.PASSWORD")
+	Config.RabbitMQ.QueueName = os.Getenv("RABBITMQ.QUEUE.NAME")
 
 }

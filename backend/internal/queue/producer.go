@@ -7,23 +7,32 @@ import (
 )
 
 type Publisher struct {
+	Conn    *amqp091.Connection
 	Channel *amqp091.Channel
-	Queue   amqp091.Queue
+	Queue   *amqp091.Queue
 }
 
-func NewPublisher(conn *amqp091.Connection, queueName string) (*Publisher, error) {
+func NewPublisher(url, port, username, password, queueName string) *Publisher {
+
+	endpoint := "amqp://" + username + ":" + password + "@" + url + ":" + port
+	conn, err := amqp091.Dial(endpoint)
+	if err != nil {
+		panic(err)
+	}
+
 	ch, err := conn.Channel()
 	if err != nil {
-		return nil, err
+		slog.Error("Error in Rabbitmq connection")
+		panic(err)
 	}
 
 	q, err := ch.QueueDeclare(
 		queueName,
-		true,  
+		true,
 		false,
-		false, 
-		false, 
-		nil,   
+		false,
+		false,
+		nil,
 	)
 	if err != nil {
 		slog.Error("Error declaring queue", "queue", queueName, "error", err)
@@ -31,9 +40,10 @@ func NewPublisher(conn *amqp091.Connection, queueName string) (*Publisher, error
 	}
 
 	return &Publisher{
+		Conn:    conn,
 		Channel: ch,
-		Queue:   q,
-	}, nil
+		Queue:   &q,
+	}
 }
 
 func (p *Publisher) Publish(body []byte) error {
@@ -47,4 +57,16 @@ func (p *Publisher) Publish(body []byte) error {
 			Body:        body,
 		},
 	)
+}
+
+func (p *Publisher) Close() error {
+	err := p.Channel.Close()
+	if err != nil {
+		return err
+	}
+	err = p.Conn.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }
