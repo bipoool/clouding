@@ -11,9 +11,10 @@ import (
 
 type DeploymentService interface {
 	Create(ctx context.Context, d *deployment.Deployment) error
-	UpdateStatus(ctx context.Context, id string, updateDeploymentStatus *deployment.UpdateDeploymentStatus) error
+	UpdateStatus(ctx context.Context, id string, updateDeploymentStatusPayload *deployment.UpdateDeploymentStatusPayload) error
 	GetByID(ctx context.Context, id string) (*deployment.Deployment, error)
 	GetByUserAndType(ctx context.Context, userId string, dType string) ([]*deployment.Deployment, error)
+	GetDeploymentHostMappingByIds(ctx context.Context, ids []int) ([]*deployment.DeploymentHostMapping, error)
 }
 
 type deploymentService struct {
@@ -66,8 +67,8 @@ func (s *deploymentService) Create(ctx context.Context, d *deployment.Deployment
 	return nil
 }
 
-func (s *deploymentService) UpdateStatus(ctx context.Context, id string, updateDeploymentStatus *deployment.UpdateDeploymentStatus) error {
-	return s.repo.UpdateStatus(ctx, id, updateDeploymentStatus)
+func (s *deploymentService) UpdateStatus(ctx context.Context, id string, updateDeploymentStatusPayload *deployment.UpdateDeploymentStatusPayload) error {
+	return s.repo.UpdateStatus(ctx, id, updateDeploymentStatusPayload)
 }
 
 func (s *deploymentService) GetByID(ctx context.Context, id string) (*deployment.Deployment, error) {
@@ -76,4 +77,8 @@ func (s *deploymentService) GetByID(ctx context.Context, id string) (*deployment
 
 func (s *deploymentService) GetByUserAndType(ctx context.Context, userId string, dType string) ([]*deployment.Deployment, error) {
 	return s.repo.GetByUserAndType(ctx, userId, dType)
+}
+
+func (s *deploymentService) GetDeploymentHostMappingByIds(ctx context.Context, ids []int) ([]*deployment.DeploymentHostMapping, error) {
+	return s.repo.GetDeploymentHostMappingByIds(ctx, ids)
 }

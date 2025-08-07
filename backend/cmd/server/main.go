@@ -48,6 +48,7 @@ func Start() {
 
 	publisher := queue.NewPublisher(
 		config.Config.RabbitMQ.URL,
+		config.Config.RabbitMQ.PORT,
 		config.Config.RabbitMQ.Username,
 		config.Config.RabbitMQ.Password,
 		config.Config.RabbitMQ.QueueName,

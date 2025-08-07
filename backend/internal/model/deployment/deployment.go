@@ -14,6 +14,12 @@ type Deployment struct {
 	UpdatedAt   time.Time        `db:"updated_at" json:"updatedAt"`
 }
 
+type DeploymentHostMapping struct {
+	Deployment_id *string          `db:"deployment_id" json:"deploymentId"`
+	Host_id       *int             `db:"host_id" json:"hostId"`
+	Status        DeploymentStatus `db:"status" json:"status"` // "pending", "started", etc.
+}
+
 type DeploymentMessage struct {
 	JobID       *string        `json:"jobId"`
 	UserID      *string        `json:"userId"`
@@ -23,7 +29,7 @@ type DeploymentMessage struct {
 	CreatedAt   time.Time      `json:"created_at"`
 }
 
-type UpdateDeploymentStatus struct {
+type UpdateDeploymentStatusPayload struct {
 	Status    DeploymentStatus `json:"status" binding:"required"`
 	UpdatedAt *time.Time       `json:"updatedAt"`
 }

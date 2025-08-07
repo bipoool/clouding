@@ -12,9 +12,9 @@ type Publisher struct {
 	Queue   *amqp091.Queue
 }
 
-func NewPublisher(url, username, password, queueName string) *Publisher {
+func NewPublisher(url, port, username, password, queueName string) *Publisher {
 
-	endpoint := "amqp://" + username + ":" + password + "@" + url
+	endpoint := "amqp://" + username + ":" + password + "@" + url + ":" + port
 	conn, err := amqp091.Dial(endpoint)
 	if err != nil {
 		panic(err)

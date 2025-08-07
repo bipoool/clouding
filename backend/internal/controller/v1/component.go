@@ -41,6 +41,7 @@ func (c *ComponentController) GetComponentByIds(ctx *gin.Context) {
 	idsStrArr := strings.Split(idsStr, ",")
 	var ids []int
 
+	// @ TODO fetch unique values here
 	for _, idStr := range idsStrArr {
 		id, err := strconv.Atoi(idStr)
 		if err != nil {

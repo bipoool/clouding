@@ -19,5 +19,6 @@ func RegisterDeploymentRoutes(rg *gin.RouterGroup, db *sqlx.DB, publisher *queue
 	rg.PUT("/deployments/:id/status", deploymentController.UpdateStatus)
 	rg.GET("/deployments/:id", deploymentController.GetByID)
 	rg.GET("/deployments/type/:type", deploymentController.GetByUserAndType)
+	rg.GET("/deployments/:id/hosts", deploymentController.GetDeploymentHostMappingByIds)
 
 }
