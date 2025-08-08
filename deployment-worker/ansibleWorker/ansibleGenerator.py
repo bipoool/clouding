@@ -7,6 +7,7 @@ from models.credential import Credential
 
 from handlers import docker, nginx
 from models import deployment
+from models.playbook import PlaybookInfo
 from repositories import blueprint as blueprintRepository
 
 ROLE_DISPATCH = {
@@ -16,7 +17,7 @@ ROLE_DISPATCH = {
 
 PLAYBOOK_BASE_PATH = "runs"
 
-def generateNotebook(payload: deployment.Deployment):
+def generateNotebook(payload: deployment.DeploymentRabbitMqPayload) -> PlaybookInfo:
     playbookDir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
     os.makedirs(playbookDir, exist_ok=True)
     playbookPath = os.path.join(playbookDir, f"main.yaml")
@@ -60,16 +61,17 @@ def generateNotebook(payload: deployment.Deployment):
     with open(playbookPath, "w") as f:
         yaml.dump(playbook, f)
 
-    return {
-        "status": "success",
-        "playbookName": "main.yaml",
-        "playbookDir": playbookDir,
-        "blueprintId": payload.blueprintId,
-        "userId": payload.userId,
-        "jobId": payload.jobId
-    }
+    info = PlaybookInfo(
+        "main.yaml",
+        playbookDir,
+        payload.blueprintId,
+        payload.userId,
+        payload.jobId
+    )
 
-def generateInventory(payload: deployment.Deployment, hostsAndCreds: List[Tuple[Host, Credential]]):
+    return info
+
+def generateInventory(payload: deployment.DeploymentRabbitMqPayload, hostsAndCreds: List[Tuple[Host, Credential]]):
     playbookDir = os.path.join(PLAYBOOK_BASE_PATH, payload.userId, payload.jobId)
     inventoryFolder = os.path.join(playbookDir, "inventory")
     os.makedirs(inventoryFolder, exist_ok=True)
