@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List
 from datetime import datetime
 from uuid import UUID
 from enum import Enum

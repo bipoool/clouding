@@ -1,6 +1,4 @@
 from database.connection import getConnection
-from models.deployment import Deployment, DeploymentStatus
-from typing import Optional
 from uuid import UUID
 
 def updateDeploymentStatusToStarted(deploymentId: UUID) -> bool:
