@@ -1,22 +1,39 @@
-import json
 import ansible_runner
 import requests
 import time
 import json
+import logging
+
+from models.deployment import DeploymentHostStatus
+from models.playbook import PlaybookInfo
+from repositories import deployment
+from repositories import deploymentHostMapping
+from models import deployment as deploymentModels
+
+logger = logging.getLogger(__name__)
 
 class AnsibleRunner:
 
-    def __init__(self, lokiEndPoint, jobId, playbookName, workDir, isPlan = False):
+    def __init__(self, lokiEndPoint, payload: deploymentModels.DeploymentRabbitMqPayload, playbookInfo: PlaybookInfo):
         self.lokiEndPoint = lokiEndPoint
-        self.jobId = jobId
-        self.playbookName = playbookName
-        self.isPlan = isPlan
-        self.workDir = workDir
+        self.jobId = playbookInfo.jobId
+        self.playbookName = playbookInfo.playbookName
+        self.workDir = playbookInfo.playbookDir
+        self.isPlan = payload.dtype == 'plan'
+        self.failedHosts = set()
+        self.successHosts = set()
 
     def run(self):
         cmdLine = ''
         if self.isPlan:
             cmdLine += '--check --diff'
+        
+        changed = deployment.updateDeploymentStatusToStarted(self.jobId)
+
+        if not changed:
+            logger.info(f"Skipping run for{self.jobId} as status was not pending or ID does not exists")
+            return
+
         ansible_runner.run(
             private_data_dir=self.workDir,
             playbook=self.playbookName,
@@ -36,6 +53,13 @@ class AnsibleRunner:
                 log["res"] = eventData.get('res')
                 log["duration"] = eventData.get('duration')
                 log['event'] = event.get('event')
+                
+                hostId = int(log["host"], base=10)
+                if event.get('event') == 'runner_on_failed' or event.get('event') == 'runner_on_unreachable':
+                    self.failedHosts.add(hostId)
+                else:
+                    self.successHosts.add(hostId)
+
             elif event.get('event') == 'playbook_on_stats':
                 eventData = event.get('event_data', {})
                 log["changed"] = eventData.get('changed')
@@ -45,6 +69,16 @@ class AnsibleRunner:
                 log["processed"] = eventData.get('processed')
                 log["skipped"] = eventData.get('skipped')
                 log['event'] = event.get('event')
+
+                deploymentHostMapping.updateDeploymentHostStatus(self.jobId, list(self.successHosts), DeploymentHostStatus.COMPLETED)
+                deploymentHostMapping.updateDeploymentHostStatus(self.jobId, list(self.failedHosts), DeploymentHostStatus.FAILED)
+
+                # Changing status for the job
+                if len(self.failedHosts) > 0:
+                    deployment.updateDeploymentStatusToFailed(self.jobId)
+                else:
+                    deployment.updateDeploymentStatusToCompleted(self.jobId)
+
             if log != {}:
                 print(log)
                 self.sendToLoki(log)

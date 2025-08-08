@@ -12,7 +12,6 @@ from models import deployment
 
 from repositories import host as hostRepository
 from repositories.vault import getCredentialsByName
-import asyncio
 
 load_dotenv()
 
@@ -86,7 +85,7 @@ class RabbitMQConsumer:
                 return
             
             # Convert to deploymentPlayload model
-            deploymentPlayload = deployment.Deployment(
+            deploymentRabbitMqPlayload = deployment.DeploymentRabbitMqPayload(
                 jobId=messageData.get('jobId'),
                 hostIds=messageData.get('hostIds'),
                 blueprintId=messageData.get('blueprintId'),
@@ -94,20 +93,20 @@ class RabbitMQConsumer:
                 dtype = messageData.get('type')
             )
             
-            hostsWithCredentials = hostRepository.getHostsWithCredentials(deploymentPlayload.hostIds)
+            hostsWithCredentials = hostRepository.getHostsWithCredentials(deploymentRabbitMqPlayload.hostIds)
             
             # Populate credential values from Vault
             for _host, credential in hostsWithCredentials:
                 if credential and credential.name:
-                    vaultValue = getCredentialsByName(f"{credential.name}-{deploymentPlayload.userId}")
+                    vaultValue = getCredentialsByName(f"{credential.name}-{deploymentRabbitMqPlayload.userId}")
                     credential.value = vaultValue
             
             logger.info(f"Fetched {len(hostsWithCredentials)} hosts with credentials")
             
             # Process the deployment using the existing controller
-            playbookInfo = ansibleGenerator.generateNotebook(deploymentPlayload)
-            ansibleGenerator.generateInventory(payload=deploymentPlayload, hostsAndCreds=hostsWithCredentials)
-            ansibleRunner = AnsibleRunner(self.lokiEndPoint, playbookInfo.get("jobId"), playbookInfo.get("playbookName"), playbookInfo.get("playbookDir"), deploymentPlayload.dtype == 'plan')
+            playbookInfo = ansibleGenerator.generateNotebook(deploymentRabbitMqPlayload)
+            ansibleGenerator.generateInventory(payload=deploymentRabbitMqPlayload, hostsAndCreds=hostsWithCredentials)
+            ansibleRunner = AnsibleRunner(self.lokiEndPoint, deploymentRabbitMqPlayload, playbookInfo)
             thread = threading.Thread(target=ansibleRunner.run)
             thread.start()
             
@@ -154,12 +153,22 @@ class RabbitMQConsumer:
             self.connection.close()
         logger.info("Consumer stopped")
 
+def getBanner() -> str:
+	return """
+     ██████╗██╗      ██████╗ ██╗   ██╗██████╗ ██╗███╗   ██╗ ██████╗     ██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗███████╗██████╗ 
+    ██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗██║████╗  ██║██╔════╝     ██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝██╔════╝██╔══██╗
+    ██║     ██║     ██║   ██║██║   ██║██║  ██║██║██╔██╗ ██║██║  ███╗    ██║ █╗ ██║██║   ██║██████╔╝█████╔╝ █████╗  ██████╔╝
+    ██║     ██║     ██║   ██║██║   ██║██║  ██║██║██║╚██╗██║██║   ██║    ██║███╗██║██║   ██║██╔══██╗██╔═██╗ ██╔══╝  ██╔══██╗
+    ╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝██║██║ ╚████║╚██████╔╝    ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗███████╗██║  ██║
+    ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝      ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝"""
+
 def main():
     """Main function to start the RabbitMQ consumer"""
     consumer = RabbitMQConsumer()
     
     try:
         consumer.connect()
+        logger.info(getBanner())
         consumer.startConsuming()
     except Exception as e:
         logger.error(f"Failed to start consumer: {e}")
