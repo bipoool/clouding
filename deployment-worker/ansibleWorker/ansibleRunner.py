@@ -1,12 +1,10 @@
-import json
-from uuid import UUID
 import ansible_runner
 import requests
 import time
 import json
 import logging
 
-from models.deployment import DeploymentStatus, DeploymentHostStatus
+from models.deployment import DeploymentHostStatus
 from models.playbook import PlaybookInfo
 from repositories import deployment
 from repositories import deploymentHostMapping
