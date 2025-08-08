@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,16 +22,21 @@ func NewHostController(s service.HostService) *HostController {
 
 func (c *HostController) GetHost(ctx *gin.Context) {
 
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-
-	if err != nil {
-		slog.Debug("HostId not correct", "ERR", err)
-		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
-		return
+	idsStr := ctx.Param("id")
+	idsStrArr := strings.Split(idsStr, ",")
+	var ids []int
+	// @ TODO fetch unique values here
+	for _, idStr := range idsStrArr {
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			slog.Debug("Host ID not correct", "ERR", err)
+			ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
+			return
+		}
+		ids = append(ids, id)
 	}
 
-	host, err := c.Service.GetHost(ctx.Request.Context(), id)
+	host, err := c.Service.GetHosts(ctx.Request.Context(), ids)
 
 	if err != nil {
 		slog.Error(err.Error())
