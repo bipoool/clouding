@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+      - ./loki/chunks:/loki/chunks
+      - ./loki/index:/loki/index
+      - ./loki/index-cache:/loki/index-cache
+      - ./loki/compactor:/loki/compactor
+      - ./loki/wal:/loki/wal
+    command: -config.file=/etc/loki/loki-config.yaml
+root@master-node-1:/home/vipul/loki-setup# cat loki-config.yaml 
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+  wal:
+    enabled: true
+    dir: /loki/wal
+  chunk_idle_period: 5m
+  max_chunk_age: 1h
+  chunk_target_size: 1048576
+  max_transfer_retries: 0
+
+schema_config:
+  configs:
+    - from: 2022-01-01
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/index-cache
+    shared_store: filesystem
+  filesystem:
+    directory: /loki/chunks
+
+compactor:
+  working_directory: /loki/compactor
+  shared_store: filesystem
+  compaction_interval: 10m
+
+limits_config:
+  retention_period: 7d  # You can adjust retention as needed
+
+chunk_store_config:
+  max_look_back_period: 24h
+
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 7d
