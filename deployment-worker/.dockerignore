@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.log
+*.retry
+.env
+.env.*
+.git/
+.gitignore
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.hypothesis/
+**/.DS_Store
+# Ansible bits that must never bake into the image
+ansibleWorker/inventory/*
+ansibleWorker/*.vault
+ansibleWorker/*.key
