@@ -15,6 +15,20 @@ headers {
   Authorization: Bearer {{authToken}}
 }
 
+body:json {
+  {
+    "name": "MyVM",
+    "ip": "192.168.1.10",
+    "os": "Ubuntu",
+    "credentialId": "cred-uuid-123",
+    "metaData": {
+      "tag": {
+        "product": "adpushup"
+      }
+    }
+  }
+}
+
 docs {
   Register a new host.
 }

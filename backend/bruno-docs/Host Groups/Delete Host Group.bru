@@ -1,0 +1,21 @@
+meta {
+  name: Delete Host Group
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/hostGroup/:id
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Delete a host group by ID.
+}
+
+

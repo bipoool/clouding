@@ -5,7 +5,7 @@ meta {
 }
 
 put {
-  url: {{baseUrl}}/hostGroup
+  url: {{baseUrl}}/hostGroup/:id
   body: json
   auth: none
 }
@@ -17,12 +17,8 @@ headers {
 
 body:json {
   {
-    "userId": "user-uuid",
     "name": "Updated Group",
-    "hosts": [
-      "host1",
-      "host2"
-    ]
+    "description": "Updated description"
   }
 }
 
