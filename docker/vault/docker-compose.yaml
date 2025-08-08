@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  vault:
+    image: hashicorp/vault:1.15.4
+    container_name: vault
+    user: "0"
+    hostname: vault
+    restart: always
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./data:/vault/data:rw
+      - ./config.hcl:/vault/config/config.hcl:ro
+    entrypoint: ["vault"]
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+    command: server -config=/vault/config/config.hcl
+    healthcheck:
+      test: ["CMD", "vault", "status", "-format=json"]
+      interval: 10s
+      timeout: 5s
+      retries: 10

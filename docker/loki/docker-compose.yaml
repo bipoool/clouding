@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - ./loki/chunks:/loki/chunks
+      - ./loki/index:/loki/index
+      - ./loki/index-cache:/loki/index-cache
+      - ./loki/compactor:/loki/compactor
+      - ./loki/wal:/loki/wal
+    command: -config.file=/etc/loki/loki-config.yaml
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
