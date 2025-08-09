@@ -1,2 +1,2 @@
 -- getHostById.sql
-SELECT id, user_id, name, ip, os, meta_data, created_at, updated_at FROM hosts WHERE id = ANY($1);
+SELECT id, user_id, name, ip, os, credential_id, meta_data, created_at, updated_at FROM hosts WHERE id = ANY($1);
