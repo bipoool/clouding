@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Launch Next.js (pnpm dev)",
+        "type": "node",
+        "request": "launch",
+        "cwd": "${workspaceFolder}",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": ["run", "dev"],
+        "env": {
+          "NODE_OPTIONS": "--inspect"
+        },
+        "console": "integratedTerminal",
+        "autoAttachChildProcesses": true
+      },
+      {
+        "name": "Attach to Next.js (9229)",
+        "type": "node",
+        "request": "attach",
+        "port": 9229,
+        "restart": true
+      },
+      {
+        "name": "Debug Client (Chrome)",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3000",
+        "webRoot": "${workspaceFolder}"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "Full-stack Debug",
+        "configurations": ["Launch Next.js (pnpm dev)", "Debug Client (Chrome)"]
+      }
+    ]
+  }
+  

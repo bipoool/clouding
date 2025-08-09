@@ -14,7 +14,7 @@ func RegisterHostGroupRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
 	hostGroupService := service.NewHostGroupService(hostGroupRepository)
 	hostGroupController := v1.NewHostGroupController(hostGroupService)
 
-	group := rg.Group("/hostGroup")
+	group := rg.Group("/hostGroups")
 	{
 		group.GET("", hostGroupController.GetAllHostGroups)
 		group.GET("/:id", hostGroupController.GetHostGroupByID)
