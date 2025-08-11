@@ -42,7 +42,7 @@ export function useVMs() {
         setError(null)
         const res = await fetch('/api/hosts', { credentials: 'include' })
         if (!res.ok) {
-          const errorData = await res.json()
+          const errorData = await res.json().catch(() => ({}));
           throw new Error(errorData.error || 'Failed to fetch VMs')
         }
         const response = await res.json()
@@ -69,13 +69,18 @@ export function useVMs() {
         body: JSON.stringify(vm)
       })
       if (!res.ok) {
-        const errorData = await res.json()
+        const errorData = await res.json().catch(() => ({}))
         throw new Error(errorData.error || 'Failed to create VM')
       }
-      const response = await res.json()
-      const newHost: Host = response.data
-      const newVM = enhanceHostData(newHost)
-      setVMs(prev => [...prev, newVM])
+      const { data: createdPartial } = (await res.json()) as { data: Partial<Host> };
+      if (!createdPartial?.id) {
+        throw new Error('Invalid API response: missing host id')
+      }
+      // Merge API response with what we already know from the form
+      const mergedHost = { ...vm, ...createdPartial } as Host;
+      const newVM = enhanceHostData(mergedHost);
+      setVMs(prev => [...prev, newVM]);
+      return newVM;
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -94,10 +99,14 @@ export function useVMs() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to update VM')
       }
-      const response = await res.json()
-      const updatedHost: Host = response.data
-      const updatedVM = enhanceHostData(updatedHost)
-      setVMs(prev => prev.map(vm => (vm.id === id ? updatedVM : vm)))
+      const { data: updatedPartial } = (await res.json()) as { data: Partial<Host> };
+      setVMs(prev =>
+        prev.map(item =>
+          item.id.toString() === id
+            ? enhanceHostData({ ...item, ...updates, ...updatedPartial })
+            : item
+        )
+      );
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -111,7 +120,7 @@ export function useVMs() {
         credentials: 'include'
       })
       if (!res.ok) {
-        const errorData = await res.json()
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to delete VM')
       }
       setVMs(prev => prev.filter(vm => vm.id !== id))
@@ -194,7 +203,7 @@ export function useVMGroups() {
         setError(null)
         const res = await fetch('/api/hostGroup', { credentials: 'include' })
         if (!res.ok) {
-          const errorData = await res.json()
+          const errorData = await res.json().catch(() => ({}));
           throw new Error(errorData.error || 'Failed to fetch groups')
         }
         const response = await res.json()
@@ -224,7 +233,7 @@ export function useVMGroups() {
         })
       })
       if (!res.ok) {
-        const errorData = await res.json()
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to create group')
       }
       const response = await res.json()
@@ -249,7 +258,7 @@ export function useVMGroups() {
         })
       })
       if (!res.ok) {
-        const errorData = await res.json()
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to update group')
       }
       const response = await res.json()
@@ -269,7 +278,7 @@ export function useVMGroups() {
         credentials: 'include'
       })
       if (!res.ok) {
-        const errorData = await res.json()
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to delete group')
       }
       setGroups(prev => prev.filter(g => g.id !== id))
@@ -288,7 +297,7 @@ export function useVMGroups() {
         body: JSON.stringify({ hostIds: [vmId] })
       })
       if (!res.ok) {
-        const errorData = await res.json()
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to add VM to group')
       }
       // Update the group's vmIds
@@ -308,7 +317,7 @@ export function useVMGroups() {
         credentials: 'include'
       })
       if (!res.ok) {
-        const errorData = await res.json()
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to remove VM from group')
       }
       // Update the group's vmIds
