@@ -118,11 +118,15 @@ export function AddCredentialModal({
 										<Input
 											placeholder='Production SSH Key'
 											className='glass-input'
+											disabled={!!editCredential}
 											{...field}
 										/>
 									</FormControl>
 									<FormDescription className='text-xs text-gray-500'>
-										A descriptive name for this credential
+										{editCredential 
+											? 'Credential name cannot be changed after creation'
+											: 'A descriptive name for this credential'
+										}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
