@@ -76,12 +76,13 @@ export const CredentialsProvider = ({ children }: CredentialsProviderProps) => {
 	const createCredential = useCallback(async (data: CreateCredentialData) => {
 		setIsLoading(true)
 		try {
-			const { data: newCredential } = await httpClient.post<Credential>(
+			const { data: createdPartial } = await httpClient.post<Credential>(
 				'/credentials',
 				data
 			)
-			setCredentials(prev => [...prev, newCredential])
-			return newCredential
+			const fullCredential: Credential = { ...data, ...createdPartial };
+			setCredentials(prev => [...prev, fullCredential])
+			return fullCredential
 		} catch (err) {
 			setError(getErrorMessage(err))
 			throw err
@@ -98,7 +99,9 @@ export const CredentialsProvider = ({ children }: CredentialsProviderProps) => {
 					`/credentials/${id}`,
 					updates
 				)
-				setCredentials(prev => prev.map(c => (c.id === id ? updated : c)))
+				setCredentials(prev =>
+					prev.map(c => (c.id === id ? { ...c, ...updated } : c))
+				);
 			} catch (err) {
 				setError(getErrorMessage(err))
 				throw err
