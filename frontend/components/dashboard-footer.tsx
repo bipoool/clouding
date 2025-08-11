@@ -8,7 +8,7 @@ export function DashboardFooter() {
 				<div className='flex flex-col sm:flex-row items-center justify-between gap-4 text-sm'>
 					{/* Left side - Copyright and branding */}
 					<div className='flex items-center gap-2 text-gray-400'>
-						<span>© 2024 Clouding. Made with</span>
+						<span>© 2025 Clouding. Made with</span>
 						<Heart className='h-4 w-4 text-orange-400' />
 						<span>by developers, for developers</span>
 						<Code className='h-4 w-4 text-cyan-400' />

@@ -17,6 +17,7 @@ interface BaseCredential {
 interface SSHKeyCredential extends BaseCredential {
 	type: 'ssh_key'
 	secret: {
+		username: string
 		sshKey: string
 	}
 }
@@ -64,6 +65,7 @@ interface BaseCreateCredentialData {
 interface CreateSSHKeyCredentialData extends BaseCreateCredentialData {
 	type: 'ssh_key'
 	secret: {
+		username: string
 		sshKey: string
 	}
 }

@@ -224,11 +224,13 @@ export function CredentialsTable({
 									{credential.type === 'ssh_key' &&
 										credential.secret.sshKey && (
 											<div className='text-sm'>
+												{credential.secret.username && (
+													<div className='text-primary'>
+														User: {credential.secret.username}
+													</div>
+												)}
 												<div className='text-primary font-mono text-xs bg-black/30 px-2 py-1 rounded'>
 													{credential.secret.sshKey.substring(0, 40)}...
-												</div>
-												<div className='text-xs text-secondary mt-1'>
-													SSH Private Key
 												</div>
 											</div>
 										)}

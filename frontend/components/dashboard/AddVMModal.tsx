@@ -248,8 +248,8 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 																	{credential.type === 'ssh_key' &&
 																		'SSH Private Key'}
 																	{credential.type === 'password' &&
-																		credential.username &&
-																		`User: ${credential.username}`}
+																		credential.secret && credential.secret.username &&
+																		`User: ${credential.secret.username}`}
 																</div>
 															</div>
 														</div>

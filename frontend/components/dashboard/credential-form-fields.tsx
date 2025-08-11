@@ -33,27 +33,46 @@ const SSHKeyFields = ({
 }: {
 	form: UseFormReturn<CredentialFormData>
 }) => (
-	<FormField
-		control={form.control}
-		name='sshKey'
-		render={({ field }) => (
-			<FormItem>
-				<FormLabel className={LABEL_CLASSES}>SSH Private Key</FormLabel>
-				<FormControl>
-					<Textarea
-						placeholder='-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----'
-						className={`${GLASS_INPUT_CLASSES} resize-none font-mono text-sm`}
-						rows={8}
-						{...field}
-					/>
-				</FormControl>
-				<FormDescription className={DESCRIPTION_CLASSES}>
-					Paste your SSH private key here
-				</FormDescription>
-				<FormMessage />
-			</FormItem>
-		)}
-	/>
+	<div className='space-y-4'>
+		<FormField
+			control={form.control}
+			name='username'
+			render={({ field }) => (
+				<FormItem>
+					<FormLabel className={LABEL_CLASSES}>Username</FormLabel>
+					<FormControl>
+						<Input
+							placeholder='username'
+							className={GLASS_INPUT_CLASSES}
+							{...field}
+						/>
+					</FormControl>
+					<FormMessage />
+				</FormItem>
+			)}
+		/>
+		<FormField
+			control={form.control}
+			name='sshKey'
+			render={({ field }) => (
+				<FormItem>
+					<FormLabel className={LABEL_CLASSES}>SSH Private Key</FormLabel>
+					<FormControl>
+						<Textarea
+							placeholder='-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----'
+							className={`${GLASS_INPUT_CLASSES} resize-none font-mono text-sm`}
+							rows={5}
+							{...field}
+						/>
+					</FormControl>
+					<FormDescription className={DESCRIPTION_CLASSES}>
+						Paste your SSH private key here
+					</FormDescription>
+					<FormMessage />
+				</FormItem>
+			)}
+		/>
+	</div>
 )
 
 const PasswordFields = ({

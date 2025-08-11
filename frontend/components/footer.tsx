@@ -145,7 +145,7 @@ export function Footer() {
 					<div className='pt-8 border-t border-white/10'>
 						<div className='flex flex-col md:flex-row items-center justify-between gap-4'>
 							<div className='flex items-center gap-2 text-secondary text-sm'>
-								<span>© 2024 Clouding. Made with</span>
+								<span>© 2025 Clouding. Made with</span>
 								<Heart className='h-4 w-4 text-accent-orange' />
 								<span>by developers, for developers</span>
 								<Code className='h-4 w-4 text-accent-cyan' />

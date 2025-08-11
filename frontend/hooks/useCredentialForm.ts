@@ -68,6 +68,7 @@ export const useCredentialForm = ({
 			switch (editCredential.type) {
 				case 'ssh_key':
 					formData.sshKey = editCredential.secret.sshKey
+					formData.username = editCredential.secret.username
 					break
 				case 'password':
 					formData.username = editCredential.secret.username
@@ -129,6 +130,9 @@ export const useCredentialForm = ({
 		// Create type-specific credential data with validation
 		switch (data.type) {
 			case 'ssh_key': {
+				if (!data.username?.trim()) {
+					throw new Error('Username is required')
+				}
 				if (!data.sshKey?.trim()) {
 					throw new Error('SSH key is required')
 				}
@@ -140,6 +144,7 @@ export const useCredentialForm = ({
 					type: 'ssh_key',
 					name: data.name,
 					secret: {
+						username: data.username.trim(),
 						sshKey: normalizedKey,
 					},
 					...baseMetadata,
