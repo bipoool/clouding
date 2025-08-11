@@ -80,7 +80,7 @@ export function useVMs() {
       const mergedHost = { ...vm, ...createdPartial } as Host;
       const newVM = enhanceHostData(mergedHost);
       setVMs(prev => [...prev, newVM]);
-      return mergedHost;
+      return newVM;
     } catch (err) {
       setError(getErrorMessage(err))
     }
