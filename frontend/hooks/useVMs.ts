@@ -72,10 +72,12 @@ export function useVMs() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to create VM')
       }
-      const response = await res.json()
-      const newHost: Host = response.data
-      const newVM = enhanceHostData(newHost)
-      setVMs(prev => [...prev, newVM])
+      const { data: createdPartial } = (await res.json()) as { data: Partial<Host> };
+      // Merge API response with what we already know from the form
+      const mergedHost = { ...vm, ...createdPartial } as Host;
+      const newVM = enhanceHostData(mergedHost);
+      setVMs(prev => [...prev, newVM]);
+      return mergedHost;
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -94,10 +96,14 @@ export function useVMs() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to update VM')
       }
-      const response = await res.json()
-      const updatedHost: Host = response.data
-      const updatedVM = enhanceHostData(updatedHost)
-      setVMs(prev => prev.map(vm => (vm.id === id ? updatedVM : vm)))
+      const { data: updatedPartial } = (await res.json()) as { data: Partial<Host> };
+      setVMs(prev =>
+        prev.map(item =>
+          item.id.toString() === id
+            ? enhanceHostData({ ...item, ...updates, ...updatedPartial })
+            : item
+        )
+      );
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -111,7 +117,7 @@ export function useVMs() {
         credentials: 'include'
       })
       if (!res.ok) {
-        const errorData = await res.json()
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to delete VM')
       }
       setVMs(prev => prev.filter(vm => vm.id !== id))

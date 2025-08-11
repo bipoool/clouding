@@ -127,7 +127,7 @@ export const CredentialsProvider = ({ children }: CredentialsProviderProps) => {
 
 	const getCredentialById = useCallback(
 		(id: string) => {
-			return credentials.find(credential => credential.id === id)
+			return credentials.find(credential => credential.id.toString() === id)
 		},
 		[credentials]
 	)

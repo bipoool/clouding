@@ -210,7 +210,9 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 									<Select onValueChange={field.onChange} value={field.value}>
 										<FormControl>
 											<SelectTrigger className='glass-input'>
-												<SelectValue placeholder='Select SSH credential' />
+												<SelectValue placeholder='Select SSH credential'>
+													{field.value && sshCredentials.find(c => c.id.toString() === field.value)?.name}
+												</SelectValue>
 											</SelectTrigger>
 										</FormControl>
 										<SelectContent className='bg-black/90 backdrop-blur-sm border border-white/10'>
