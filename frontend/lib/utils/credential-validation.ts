@@ -79,6 +79,13 @@ export const credentialSchema = z.object({
 	// Conditional validation based on credential type
 	switch (data.type) {
 		case 'ssh_key':
+			if (!data.username?.trim()) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Username is required',
+					path: ['username'],
+				})
+			}
 			if (!data.sshKey?.trim()) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
