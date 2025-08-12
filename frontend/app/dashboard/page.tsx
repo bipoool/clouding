@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { DashboardLayout } from '@/components/dashboard-layout'
-import { useOverviewMetrics } from '@/hooks/useOverviewMetrics'
+import { OverviewMetric, useOverviewMetrics } from '@/hooks/useOverviewMetrics'
 import {
 	Server,
 	Activity,
@@ -20,13 +20,13 @@ interface StatConfig {
 	name: string
 	value: string
 	change: string
-	icon: any
+	icon: React.ComponentType<{ className?: string }>
 	gradient: string
 	iconColor: string
 	changeColor: string
 }
 
-const getStatsConfig = (metrics: any[]): StatConfig[] => {
+const getStatsConfig = (metrics: OverviewMetric[]): StatConfig[] => {
 	const vmsMetric = metrics.find(m => m.entity === 'vms')
 	const vmGroupsMetric = metrics.find(m => m.entity === 'vmGroups')
 	const credentialsMetric = metrics.find(m => m.entity === 'credentials')
