@@ -16,4 +16,5 @@ func SetupRouter(ginRouteGroup *gin.RouterGroup, db *sqlx.DB, publisher *queue.P
 	v1.RegisterComponentRoutes(ginRouteGroup, db)
 	v1.RegisterBlueprintRoutes(ginRouteGroup, db)
 	v1.RegisterDeploymentRoutes(ginRouteGroup, db, publisher)
+	v1.RegisterMetricRoutes(ginRouteGroup, db)
 }

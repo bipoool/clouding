@@ -1,0 +1,61 @@
+meta {
+  name: Get Metrics Overview
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/metrics/overview
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Get metrics overview for the authenticated user.
+  
+  Returns a list of metrics with the following structure:
+  - entity: The entity name (string)
+  - currentMonth: Current month count (integer)
+  - lastMonth: Last month count (integer)
+  - total: Total count (integer)
+  
+  Requires authentication via Bearer token.
+
+  Response example:
+  {
+    "data": [
+      {
+        "entity": "vms",
+        "currentMonth": 1,
+        "lastMonth": 0,
+        "total": 1
+      },
+      {
+        "entity": "vmGroups",
+        "currentMonth": 10,
+        "lastMonth": 0,
+        "total": 10
+      },
+      {
+        "entity": "credentials",
+        "currentMonth": 6,
+        "lastMonth": 4,
+        "total": 10
+      },
+      {
+        "entity": "blueprints",
+        "currentMonth": 0,
+        "lastMonth": 5,
+        "total": 5
+      }
+    ],
+    "error": null,
+    "success": true
+  }
+
+
+}
