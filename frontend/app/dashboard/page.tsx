@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { DashboardLayout } from '@/components/dashboard-layout'
+import { OverviewMetric, useOverviewMetrics } from '@/hooks/useOverviewMetrics'
 import {
 	Server,
 	Activity,
@@ -10,48 +13,78 @@ import {
 	Layers,
 	Settings,
 	Key,
+	Loader2,
 } from 'lucide-react'
 
-const stats = [
-	{
-		name: 'Total VMs',
-		value: '14',
-		change: '+2',
-		icon: Server,
-		gradient: 'from-cyan-500/20 to-blue-500/10',
-		iconColor: 'text-cyan-400',
-		changeColor: 'text-green-400',
-	},
-	{
-		name: 'VM Groups',
-		value: '4',
-		change: '+1',
-		icon: Users,
-		gradient: 'from-purple-500/20 to-violet-500/10',
-		iconColor: 'text-purple-400',
-		changeColor: 'text-green-400',
-	},
-	{
-		name: 'Credentials',
-		value: '3',
-		change: '+1',
-		icon: Key,
-		gradient: 'from-orange-500/20 to-yellow-500/10',
-		iconColor: 'text-orange-400',
-		changeColor: 'text-green-400',
-	},
-	{
-		name: 'Configurations',
-		value: '8',
-		change: '+3',
-		icon: Layers,
-		gradient: 'from-green-500/20 to-emerald-500/10',
-		iconColor: 'text-green-400',
-		changeColor: 'text-green-400',
-	},
-]
+interface StatConfig {
+	name: string
+	value: string
+	change: string
+	icon: React.ComponentType<{ className?: string }>
+	gradient: string
+	iconColor: string
+	changeColor: string
+}
+
+const getStatsConfig = (metrics: OverviewMetric[]): StatConfig[] => {
+	const vmsMetric = metrics.find(m => m.entity === 'vms')
+	const vmGroupsMetric = metrics.find(m => m.entity === 'vmGroups')
+	const credentialsMetric = metrics.find(m => m.entity === 'credentials')
+	const blueprintsMetric = metrics.find(m => m.entity === 'blueprints')
+
+	const calculateChange = (current: number, last: number) => {
+		const diff = current - last
+		return diff >= 0 ? `+${diff}` : `${diff}`
+	}
+
+	const getChangeColor = (current: number, last: number) => {
+		return current >= last ? 'text-green-400' : 'text-red-400'
+	}
+
+	return [
+		{
+			name: 'Total VMs',
+			value: vmsMetric?.total?.toString() || '0',
+			change: vmsMetric ? calculateChange(vmsMetric.currentMonth, vmsMetric.lastMonth) : '0',
+			icon: Server,
+			gradient: 'from-cyan-500/20 to-blue-500/10',
+			iconColor: 'text-cyan-400',
+			changeColor: vmsMetric ? getChangeColor(vmsMetric.currentMonth, vmsMetric.lastMonth) : 'text-gray-400',
+		},
+		{
+			name: 'VM Groups',
+			value: vmGroupsMetric?.total?.toString() || '0',
+			change: vmGroupsMetric ? calculateChange(vmGroupsMetric.currentMonth, vmGroupsMetric.lastMonth) : '0',
+			icon: Users,
+			gradient: 'from-purple-500/20 to-violet-500/10',
+			iconColor: 'text-purple-400',
+			changeColor: vmGroupsMetric ? getChangeColor(vmGroupsMetric.currentMonth, vmGroupsMetric.lastMonth) : 'text-gray-400',
+		},
+		{
+			name: 'Credentials',
+			value: credentialsMetric?.total?.toString() || '0',
+			change: credentialsMetric ? calculateChange(credentialsMetric.currentMonth, credentialsMetric.lastMonth) : '0',
+			icon: Key,
+			gradient: 'from-orange-500/20 to-yellow-500/10',
+			iconColor: 'text-orange-400',
+			changeColor: credentialsMetric ? getChangeColor(credentialsMetric.currentMonth, credentialsMetric.lastMonth) : 'text-gray-400',
+		},
+		{
+			name: 'Configurations',
+			value: blueprintsMetric?.total?.toString() || '0',
+			change: blueprintsMetric ? calculateChange(blueprintsMetric.currentMonth, blueprintsMetric.lastMonth) : '0',
+			icon: Layers,
+			gradient: 'from-green-500/20 to-emerald-500/10',
+			iconColor: 'text-green-400',
+			changeColor: blueprintsMetric ? getChangeColor(blueprintsMetric.currentMonth, blueprintsMetric.lastMonth) : 'text-gray-400',
+		},
+	]
+}
 
 export default function DashboardPage() {
+	const { metrics, isLoading, error } = useOverviewMetrics()
+	const stats = getStatsConfig(metrics)
+
 	return (
 		<DashboardLayout>
 			<div className='space-y-8'>
@@ -75,42 +108,56 @@ export default function DashboardPage() {
 					<h3 className='text-2xl font-bold text-primary mb-6'>
 						Overview Statistics
 					</h3>
-					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-						{stats.map(stat => (
-							<div
-								key={stat.name}
-								className='bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 group hover:bg-white/10 transition-all duration-300'
-							>
-								<div className='flex items-center justify-between'>
-									<div className='flex-1'>
-										<p className='text-sm font-medium text-secondary mb-1'>
-											{stat.name}
-										</p>
-										<p className='text-3xl font-bold text-primary mb-2'>
-											{stat.value}
-										</p>
-										<div className='flex items-center gap-2'>
-											<span
-												className={`text-sm font-semibold ${stat.changeColor}`}
-											>
-												{stat.change}
-											</span>
-											<span className='text-xs text-secondary'>
-												vs last month
-											</span>
+					{isLoading ? (
+						<div className='flex items-center justify-center py-12'>
+							<Loader2 className='h-8 w-8 animate-spin text-primary' />
+							<span className='ml-3 text-lg text-secondary'>Loading metrics...</span>
+						</div>
+					) : error ? (
+						<div className='flex items-center justify-center py-12'>
+							<div className='text-center'>
+								<p className='text-red-400 mb-2'>Failed to load metrics</p>
+								<p className='text-sm text-secondary'>{error}</p>
+							</div>
+						</div>
+					) : (
+						<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+							{stats.map((stat: StatConfig) => (
+								<div
+									key={stat.name}
+									className='bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 group hover:bg-white/10 transition-all duration-300'
+								>
+									<div className='flex items-center justify-between'>
+										<div className='flex-1'>
+											<p className='text-sm font-medium text-secondary mb-1'>
+												{stat.name}
+											</p>
+											<p className='text-3xl font-bold text-primary mb-2'>
+												{stat.value}
+											</p>
+											<div className='flex items-center gap-2'>
+												<span
+													className={`text-sm font-semibold ${stat.changeColor}`}
+												>
+													{stat.change}
+												</span>
+												<span className='text-xs text-secondary'>
+													vs last month
+												</span>
+											</div>
+										</div>
+										<div
+											className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} backdrop-blur-sm`}
+										>
+											<stat.icon
+												className={`h-6 w-6 ${stat.iconColor} group-hover:scale-110 transition-transform duration-300`}
+											/>
 										</div>
 									</div>
-									<div
-										className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} backdrop-blur-sm`}
-									>
-										<stat.icon
-											className={`h-6 w-6 ${stat.iconColor} group-hover:scale-110 transition-transform duration-300`}
-										/>
-									</div>
 								</div>
-							</div>
-						))}
-					</div>
+							))}
+						</div>
+					)}
 				</div>
 
 				{/* Main Navigation Sections */}
@@ -131,7 +178,9 @@ export default function DashboardPage() {
 											<h4 className='text-xl font-bold text-primary mb-1'>
 												Virtual Machines
 											</h4>
-											<p className='text-sm text-secondary'>14 VMs</p>
+											<p className='text-sm text-secondary'>
+												{metrics.find(m => m.entity === 'vms')?.total?.toString() || '0'} VMs
+											</p>
 										</div>
 									</div>
 									<p className='text-gray-200 mb-4'>
@@ -158,7 +207,9 @@ export default function DashboardPage() {
 											<h4 className='text-xl font-bold text-primary mb-1'>
 												VM Groups
 											</h4>
-											<p className='text-sm text-secondary'>4 Groups</p>
+											<p className='text-sm text-secondary'>
+												{metrics.find(m => m.entity === 'vmGroups')?.total?.toString() || '0'} Groups
+											</p>
 										</div>
 									</div>
 									<p className='text-gray-200 mb-4'>
@@ -188,7 +239,9 @@ export default function DashboardPage() {
 											<h4 className='text-xl font-bold text-primary mb-1'>
 												Infrastructure Configs
 											</h4>
-											<p className='text-sm text-secondary'>8 Configurations</p>
+											<p className='text-sm text-secondary'>
+												{metrics.find(m => m.entity === 'blueprints')?.total?.toString() || '0'} Configurations
+											</p>
 										</div>
 									</div>
 									<p className='text-gray-200 mb-4'>
@@ -215,7 +268,9 @@ export default function DashboardPage() {
 											<h4 className='text-xl font-bold text-primary mb-1'>
 												Credentials
 											</h4>
-											<p className='text-sm text-secondary'>3 Credentials</p>
+											<p className='text-sm text-secondary'>
+												{metrics.find(m => m.entity === 'credentials')?.total?.toString() || '0'} Credentials
+											</p>
 										</div>
 									</div>
 									<p className='text-gray-200 mb-4'>
