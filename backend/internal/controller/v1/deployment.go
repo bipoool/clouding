@@ -4,9 +4,12 @@ import (
 	"clouding/backend/internal/model/deployment"
 	"clouding/backend/internal/service"
 	"clouding/backend/internal/utils"
+	"strings"
+	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -101,3 +104,63 @@ func (c *DeploymentController) GetDeploymentHostMappingByIds(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(result))
 }
+
+func (c *DeploymentController) StreamJobProgress(ctx *gin.Context) {
+	jobId := ctx.Param("jobId")
+
+
+	ctx.Header("Content-Type", "text/event-stream")
+	ctx.Header("Cache-Control", "no-cache")
+	ctx.Header("Connection", "keep-alive")
+
+
+	logChan := make(chan string)
+	done := make(chan struct{})
+
+	go func() {
+		defer close(logChan)
+		defer close(done)
+
+		lastTimestamp := time.Now().Add(-1 * time.Minute).UnixNano()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				logs, newTs, err := utils.QueryLokiLogs(jobId, lastTimestamp)
+				if err != nil {
+					logChan <- fmt.Sprintf(`{"error": "%s"}`, err.Error())
+					return
+				}
+
+				for _, log := range logs {
+					logChan <- log
+				}
+				
+				lastTimestamp = newTs
+
+				if utils.CheckIfJobFinished(logs) {
+					log.Println(" Job finished detected in logs")
+					return
+				}
+
+				time.Sleep(2 * time.Second)
+			}
+		}
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case log, ok := <-logChan:
+			if !ok {
+				return
+			}
+			ctx.SSEvent("message", log)
+			ctx.Writer.Flush()
+		}
+	}
+}
+
