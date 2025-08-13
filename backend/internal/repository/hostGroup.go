@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed" // Required for embedding
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 
@@ -71,8 +72,17 @@ func (r *hostGroupRepository) CreateHostGroup(ctx context.Context, h *hostgroup.
 		return err
 	}
 	defer rows.Close()
+	var id int
+	var createdAt time.Time
+	var updatedAt time.Time
 	if rows.Next() {
-		return rows.Scan(h.ID, h.CreatedAt, h.UpdatedAt)
+		err = rows.Scan(&id, &createdAt, &updatedAt)
+		if err != nil {
+			return err
+		}
+		h.ID = &id
+		h.CreatedAt = &createdAt
+		h.UpdatedAt = &updatedAt
 	}
 	return nil
 }
@@ -96,7 +106,12 @@ func (r *hostGroupRepository) UpdateHostGroup(ctx context.Context, h *hostgroup.
 		return err
 	}
 
-	err = r.db.GetContext(ctx, h.UpdatedAt, updateHostGroupQuery, args...)
+	var updatedAt time.Time
+	err = r.db.GetContext(ctx, &updatedAt, updateHostGroupQuery, args...)
+	if err != nil {
+		return err
+	}
+	h.UpdatedAt = &updatedAt
 	return err
 }
 
