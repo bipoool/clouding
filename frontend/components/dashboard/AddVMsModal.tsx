@@ -31,7 +31,7 @@ export function AddVMsModal({
 	onAddVMs,
 }: AddVMsModalProps) {
 	const [selectedVMIds, setSelectedVMIds] = useState<string[]>([])
-	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [addingVMIds, setAddingVMIds] = useState<string[]>([])
 	const [error, setError] = useState<string | null>(null)
 
 	// Filter out VMs that are already in the group
@@ -41,6 +41,7 @@ export function AddVMsModal({
 	useEffect(() => {
 		if (open) {
 			setSelectedVMIds([])
+			setAddingVMIds([])
 			setError(null)
 		}
 	}, [open])
@@ -67,7 +68,7 @@ export function AddVMsModal({
 			return
 		}
 
-		setIsSubmitting(true)
+		setAddingVMIds(selectedVMIds)
 		setError(null)
 
 		try {
@@ -78,7 +79,7 @@ export function AddVMsModal({
 			setError(errorMessage)
 			logger.error('Failed to add VMs to group:', error)
 		} finally {
-			setIsSubmitting(false)
+			setAddingVMIds([])
 		}
 	}
 
@@ -163,17 +164,16 @@ export function AddVMsModal({
 							variant='ghost'
 							onClick={() => onOpenChange(false)}
 							className='flex-1 glass-btn'
-							disabled={isSubmitting}
 						>
 							Cancel
 						</Button>
 						<Button
 							type='button'
 							onClick={handleSubmit}
-							disabled={isSubmitting || selectedVMIds.length === 0}
+							disabled={selectedVMIds.length === 0 || addingVMIds.length > 0}
 							className='flex-1 gradient-border-btn'
 						>
-							{isSubmitting ? (
+							{addingVMIds.length > 0 ? (
 								<>
 									<Loader2 className='h-4 w-4 mr-2 animate-spin' />
 									Adding...
