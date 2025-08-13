@@ -9,9 +9,9 @@ export const POST = withAuth(async (request: AuthenticatedRequest, { params }: {
   try {
     const { id } = params
     const body = await request.json()
-    logger.info(`Adding host to host group ${id} for user: ${request.user.id}`)
     
     const result = await backendClient.post(`/hostGroups/${id}/hosts`, body, request)
+    logger.info(`Added host to host group ${id} with host IDs: ${body.hostIds} for user: ${request.user.id}`)
     
     return NextResponse.json(result, { status: 201 })
   } catch (error) {

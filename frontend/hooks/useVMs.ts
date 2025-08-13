@@ -225,7 +225,6 @@ export function useVMGroups() {
   const createGroup = useCallback(async (group: Omit<VMGroup, 'id' | 'createdAt' | 'updatedAt' | 'vmIds'>) => {
     try {
       setError(null)
-      setIsLoading(true)
       const res = await fetch('/api/hostGroup', {
         method: 'POST',
         credentials: 'include',
@@ -269,15 +268,12 @@ export function useVMGroups() {
       const errorMessage = getErrorMessage(err)
       setError(errorMessage)
       throw err;
-    } finally {
-      setIsLoading(false);
     }
   }, [])
 
   const updateGroup = useCallback(async (id: string, updates: Partial<VMGroup>) => {
     try {
       setError(null)
-      setIsLoading(true)
       const res = await fetch(`/api/hostGroup/${id}`, {
         method: 'PUT',
         credentials: 'include',
@@ -315,15 +311,12 @@ export function useVMGroups() {
       return mergedVMGroup;
     } catch (err) {
       setError(getErrorMessage(err))
-    } finally {
-      setIsLoading(false);
     }
   }, [])
 
   const deleteGroup = useCallback(async (id: string) => {
     try {
       setError(null)
-      setIsLoading(true)
       const res = await fetch(`/api/hostGroup/${id}`, {
         method: 'DELETE',
         credentials: 'include'
@@ -340,29 +333,26 @@ export function useVMGroups() {
     }
   }, [])
 
-  const addVMToGroup = useCallback(async (groupId: string, vmId: string) => {
+  const addVMsToGroup = useCallback(async (groupId: string, vmIds: string[]) => {
     try {
       setError(null)
-      setIsLoading(true)
       const res = await fetch(`/api/hostGroup/${groupId}/hosts`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hostIds: [vmId] })
+        body: JSON.stringify({ hostIds: vmIds })
       })
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to add VM to group')
+        throw new Error(errorData.error || 'Failed to add VMs to group')
       }
-      // Update the group's vmIds
+      // Update the group's vmIds with deduplication
       setGroups(prev => prev.map(g => 
-        g.id === groupId ? { ...g, vmIds: [...g.vmIds, vmId] } : g
+        g.id === groupId ? { ...g, vmIds: Array.from(new Set([...g.vmIds, ...vmIds])) } : g
       ))
     } catch (err) {
       setError(getErrorMessage(err))
       throw err;
-    } finally {
-      setIsLoading(false);
     }
   }, [])
 
@@ -384,8 +374,6 @@ export function useVMGroups() {
     } catch (err) {
       setError(getErrorMessage(err))
       throw err;
-    } finally {
-      setIsLoading(false);
     }
   }, [])
 
@@ -399,7 +387,7 @@ export function useVMGroups() {
     createGroup,
     updateGroup,
     deleteGroup,
-    addVMToGroup,
+    addVMsToGroup,
     removeVMFromGroup
   }
 } 
