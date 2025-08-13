@@ -55,7 +55,7 @@ export function ManageVMsModal({
 	}
 
 	const getVMHealthColor = (health?: number) => {
-		if (!health) return 'text-gray-400'
+		if (health == null) return 'text-gray-400'
 		if (health >= 90) return 'text-green-400'
 		if (health >= 70) return 'text-yellow-400'
 		return 'text-red-400'

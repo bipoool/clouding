@@ -5,7 +5,7 @@ import { logger } from '@/lib/utils/logger'
 import { handleApiError } from '@/app/api/utils/error-handler'
 
 // POST /api/hostGroup/[id]/hosts - Add host to host group
-export const POST = withAuth(async (request: AuthenticatedRequest, { params }: { params: { id: string, hostIds: string[] } }) => {
+export const POST = withAuth(async (request: AuthenticatedRequest, { params }: { params: { id: string } }) => {
   try {
     const { id } = params
     const body = await request.json()

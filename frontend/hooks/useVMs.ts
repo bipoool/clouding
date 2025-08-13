@@ -344,11 +344,11 @@ export function useVMGroups() {
       })
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to add VM to group')
+        throw new Error(errorData.error || 'Failed to add VMs to group')
       }
-      // Update the group's vmIds
+      // Update the group's vmIds with deduplication
       setGroups(prev => prev.map(g => 
-        g.id === groupId ? { ...g, vmIds: [...g.vmIds, ...vmIds] } : g
+        g.id === groupId ? { ...g, vmIds: Array.from(new Set([...g.vmIds, ...vmIds])) } : g
       ))
     } catch (err) {
       setError(getErrorMessage(err))
