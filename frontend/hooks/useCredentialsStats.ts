@@ -24,7 +24,9 @@ export function useCredentialsStats(credentials: Credential[] | null): Credentia
 		// Check for credentials expiring soon (within configured warning period)
 		const expiringCredentials = safeCredentials.filter(cred => {
 			if (!cred?.expiresAt) return false
-			const expiryDate = new Date(cred.expiresAt)
+			const ms = Date.parse(cred.expiresAt)
+			if (isNaN(ms)) return false
+			const expiryDate = new Date(ms)
 			const warningDate = new Date()
 			warningDate.setDate(warningDate.getDate() + EXPIRY_WARNING_DAYS)
 			return expiryDate <= warningDate

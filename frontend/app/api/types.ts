@@ -105,13 +105,14 @@ export interface HostGroup {
 }
 
 export interface CreateHostGroupRequest {
-  userId: string
   name: string
+  description: string
   hostIds: string[]
 }
 
 export interface UpdateHostGroupRequest {
   name?: string
+  description?: string
   hostIds?: string[]
 }
 

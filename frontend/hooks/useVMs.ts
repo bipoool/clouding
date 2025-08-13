@@ -229,6 +229,7 @@ export function useVMGroups() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: group.name,
+          description: group.description ?? '',
           hostIds: []
         })
       })
@@ -238,10 +239,14 @@ export function useVMGroups() {
       }
       const json = await res.json().catch(() => ({}));
       const createdPartial = (json && (json.data ?? json)) as Partial<HostGroup>;
+      if (!createdPartial?.id) {
+        throw new Error('Invalid API response: missing host group id')
+      }
 
       // Merge what we know (form input) with server response
       const mergedHostGroup = {
         name: group.name,
+        description: group.description ?? '',
         hostIds: [],
         ...createdPartial,
       } as HostGroup;
@@ -271,6 +276,7 @@ export function useVMGroups() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: updates.name,
+          description: updates.description ?? '',
           hostIds: updates.vmIds
         })
       })
@@ -286,7 +292,7 @@ export function useVMGroups() {
       setGroups(prev =>
         prev.map(g => {
           if (g.id !== id) return g;
-          const baseline = { ...g, ...updates };
+          const baseline = { ...g, ...updates, description: updates.description };
           const serverVMOverlay =
             updatedPartialHG && Object.keys(updatedPartialHG).length > 0
               ? (convertHostGroupToVMGroup(updatedPartialHG as HostGroup) as Partial<VMGroup>)
@@ -295,6 +301,9 @@ export function useVMGroups() {
           return mergedVMGroup!;
         })
       );
+      if (!mergedVMGroup) {
+        throw new Error(`Group ${id} not found in local state after update`)
+      }
       return mergedVMGroup;
     } catch (err) {
       setError(getErrorMessage(err))

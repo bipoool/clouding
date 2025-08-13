@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, AuthenticatedRequest } from '@/app/api/auth/middleware'
 import { 
-  CreateHostGroupRequest, 
   UpdateHostGroupRequest,
-  HostGroup, 
-  ApiResponse, 
-  ApiError 
 } from '../types'
 import { logger } from '@/lib/utils/logger'
 import { backendClient, BackendClientError } from '@/lib/backend-client'
@@ -29,10 +25,10 @@ function isValidUpdateHostGroupRequest(body: unknown): body is UpdateHostGroupWi
     obj.id.trim().length > 0 &&
     typeof obj.name === 'string' &&
     obj.name.trim().length > 0 &&
-    typeof obj.userId === 'string' &&
-    obj.userId.trim().length > 0 &&
-    Array.isArray(obj.hosts) &&
-    obj.hosts.every(host => typeof host === 'string')
+    typeof obj.description === 'string' &&
+    obj.description.trim().length > 0 &&
+    Array.isArray(obj.hostIds) &&
+    obj.hostIds.every(hostId => typeof hostId === 'string')
   )
 }
 
@@ -71,7 +67,7 @@ export const PUT = withAuth(async (request: AuthenticatedRequest) => {
     // Type-safe validation using type guard
     if (!isValidUpdateHostGroupRequest(body)) {
       return NextResponse.json(
-        { error: 'Invalid request body', message: 'id, name, userId, and hosts (array) are required' },
+        { error: 'Invalid request body', message: 'id, name, description, and hostIds (array) are required' },
         { status: 400 }
       )
     }
