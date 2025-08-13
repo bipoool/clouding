@@ -38,7 +38,10 @@ const getStatsConfig = (metrics: OverviewMetric[]): StatConfig[] => {
 	}
 
 	const getChangeColor = (current: number, last: number) => {
-		return current >= last ? 'text-green-400' : 'text-red-400'
+		if (current === last) {
+			return 'text-gray-400'
+		}
+		return current > last ? 'text-green-400' : 'text-red-400'
 	}
 
 	return [
