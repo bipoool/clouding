@@ -43,6 +43,15 @@ const getStatsConfig = (metrics: OverviewMetric[]): StatConfig[] => {
 
 	return [
 		{
+			name: 'Credentials',
+			value: credentialsMetric?.total?.toString() || '0',
+			change: credentialsMetric ? calculateChange(credentialsMetric.currentMonth, credentialsMetric.lastMonth) : '0',
+			icon: Key,
+			gradient: 'from-orange-500/20 to-yellow-500/10',
+			iconColor: 'text-orange-400',
+			changeColor: credentialsMetric ? getChangeColor(credentialsMetric.currentMonth, credentialsMetric.lastMonth) : 'text-gray-400',
+		},
+		{
 			name: 'Total VMs',
 			value: vmsMetric?.total?.toString() || '0',
 			change: vmsMetric ? calculateChange(vmsMetric.currentMonth, vmsMetric.lastMonth) : '0',
@@ -59,15 +68,6 @@ const getStatsConfig = (metrics: OverviewMetric[]): StatConfig[] => {
 			gradient: 'from-purple-500/20 to-violet-500/10',
 			iconColor: 'text-purple-400',
 			changeColor: vmGroupsMetric ? getChangeColor(vmGroupsMetric.currentMonth, vmGroupsMetric.lastMonth) : 'text-gray-400',
-		},
-		{
-			name: 'Credentials',
-			value: credentialsMetric?.total?.toString() || '0',
-			change: credentialsMetric ? calculateChange(credentialsMetric.currentMonth, credentialsMetric.lastMonth) : '0',
-			icon: Key,
-			gradient: 'from-orange-500/20 to-yellow-500/10',
-			iconColor: 'text-orange-400',
-			changeColor: credentialsMetric ? getChangeColor(credentialsMetric.currentMonth, credentialsMetric.lastMonth) : 'text-gray-400',
 		},
 		{
 			name: 'Configurations',
@@ -166,6 +166,35 @@ export default function DashboardPage() {
 						Management Sections
 					</h3>
 					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+						
+					<Link href='/dashboard/credentials' className='interactive-element'>
+							<div className='glass-card glass-card-hover group relative overflow-hidden h-full'>
+								<div className='absolute inset-0 bg-gradient-to-br from-orange-500/20 via-yellow-500/10 to-orange-600/5 opacity-50' />
+								<div className='relative z-10 p-6'>
+									<div className='flex items-center mb-4'>
+										<div className='p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-yellow-500/10 mr-4'>
+											<Key className='h-8 w-8 text-orange-400 group-hover:scale-110 transition-transform' />
+										</div>
+										<div>
+											<h4 className='text-xl font-bold text-primary mb-1'>
+												Credentials
+											</h4>
+											<p className='text-sm text-secondary'>
+												{metrics.find(m => m.entity === 'credentials')?.total?.toString() || '0'} Credentials
+											</p>
+										</div>
+									</div>
+									<p className='text-gray-200 mb-4'>
+										Manage SSH keys, SSL certificates, API tokens, and other
+										authentication credentials for your infrastructure.
+									</p>
+									<div className='flex items-center text-sm text-orange-400'>
+										<Key className='h-4 w-4 mr-2' />
+										Manage Credentials →
+									</div>
+								</div>
+							</div>
+						</Link>
 						<Link href='/dashboard/vms' className='interactive-element'>
 							<div className='glass-card glass-card-hover group relative overflow-hidden h-full'>
 								<div className='absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-cyan-600/5 opacity-50' />
@@ -251,35 +280,6 @@ export default function DashboardPage() {
 									<div className='flex items-center text-sm text-green-400'>
 										<Layers className='h-4 w-4 mr-2' />
 										View Configurations →
-									</div>
-								</div>
-							</div>
-						</Link>
-
-						<Link href='/dashboard/credentials' className='interactive-element'>
-							<div className='glass-card glass-card-hover group relative overflow-hidden h-full'>
-								<div className='absolute inset-0 bg-gradient-to-br from-orange-500/20 via-yellow-500/10 to-orange-600/5 opacity-50' />
-								<div className='relative z-10 p-6'>
-									<div className='flex items-center mb-4'>
-										<div className='p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-yellow-500/10 mr-4'>
-											<Key className='h-8 w-8 text-orange-400 group-hover:scale-110 transition-transform' />
-										</div>
-										<div>
-											<h4 className='text-xl font-bold text-primary mb-1'>
-												Credentials
-											</h4>
-											<p className='text-sm text-secondary'>
-												{metrics.find(m => m.entity === 'credentials')?.total?.toString() || '0'} Credentials
-											</p>
-										</div>
-									</div>
-									<p className='text-gray-200 mb-4'>
-										Manage SSH keys, SSL certificates, API tokens, and other
-										authentication credentials for your infrastructure.
-									</p>
-									<div className='flex items-center text-sm text-orange-400'>
-										<Key className='h-4 w-4 mr-2' />
-										Manage Credentials →
 									</div>
 								</div>
 							</div>
