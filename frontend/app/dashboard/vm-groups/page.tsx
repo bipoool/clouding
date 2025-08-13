@@ -26,8 +26,9 @@ export default function VMGroupsPage() {
 		error: groupsError,
 		createGroup,
 		deleteGroup,
+		addVMsToGroup,
+		removeVMFromGroup,
 	} = useVMGroups()
-	const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
 
 	const totalVMsInGroups = groups.reduce(
 		(sum, group) => sum + group.vmIds.length,
@@ -35,17 +36,6 @@ export default function VMGroupsPage() {
 	)
 	const ungroupedVMs = vms.filter(vm => !vm.group)
 	const activeGroups = groups.filter(group => group.vmIds.length > 0)
-
-	const handleAddVMsToGroup = (groupId: string) => {
-		setSelectedGroup(groupId)
-		// In a real app, this would open a dialog to select VMs
-		logger.log('Add VMs to group:', groupId)
-	}
-
-	const handleManageVMs = (groupId: string) => {
-		// In a real app, this would open a management dialog
-		logger.log('Manage VMs in group:', groupId)
-	}
 
 	if (vmsLoading || groupsLoading) {
 		return (
@@ -266,8 +256,8 @@ export default function VMGroupsPage() {
 									group={group}
 									vms={vms}
 									onDeleteGroup={deleteGroup}
-									onAddVMsToGroup={handleAddVMsToGroup}
-									onManageVMs={handleManageVMs}
+									onAddVMsToGroup={addVMsToGroup}
+									onRemoveVMFromGroup={removeVMFromGroup}
 								/>
 							))}
 						</div>

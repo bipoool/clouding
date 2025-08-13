@@ -340,7 +340,7 @@ export function useVMGroups() {
     }
   }, [])
 
-  const addVMToGroup = useCallback(async (groupId: string, vmId: string) => {
+  const addVMsToGroup = useCallback(async (groupId: string, vmIds: string[]) => {
     try {
       setError(null)
       setIsLoading(true)
@@ -348,7 +348,7 @@ export function useVMGroups() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hostIds: [vmId] })
+        body: JSON.stringify({ hostIds: vmIds })
       })
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -356,7 +356,7 @@ export function useVMGroups() {
       }
       // Update the group's vmIds
       setGroups(prev => prev.map(g => 
-        g.id === groupId ? { ...g, vmIds: [...g.vmIds, vmId] } : g
+        g.id === groupId ? { ...g, vmIds: [...g.vmIds, ...vmIds] } : g
       ))
     } catch (err) {
       setError(getErrorMessage(err))
@@ -399,7 +399,7 @@ export function useVMGroups() {
     createGroup,
     updateGroup,
     deleteGroup,
-    addVMToGroup,
+    addVMsToGroup,
     removeVMFromGroup
   }
 } 

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,13 +18,15 @@ import {
 	Activity,
 } from 'lucide-react'
 import type { VMGroup, VM } from '@/hooks/useVMs'
+import { AddVMsModal } from './AddVMsModal'
+import { ManageVMsModal } from './ManageVMsModal'
 
 interface VMGroupCardProps {
 	group: VMGroup
 	vms: VM[]
 	onDeleteGroup: (id: string) => void
-	onAddVMsToGroup: (groupId: string) => void
-	onManageVMs: (groupId: string) => void
+	onAddVMsToGroup: (groupId: string, vmIds: string[]) => Promise<void>
+	onRemoveVMFromGroup: (groupId: string, vmId: string) => Promise<void>
 }
 
 export function VMGroupCard({
@@ -31,8 +34,10 @@ export function VMGroupCard({
 	vms,
 	onDeleteGroup,
 	onAddVMsToGroup,
-	onManageVMs,
+	onRemoveVMFromGroup,
 }: VMGroupCardProps) {
+	const [addVMsModalOpen, setAddVMsModalOpen] = useState(false)
+	const [manageVMsModalOpen, setManageVMsModalOpen] = useState(false)
 	const groupVMs = vms.filter(vm => group.vmIds.includes(vm.id))
 	const connectedVMs = groupVMs.filter(vm => vm.status === 'connected')
 	const avgHealth =
@@ -64,11 +69,12 @@ export function VMGroupCard({
 	}
 
 	return (
-		<div className='glass-card glass-card-hover group relative overflow-hidden'>
-			{/* Background gradient based on health */}
-			<div
+		<>
+			<div className='glass-card glass-card-hover group relative overflow-hidden'>
+			{/* @ TODO: Enable it when health APIs are done */}
+			{/* <div
 				className={`absolute inset-0 bg-gradient-to-br ${getHealthGradient(avgHealth)} opacity-30`}
-			/>
+			/> */}
 
 			<div className='relative z-10'>
 				{/* Header */}
@@ -97,11 +103,11 @@ export function VMGroupCard({
 							align='end'
 							className='bg-black/90 backdrop-blur-sm border border-white/10'
 						>
-							<DropdownMenuItem onClick={() => onManageVMs(group.id)}>
+							<DropdownMenuItem onClick={() => setManageVMsModalOpen(true)}>
 								<Server className='h-4 w-4 mr-2' />
 								Manage VMs
 							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => onAddVMsToGroup(group.id)}>
+							<DropdownMenuItem onClick={() => setAddVMsModalOpen(true)}>
 								<Plus className='h-4 w-4 mr-2' />
 								Add VMs
 							</DropdownMenuItem>
@@ -137,33 +143,6 @@ export function VMGroupCard({
 						</div>
 					</div>
 				</div>
-
-				{/* Health Bar */}
-				{group.vmIds.length > 0 && (
-					<div className='mb-4'>
-						<div className='flex items-center justify-between text-sm mb-2'>
-							<span className='text-secondary flex items-center gap-1'>
-								<Activity className='h-3 w-3' />
-								Group Health
-							</span>
-							<span className={`font-semibold ${getHealthColor(avgHealth)}`}>
-								{avgHealth}%
-							</span>
-						</div>
-						<div className='w-full bg-white/10 rounded-full h-2 backdrop-blur-sm'>
-							<div
-								className={`bg-gradient-to-r ${
-									avgHealth >= 90
-										? 'from-green-400/70 to-emerald-500/50'
-										: avgHealth >= 70
-											? 'from-yellow-400/70 to-orange-500/50'
-											: 'from-red-400/70 to-pink-500/50'
-								} h-2 rounded-full transition-all duration-500 shadow-lg`}
-								style={{ width: `${avgHealth}%` }}
-							/>
-						</div>
-					</div>
-				)}
 				{/* Footer */}
 				<div className='flex items-center justify-between pt-4 border-t border-white/10'>
 					<div className='text-xs text-secondary'>
@@ -175,7 +154,7 @@ export function VMGroupCard({
 							<Button
 								variant='ghost'
 								size='sm'
-								onClick={() => onAddVMsToGroup(group.id)}
+								onClick={() => setAddVMsModalOpen(true)}
 								className='text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10'
 							>
 								<Plus className='h-4 w-4 mr-1' />
@@ -185,7 +164,7 @@ export function VMGroupCard({
 							<Button
 								variant='ghost'
 								size='sm'
-								onClick={() => onManageVMs(group.id)}
+								onClick={() => setManageVMsModalOpen(true)}
 								className='text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10'
 							>
 								<Server className='h-4 w-4 mr-1' />
@@ -196,5 +175,23 @@ export function VMGroupCard({
 				</div>
 			</div>
 		</div>
+
+		{/* Modals */}
+		<AddVMsModal
+			open={addVMsModalOpen}
+			onOpenChange={setAddVMsModalOpen}
+			group={group}
+			allVMs={vms}
+			onAddVMs={onAddVMsToGroup}
+		/>
+
+		<ManageVMsModal
+			open={manageVMsModalOpen}
+			onOpenChange={setManageVMsModalOpen}
+			group={group}
+			groupVMs={groupVMs}
+			onRemoveVM={onRemoveVMFromGroup}
+		/>
+		</>
 	)
 }
