@@ -82,7 +82,9 @@ export function useVMs() {
       setVMs(prev => [...prev, newVM]);
       return newVM;
     } catch (err) {
-      setError(getErrorMessage(err))
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
+      throw err;
     }
   }, [])
 
@@ -188,9 +190,9 @@ export function useVMGroups() {
   const convertHostGroupToVMGroup = (hostGroup: HostGroup): VMGroup => ({
     id: hostGroup.id,
     name: hostGroup.name,
-    description: undefined, // HostGroup doesn't have description
+    description: hostGroup.description,
     vmIds: hostGroup.hostIds,
-    configId: undefined, // Will be added later when blueprint integration is available
+    configId: undefined,
     createdAt: hostGroup.createdAt,
     updatedAt: hostGroup.updatedAt
   })
@@ -223,12 +225,14 @@ export function useVMGroups() {
   const createGroup = useCallback(async (group: Omit<VMGroup, 'id' | 'createdAt' | 'updatedAt' | 'vmIds'>) => {
     try {
       setError(null)
+      setIsLoading(true)
       const res = await fetch('/api/hostGroup', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: group.name,
+          description: group.description ?? '',
           hostIds: []
         })
       })
@@ -236,24 +240,51 @@ export function useVMGroups() {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to create group')
       }
-      const response = await res.json()
-      const newHostGroup: HostGroup = response.data
-      const newVMGroup = convertHostGroupToVMGroup(newHostGroup)
-      setGroups(prev => [...prev, newVMGroup])
+      const json = await res.json().catch(() => ({}));
+      const createdPartial = (json && (json.data ?? json)) as Partial<HostGroup>;
+      if (!createdPartial?.id) {
+        throw new Error('Invalid API response: missing host group id')
+      }
+
+      // Merge what we know (form input) with server response
+      const mergedHostGroup = {
+        name: group.name,
+        description: group.description ?? '',
+        hostIds: [],
+        ...createdPartial,
+      } as HostGroup;
+
+      const newVMGroup = convertHostGroupToVMGroup(mergedHostGroup);
+      // Upsert by id to avoid accidental duplicates
+      setGroups(prev => {
+        const idx = prev.findIndex(g => g.id === newVMGroup.id);
+        if (idx === -1) return [...prev, newVMGroup];
+        const copy = prev.slice();
+        copy[idx] = newVMGroup;
+        return copy;
+      });
+
+      return newVMGroup;
     } catch (err) {
-      setError(getErrorMessage(err))
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
   const updateGroup = useCallback(async (id: string, updates: Partial<VMGroup>) => {
     try {
       setError(null)
+      setIsLoading(true)
       const res = await fetch(`/api/hostGroup/${id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: updates.name,
+          description: updates.description ?? '',
           hostIds: updates.vmIds
         })
       })
@@ -261,18 +292,38 @@ export function useVMGroups() {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to update group')
       }
-      const response = await res.json()
-      const updatedHostGroup: HostGroup = response.data
-      const updatedVMGroup = convertHostGroupToVMGroup(updatedHostGroup)
-      setGroups(prev => prev.map(g => (g.id === id ? updatedVMGroup : g)))
+
+      const json = await res.json().catch(() => ({}));
+      const updatedPartialHG = (json && (json.data ?? json)) as Partial<HostGroup>;
+
+      let mergedVMGroup: VMGroup | undefined;
+      setGroups(prev =>
+        prev.map(g => {
+          if (g.id !== id) return g;
+          const baseline = { ...g, ...updates, description: updates.description };
+          const serverVMOverlay =
+            updatedPartialHG && Object.keys(updatedPartialHG).length > 0
+              ? (convertHostGroupToVMGroup(updatedPartialHG as HostGroup) as Partial<VMGroup>)
+              : {};
+          mergedVMGroup = { ...baseline, ...serverVMOverlay };
+          return mergedVMGroup!;
+        })
+      );
+      if (!mergedVMGroup) {
+        throw new Error(`Group ${id} not found in local state after update`)
+      }
+      return mergedVMGroup;
     } catch (err) {
       setError(getErrorMessage(err))
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
   const deleteGroup = useCallback(async (id: string) => {
     try {
       setError(null)
+      setIsLoading(true)
       const res = await fetch(`/api/hostGroup/${id}`, {
         method: 'DELETE',
         credentials: 'include'
@@ -284,12 +335,15 @@ export function useVMGroups() {
       setGroups(prev => prev.filter(g => g.id !== id))
     } catch (err) {
       setError(getErrorMessage(err))
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
   const addVMToGroup = useCallback(async (groupId: string, vmId: string) => {
     try {
       setError(null)
+      setIsLoading(true)
       const res = await fetch(`/api/hostGroup/${groupId}/hosts`, {
         method: 'POST',
         credentials: 'include',
@@ -306,6 +360,9 @@ export function useVMGroups() {
       ))
     } catch (err) {
       setError(getErrorMessage(err))
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
@@ -326,19 +383,9 @@ export function useVMGroups() {
       ))
     } catch (err) {
       setError(getErrorMessage(err))
-    }
-  }, [])
-
-  const assignConfigToGroup = useCallback(async (groupId: string, configId: string) => {
-    try {
-      setError(null)
-      // TODO: Implement via /api/blueprint or configs when available
-      // For now, just update the group in state
-      setGroups(prev => prev.map(g => 
-        g.id === groupId ? { ...g, configId } : g
-      ))
-    } catch (err) {
-      setError(getErrorMessage(err))
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
@@ -353,7 +400,6 @@ export function useVMGroups() {
     updateGroup,
     deleteGroup,
     addVMToGroup,
-    removeVMFromGroup,
-    assignConfigToGroup
+    removeVMFromGroup
   }
 } 

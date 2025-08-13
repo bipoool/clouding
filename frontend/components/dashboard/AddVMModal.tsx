@@ -48,7 +48,7 @@ const vmSchema = z.object({
 type VMFormData = z.infer<typeof vmSchema>
 
 interface AddVMModalProps {
-	onAddVM: (vm: Partial<VM>) => void
+	onAddVM: (vm: Partial<VM>) => Promise<VM>
 	trigger?: React.ReactNode
 }
 
@@ -73,11 +73,8 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 		setIsSubmitting(true)
 
 		try {
-			// Simulate connection test
-			await new Promise(resolve => setTimeout(resolve, 1000))
-
 			const newVM: Partial<VM> = {
-				name: data.name,
+				name: data.name.trim(),
 				ip: data.ip,
 				os: data.os,
 				status: 'connected', // Assume connected for demo
@@ -85,7 +82,7 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 				credentialId: data.credentialId,
 			}
 
-			onAddVM(newVM)
+			await onAddVM(newVM)
 			setOpen(false)
 			form.reset()
 		} catch (error) {

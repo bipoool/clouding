@@ -98,20 +98,21 @@ export interface UpdateHostRequest {
 export interface HostGroup {
   id: string
   name: string
-  userId: string
+  description: string
   hostIds: string[]
   createdAt: string
   updatedAt: string
 }
 
 export interface CreateHostGroupRequest {
-  userId: string
   name: string
+  description: string
   hostIds: string[]
 }
 
 export interface UpdateHostGroupRequest {
   name?: string
+  description?: string
   hostIds?: string[]
 }
 

@@ -42,11 +42,6 @@ export default function VMGroupsPage() {
 		logger.log('Add VMs to group:', groupId)
 	}
 
-	const handleAssignConfig = (groupId: string) => {
-		// In a real app, this would open a dialog to select a config
-		logger.log('Assign config to group:', groupId)
-	}
-
 	const handleManageVMs = (groupId: string) => {
 		// In a real app, this would open a management dialog
 		logger.log('Manage VMs in group:', groupId)
@@ -272,7 +267,6 @@ export default function VMGroupsPage() {
 									vms={vms}
 									onDeleteGroup={deleteGroup}
 									onAddVMsToGroup={handleAddVMsToGroup}
-									onAssignConfig={handleAssignConfig}
 									onManageVMs={handleManageVMs}
 								/>
 							))}

@@ -11,7 +11,6 @@ import {
 import {
 	Users,
 	MoreVertical,
-	Settings,
 	Trash2,
 	Plus,
 	Server,
@@ -24,7 +23,6 @@ interface VMGroupCardProps {
 	vms: VM[]
 	onDeleteGroup: (id: string) => void
 	onAddVMsToGroup: (groupId: string) => void
-	onAssignConfig: (groupId: string) => void
 	onManageVMs: (groupId: string) => void
 }
 
@@ -33,7 +31,6 @@ export function VMGroupCard({
 	vms,
 	onDeleteGroup,
 	onAddVMsToGroup,
-	onAssignConfig,
 	onManageVMs,
 }: VMGroupCardProps) {
 	const groupVMs = vms.filter(vm => group.vmIds.includes(vm.id))
@@ -108,10 +105,6 @@ export function VMGroupCard({
 								<Plus className='h-4 w-4 mr-2' />
 								Add VMs
 							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => onAssignConfig(group.id)}>
-								<Settings className='h-4 w-4 mr-2' />
-								Assign Config
-							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => onDeleteGroup(group.id)}
 								className='text-red-400 hover:text-red-300 hover:bg-red-900/30'
@@ -171,26 +164,6 @@ export function VMGroupCard({
 						</div>
 					</div>
 				)}
-
-				{/* Configuration Status */}
-				<div className='mb-4'>
-					{group.configId ? (
-						<Badge className='bg-purple-500/20 text-purple-400 border-purple-500/30'>
-							Configuration Assigned
-						</Badge>
-					) : (
-						<Button
-							variant='ghost'
-							size='sm'
-							onClick={() => onAssignConfig(group.id)}
-							className='text-xs text-gray-400 hover:text-cyan-400 p-0 h-auto'
-						>
-							<Settings className='h-3 w-3 mr-1' />
-							Assign Configuration
-						</Button>
-					)}
-				</div>
-
 				{/* Footer */}
 				<div className='flex items-center justify-between pt-4 border-t border-white/10'>
 					<div className='text-xs text-secondary'>
