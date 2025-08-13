@@ -36,7 +36,7 @@ const groupSchema = z.object({
 type GroupFormData = z.infer<typeof groupSchema>
 
 interface CreateGroupModalProps {
-	onCreateGroup: (group: Omit<VMGroup, 'id' | 'createdAt' | 'vmIds'>) => void
+	onCreateGroup: (group: Omit<VMGroup, 'id' | 'createdAt' | 'vmIds' | 'updatedAt'>) => void
 	trigger?: React.ReactNode
 }
 
@@ -62,7 +62,7 @@ export function CreateGroupModal({
 			// Simulate API call
 			await new Promise(resolve => setTimeout(resolve, 500))
 
-			const newGroup: Omit<VMGroup, 'id' | 'createdAt' | 'vmIds'> = {
+			const newGroup: Omit<VMGroup, 'id' | 'createdAt' | 'vmIds' | 'updatedAt'> = {
 				name: data.name,
 				description: data.description || undefined,
 			}
@@ -134,7 +134,7 @@ export function CreateGroupModal({
 									</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder='Frontend and API servers for production environment...'
+											placeholder='Add a description to help identify this group...'
 											className='glass-input resize-none'
 											rows={3}
 											{...field}
