@@ -36,7 +36,7 @@ const groupSchema = z.object({
 type GroupFormData = z.infer<typeof groupSchema>
 
 interface CreateGroupModalProps {
-	onCreateGroup: (group: Omit<VMGroup, 'id' | 'createdAt' | 'vmIds' | 'updatedAt'>) => void
+	onCreateGroup: (group: Omit<VMGroup, 'id' | 'createdAt' | 'vmIds' | 'updatedAt'>) => Promise<VMGroup>
 	trigger?: React.ReactNode
 }
 
@@ -46,6 +46,7 @@ export function CreateGroupModal({
 }: CreateGroupModalProps) {
 	const [open, setOpen] = useState(false)
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [error, setError] = useState<string | null>(null)
 
 	const form = useForm<GroupFormData>({
 		resolver: zodResolver(groupSchema),
@@ -57,20 +58,20 @@ export function CreateGroupModal({
 
 	const handleSubmit = async (data: GroupFormData) => {
 		setIsSubmitting(true)
+		setError(null)
 
 		try {
-			// Simulate API call
-			await new Promise(resolve => setTimeout(resolve, 500))
-
 			const newGroup: Omit<VMGroup, 'id' | 'createdAt' | 'vmIds' | 'updatedAt'> = {
-				name: data.name,
-				description: data.description || undefined,
+				name: data.name.trim(),
+				description: data.description?.trim() || undefined,
 			}
 
-			onCreateGroup(newGroup)
+			await onCreateGroup(newGroup)
 			setOpen(false)
 			form.reset()
 		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : 'Failed to create group'
+			setError(errorMessage)
 			logger.error('Failed to create group:', error)
 		} finally {
 			setIsSubmitting(false)
@@ -147,6 +148,12 @@ export function CreateGroupModal({
 								</FormItem>
 							)}
 						/>
+
+						{error && (
+							<div className='p-3 bg-red-500/10 border border-red-500/30 rounded-lg'>
+								<p className='text-sm text-red-400'>{error}</p>
+							</div>
+						)}
 
 						<div className='flex gap-3 pt-4'>
 							<Button

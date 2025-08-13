@@ -82,7 +82,9 @@ export function useVMs() {
       setVMs(prev => [...prev, newVM]);
       return newVM;
     } catch (err) {
-      setError(getErrorMessage(err))
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
+      throw err;
     }
   }, [])
 
@@ -223,6 +225,7 @@ export function useVMGroups() {
   const createGroup = useCallback(async (group: Omit<VMGroup, 'id' | 'createdAt' | 'updatedAt' | 'vmIds'>) => {
     try {
       setError(null)
+      setIsLoading(true)
       const res = await fetch('/api/hostGroup', {
         method: 'POST',
         credentials: 'include',
@@ -263,13 +266,18 @@ export function useVMGroups() {
 
       return newVMGroup;
     } catch (err) {
-      setError(getErrorMessage(err))
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
   const updateGroup = useCallback(async (id: string, updates: Partial<VMGroup>) => {
     try {
       setError(null)
+      setIsLoading(true)
       const res = await fetch(`/api/hostGroup/${id}`, {
         method: 'PUT',
         credentials: 'include',
@@ -307,12 +315,15 @@ export function useVMGroups() {
       return mergedVMGroup;
     } catch (err) {
       setError(getErrorMessage(err))
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
   const deleteGroup = useCallback(async (id: string) => {
     try {
       setError(null)
+      setIsLoading(true)
       const res = await fetch(`/api/hostGroup/${id}`, {
         method: 'DELETE',
         credentials: 'include'
@@ -324,12 +335,15 @@ export function useVMGroups() {
       setGroups(prev => prev.filter(g => g.id !== id))
     } catch (err) {
       setError(getErrorMessage(err))
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
   const addVMToGroup = useCallback(async (groupId: string, vmId: string) => {
     try {
       setError(null)
+      setIsLoading(true)
       const res = await fetch(`/api/hostGroup/${groupId}/hosts`, {
         method: 'POST',
         credentials: 'include',
@@ -346,6 +360,9 @@ export function useVMGroups() {
       ))
     } catch (err) {
       setError(getErrorMessage(err))
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
@@ -366,19 +383,9 @@ export function useVMGroups() {
       ))
     } catch (err) {
       setError(getErrorMessage(err))
-    }
-  }, [])
-
-  const assignConfigToGroup = useCallback(async (groupId: string, configId: string) => {
-    try {
-      setError(null)
-      // TODO: Implement via /api/blueprint or configs when available
-      // For now, just update the group in state
-      setGroups(prev => prev.map(g => 
-        g.id === groupId ? { ...g, configId } : g
-      ))
-    } catch (err) {
-      setError(getErrorMessage(err))
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   }, [])
 
@@ -393,7 +400,6 @@ export function useVMGroups() {
     updateGroup,
     deleteGroup,
     addVMToGroup,
-    removeVMFromGroup,
-    assignConfigToGroup
+    removeVMFromGroup
   }
 } 
