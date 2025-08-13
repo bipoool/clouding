@@ -98,7 +98,7 @@ export interface UpdateHostRequest {
 export interface HostGroup {
   id: string
   name: string
-  userId: string
+  description: string
   hostIds: string[]
   createdAt: string
   updatedAt: string

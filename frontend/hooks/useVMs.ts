@@ -188,9 +188,9 @@ export function useVMGroups() {
   const convertHostGroupToVMGroup = (hostGroup: HostGroup): VMGroup => ({
     id: hostGroup.id,
     name: hostGroup.name,
-    description: undefined, // HostGroup doesn't have description
+    description: hostGroup.description,
     vmIds: hostGroup.hostIds,
-    configId: undefined, // Will be added later when blueprint integration is available
+    configId: undefined,
     createdAt: hostGroup.createdAt,
     updatedAt: hostGroup.updatedAt
   })
@@ -236,10 +236,27 @@ export function useVMGroups() {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to create group')
       }
-      const response = await res.json()
-      const newHostGroup: HostGroup = response.data
-      const newVMGroup = convertHostGroupToVMGroup(newHostGroup)
-      setGroups(prev => [...prev, newVMGroup])
+      const json = await res.json().catch(() => ({}));
+      const createdPartial = (json && (json.data ?? json)) as Partial<HostGroup>;
+
+      // Merge what we know (form input) with server response
+      const mergedHostGroup = {
+        name: group.name,
+        hostIds: [],
+        ...createdPartial,
+      } as HostGroup;
+
+      const newVMGroup = convertHostGroupToVMGroup(mergedHostGroup);
+      // Upsert by id to avoid accidental duplicates
+      setGroups(prev => {
+        const idx = prev.findIndex(g => g.id === newVMGroup.id);
+        if (idx === -1) return [...prev, newVMGroup];
+        const copy = prev.slice();
+        copy[idx] = newVMGroup;
+        return copy;
+      });
+
+      return newVMGroup;
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -261,10 +278,24 @@ export function useVMGroups() {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to update group')
       }
-      const response = await res.json()
-      const updatedHostGroup: HostGroup = response.data
-      const updatedVMGroup = convertHostGroupToVMGroup(updatedHostGroup)
-      setGroups(prev => prev.map(g => (g.id === id ? updatedVMGroup : g)))
+
+      const json = await res.json().catch(() => ({}));
+      const updatedPartialHG = (json && (json.data ?? json)) as Partial<HostGroup>;
+
+      let mergedVMGroup: VMGroup | undefined;
+      setGroups(prev =>
+        prev.map(g => {
+          if (g.id !== id) return g;
+          const baseline = { ...g, ...updates };
+          const serverVMOverlay =
+            updatedPartialHG && Object.keys(updatedPartialHG).length > 0
+              ? (convertHostGroupToVMGroup(updatedPartialHG as HostGroup) as Partial<VMGroup>)
+              : {};
+          mergedVMGroup = { ...baseline, ...serverVMOverlay };
+          return mergedVMGroup!;
+        })
+      );
+      return mergedVMGroup;
     } catch (err) {
       setError(getErrorMessage(err))
     }
