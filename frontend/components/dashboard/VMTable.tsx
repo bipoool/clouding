@@ -32,16 +32,18 @@ import {
 	Code,
 } from 'lucide-react'
 import type { VM } from '@/hooks/useVMs'
-import { useCredentials } from '@/hooks/useCredentials'
+import type { Credential } from '@/lib/utils/credential-types'
 
 interface VMTableProps {
 	vms: VM[]
+	credentials: Credential[]
 	onDeleteVM: (id: string) => void
 	onEditVM: (vmId: string) => void
 }
 
 export function VMTable({
 	vms,
+	credentials,
 	onDeleteVM,
 	onEditVM,
 }: VMTableProps) {
@@ -50,7 +52,9 @@ export function VMTable({
 		'all' | 'connected' | 'disconnected' | 'error'
 	>('all')
 
-	const { getCredentialById } = useCredentials()
+	const getCredentialById = (id: string) => {
+		return credentials.find(credential => credential.id.toString() === id.toString())
+	}
 
 	const filteredVMs = vms.filter(vm => {
 		const matchesSearch =

@@ -33,7 +33,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Server, Key, Lock, ExternalLink } from 'lucide-react'
 import type { VM } from '@/hooks/useVMs'
-import { useCredentials } from '@/hooks/useCredentials'
+import type { Credential } from '@/lib/utils/credential-types'
 import Link from 'next/link'
 
 const vmSchema = z.object({
@@ -48,6 +48,7 @@ const vmSchema = z.object({
 type VMFormData = z.infer<typeof vmSchema>
 
 interface AddVMModalProps {
+	credentials: Credential[]
 	onAddVM: (vm: Partial<VM>) => Promise<VM>
 	onUpdateVM?: (id: string, updates: Partial<VM>) => Promise<void>
 	editingVM?: VM | null
@@ -55,12 +56,13 @@ interface AddVMModalProps {
 	trigger?: React.ReactNode
 }
 
-export function AddVMModal({ onAddVM, onUpdateVM, editingVM, onEditComplete, trigger }: AddVMModalProps) {
+export function AddVMModal({ credentials, onAddVM, onUpdateVM, editingVM, onEditComplete, trigger }: AddVMModalProps) {
 	const [open, setOpen] = useState(false)
 	const [isSubmitting, setIsSubmitting] = useState(false)
-	const { getSSHCredentials } = useCredentials()
 
-	const sshCredentials = getSSHCredentials()
+	const sshCredentials = credentials.filter(credential => 
+		credential.type === 'ssh_key' || credential.type === 'password'
+	)
 	const isEditing = !!editingVM
 
 	// Auto-open modal when editingVM is provided

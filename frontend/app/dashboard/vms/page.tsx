@@ -7,6 +7,7 @@ import { VMTable, AddVMModal, VmsPageSkeleton } from '@/components/dashboard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useVMs } from '@/hooks/useVMs'
+import { useCredentials } from '@/hooks/useCredentials'
 import type { VM } from '@/hooks/useVMs'
 import {
 	Server,
@@ -27,6 +28,8 @@ export default function VMsPage() {
 		deleteVM,
 		updateVM,
 	} = useVMs()
+	
+	const { credentials } = useCredentials()
 	const [editingVM, setEditingVM] = useState<VM | null>(null)
 
 	const connectedVMs = vms.filter(vm => vm.status === 'connected')
@@ -98,7 +101,7 @@ export default function VMsPage() {
 								</p>
 							</div>
 						</div>
-						<AddVMModal onAddVM={addVM} />
+						<AddVMModal credentials={credentials} onAddVM={addVM} />
 					</div>
 				</div>
 
@@ -258,12 +261,14 @@ export default function VMsPage() {
 				{/* VM Table */}
 				<VMTable
 					vms={vms}
+					credentials={credentials}
 					onDeleteVM={deleteVM}
 					onEditVM={handleEditVM}
 				/>
 
 				{/* Add/Edit VM Modal */}
 				<AddVMModal
+					credentials={credentials}
 					onAddVM={addVM}
 					onUpdateVM={updateVM}
 					editingVM={editingVM}
