@@ -8,7 +8,6 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
-import { CredentialsProvider } from '@/lib/contexts/credentials-context'
 
 const jetbrainsMono = JetBrains_Mono({
 	subsets: ['latin'],
@@ -63,12 +62,10 @@ export default function RootLayout({
 					enableSystem
 					disableTransitionOnChange
 				>
-					<CredentialsProvider>
-						{children}
-						<Toaster />
-						<Analytics />
-						<SpeedInsights />
-					</CredentialsProvider>
+					{children}
+					<Toaster />
+					<Analytics />
+					<SpeedInsights />
 				</ThemeProvider>
 			</body>
 		</html>

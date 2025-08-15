@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,16 +32,18 @@ import {
 	Code,
 } from 'lucide-react'
 import type { VM } from '@/hooks/useVMs'
-import { useCredentialsContext } from '@/lib/contexts/credentials-context'
+import type { Credential } from '@/lib/utils/credential-types'
 
 interface VMTableProps {
 	vms: VM[]
+	credentials: Credential[]
 	onDeleteVM: (id: string) => void
 	onEditVM: (vmId: string) => void
 }
 
 export function VMTable({
 	vms,
+	credentials,
 	onDeleteVM,
 	onEditVM,
 }: VMTableProps) {
@@ -50,7 +52,11 @@ export function VMTable({
 		'all' | 'connected' | 'disconnected' | 'error'
 	>('all')
 
-	const { getCredentialById } = useCredentialsContext()
+	const credentialById = useMemo(
+		() => new Map(credentials.map(c => [c.id.toString(), c])),
+		[credentials]
+	)
+	const getCredentialById = (id: string) => credentialById.get(id.toString())
 
 	const filteredVMs = vms.filter(vm => {
 		const matchesSearch =

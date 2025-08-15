@@ -130,41 +130,6 @@ export function useVMs() {
     }
   }, [])
 
-  const assignVMToGroup = useCallback(async (vmId: string, groupId: string) => {
-    try {
-      setError(null)
-      const res = await fetch(`/api/hostGroup/${groupId}/hosts`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hostIds: [vmId] })
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || 'Failed to assign VM to group')
-      }
-      // Update the VM's group property
-      setVMs(prev => prev.map(vm => 
-        vm.id === vmId ? { ...vm, group: groupId } : vm
-      ))
-    } catch (err) {
-      setError(getErrorMessage(err))
-    }
-  }, [])
-
-  const assignConfigToVM = useCallback(async (id: string, configId: string) => {
-    try {
-      setError(null)
-      // TODO: Implement via /api/blueprint or configs when available
-      // For now, just update the VM in state
-      setVMs(prev => prev.map(vm => 
-        vm.id === id ? { ...vm, configId } : vm
-      ))
-    } catch (err) {
-      setError(getErrorMessage(err))
-    }
-  }, [])
-
   const clearError = useCallback(() => setError(null), [])
 
   return { 
@@ -174,9 +139,7 @@ export function useVMs() {
     clearError,
     addVM, 
     updateVM, 
-    deleteVM, 
-    assignVMToGroup, 
-    assignConfigToVM 
+    deleteVM,
   }
 }
 

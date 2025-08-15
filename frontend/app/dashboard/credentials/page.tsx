@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import {
 	CredentialsPageContent,
 	CredentialsPageSkeleton,
 	ErrorAlert,
 } from '@/components/dashboard'
-import { useCredentialsContext } from '@/lib/contexts/credentials-context'
+import { useCredentials } from '@/hooks/useCredentials'
 import { useCredentialsStats } from '@/hooks/useCredentialsStats'
 import type {
 	Credential,
@@ -23,7 +23,7 @@ export default function CredentialsPage() {
 		updateCredential,
 		deleteCredential,
 		clearError,
-	} = useCredentialsContext()
+	} = useCredentials()
 	const stats = useCredentialsStats(credentials)
 
 	const [editingCredential, setEditingCredential] = useState<Credential | null>(
