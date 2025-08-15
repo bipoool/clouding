@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { logger } from '@/lib/utils/logger'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -49,15 +49,26 @@ type VMFormData = z.infer<typeof vmSchema>
 
 interface AddVMModalProps {
 	onAddVM: (vm: Partial<VM>) => Promise<VM>
+	onUpdateVM?: (id: string, updates: Partial<VM>) => Promise<void>
+	editingVM?: VM | null
+	onEditComplete?: () => void
 	trigger?: React.ReactNode
 }
 
-export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
+export function AddVMModal({ onAddVM, onUpdateVM, editingVM, onEditComplete, trigger }: AddVMModalProps) {
 	const [open, setOpen] = useState(false)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const { getSSHCredentials } = useCredentialsContext()
 
 	const sshCredentials = getSSHCredentials()
+	const isEditing = !!editingVM
+
+	// Auto-open modal when editingVM is provided
+	useEffect(() => {
+		if (editingVM) {
+			setOpen(true)
+		}
+	}, [editingVM])
 
 	const form = useForm<VMFormData>({
 		resolver: zodResolver(vmSchema),
@@ -69,31 +80,74 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 		},
 	})
 
+	// Update form when editingVM changes
+	useEffect(() => {
+		if (editingVM) {
+			const osValue = ['ubuntu', 'centos', 'debian', 'alpine', 'windows'].includes(editingVM.os || '')
+				? editingVM.os as 'ubuntu' | 'centos' | 'debian' | 'alpine' | 'windows'
+				: 'ubuntu'
+			
+			form.reset({
+				name: editingVM.name || '',
+				ip: editingVM.ip || '',
+				os: osValue,
+				credentialId: editingVM.credentialId || '',
+			})
+		} else {
+			form.reset({
+				name: '',
+				ip: '',
+				os: 'ubuntu',
+				credentialId: '',
+			})
+		}
+	}, [editingVM, form])
+
 	const handleSubmit = async (data: VMFormData) => {
 		setIsSubmitting(true)
 
 		try {
-			const newVM: Partial<VM> = {
-				name: data.name.trim(),
-				ip: data.ip,
-				os: data.os,
-				status: 'connected', // Assume connected for demo
-				health: Math.floor(Math.random() * 20) + 80, // Random health 80-100
-				credentialId: data.credentialId,
+			if (isEditing && editingVM && onUpdateVM) {
+				// Update existing VM
+				const updates: Partial<VM> = {
+					name: data.name.trim(),
+					ip: data.ip,
+					os: data.os,
+					credentialId: data.credentialId,
+				}
+				await onUpdateVM(editingVM.id, updates)
+				setOpen(false)
+				onEditComplete?.()
+			} else {
+				// Add new VM
+				const newVM: Partial<VM> = {
+					name: data.name.trim(),
+					ip: data.ip,
+					os: data.os,
+					status: 'connected', // Assume connected for demo
+					health: Math.floor(Math.random() * 20) + 80, // Random health 80-100
+					credentialId: data.credentialId,
+				}
+				await onAddVM(newVM)
+				setOpen(false)
+				form.reset()
 			}
-
-			await onAddVM(newVM)
-			setOpen(false)
-			form.reset()
 		} catch (error) {
-			logger.error('Failed to add VM:', error)
+			logger.error(`Failed to ${isEditing ? 'update' : 'add'} VM:`, error)
 		} finally {
 			setIsSubmitting(false)
 		}
 	}
 
+	const handleOpenChange = (newOpen: boolean) => {
+		setOpen(newOpen)
+		if (!newOpen && isEditing) {
+			onEditComplete?.()
+		}
+	}
+
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>
 				{trigger || (
 					<Button className='gradient-border-btn'>
@@ -106,11 +160,10 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 				<DialogHeader>
 					<DialogTitle className='text-primary flex items-center gap-2'>
 						<Server className='h-5 w-5 text-cyan-400' />
-						Add Virtual Machine
+						{isEditing ? 'Edit Virtual Machine' : 'Add Virtual Machine'}
 					</DialogTitle>
 					<DialogDescription className='text-secondary'>
-						Connect an existing VM by providing its connection details and
-						selecting authentication credentials.
+						{isEditing ? 'Modify the connection details and authentication credentials of an existing VM.' : 'Connect an existing VM by providing its connection details and selecting authentication credentials.'}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -279,7 +332,10 @@ export function AddVMModal({ onAddVM, trigger }: AddVMModalProps) {
 								disabled={isSubmitting || sshCredentials.length === 0}
 								className='flex-1 gradient-border-btn'
 							>
-								{isSubmitting ? 'Connecting...' : 'Add VM'}
+								{isSubmitting 
+									? (isEditing ? 'Updating...' : 'Adding...') 
+									: (isEditing ? 'Update VM' : 'Add VM')
+								}
 							</Button>
 						</div>
 					</form>
