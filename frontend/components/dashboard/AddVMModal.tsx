@@ -33,7 +33,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Server, Key, Lock, ExternalLink } from 'lucide-react'
 import type { VM } from '@/hooks/useVMs'
-import { useCredentialsContext } from '@/lib/contexts/credentials-context'
+import { useCredentials } from '@/hooks/useCredentials'
 import Link from 'next/link'
 
 const vmSchema = z.object({
@@ -58,7 +58,7 @@ interface AddVMModalProps {
 export function AddVMModal({ onAddVM, onUpdateVM, editingVM, onEditComplete, trigger }: AddVMModalProps) {
 	const [open, setOpen] = useState(false)
 	const [isSubmitting, setIsSubmitting] = useState(false)
-	const { getSSHCredentials } = useCredentialsContext()
+	const { getSSHCredentials } = useCredentials()
 
 	const sshCredentials = getSSHCredentials()
 	const isEditing = !!editingVM

@@ -1,7 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { Credential, CreateCredentialData } from '@/lib/utils/credential-types'
 import { getErrorMessage } from '@/lib/utils'
-import { httpClient } from '@/lib/http-client'
 
 export interface CredentialsHookReturn {
   credentials: Credential[]
@@ -17,99 +16,92 @@ export interface CredentialsHookReturn {
 
 export function useCredentials(): CredentialsHookReturn {
   const [credentials, setCredentials] = useState<Credential[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const isMountedRef = useRef(true)
 
   // Initial fetch
   useEffect(() => {
-    const abortController = new AbortController()
-    
     const fetchCredentials = async () => {
-      setIsLoading(true)
       try {
-        const { data } = await httpClient.get<Credential[]>('/credentials', {
-          signal: abortController.signal
-        })
-        
-        // Check if component is still mounted before updating state
-        if (!abortController.signal.aborted) {
-          setCredentials(data || [])
+        setIsLoading(true)
+        setError(null)
+        const res = await fetch('/api/credentials')
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to fetch credentials')
         }
+        const response = await res.json()
+        const credentials: Credential[] = response.data || []
+        setCredentials(credentials)
       } catch (err) {
-        // Only update error state if request wasn't cancelled
-        if (!abortController.signal.aborted) {
-          setError(getErrorMessage(err))
-        }
+        setError(getErrorMessage(err))
       } finally {
-        // Only update loading state if component is still mounted
-        if (!abortController.signal.aborted) {
-          setIsLoading(false)
-        }
+        setIsLoading(false)
       }
     }
 
     fetchCredentials()
-
-    // Cleanup: abort the fetch request and mark component as unmounted
-    return () => {
-      abortController.abort()
-      isMountedRef.current = false
-    }
   }, [])
 
   const clearError = useCallback(() => {
-    if (isMountedRef.current) {
-      setError(null)
-    }
+    setError(null)
   }, [])
 
   const createCredential = useCallback(async (data: CreateCredentialData) => {
-    if (!isMountedRef.current) return
-    
     try {
-      const { data: newCredential } = await httpClient.post<Credential>('/credentials', data)
-      
-      if (isMountedRef.current) {
-        setCredentials(prev => [...prev, newCredential])
+      setError(null)
+      const res = await fetch('/api/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to create credential')
       }
+      const { data: newCredential } = await res.json()
+      setCredentials(prev => [...prev, newCredential])
       return newCredential
     } catch (err) {
-      if (isMountedRef.current) {
-        setError(getErrorMessage(err))
-      }
+      setError(getErrorMessage(err))
+      throw err
     }
   }, [])
 
   const updateCredential = useCallback(async (id: string, updates: Partial<CreateCredentialData>) => {
-    if (!isMountedRef.current) return
-    
     try {
-      const { data: updated } = await httpClient.put<Credential>(`/credentials/${id}`, updates)
-      
-      if (isMountedRef.current) {
-        setCredentials(prev => prev.map(c => (c.id === id ? updated : c)))
+      setError(null)
+      const res = await fetch(`/api/credentials/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to update credential')
       }
+      const { data: updated } = await res.json()
+      setCredentials(prev => prev.map(c => (c.id === id ? updated : c)))
     } catch (err) {
-      if (isMountedRef.current) {
-        setError(getErrorMessage(err))
-      }
+      setError(getErrorMessage(err))
+      throw err
     }
   }, [])
 
   const deleteCredential = useCallback(async (id: string) => {
-    if (!isMountedRef.current) return
-    
     try {
-      await httpClient.delete<void>(`/credentials/${id}`)
-      
-      if (isMountedRef.current) {
-        setCredentials(prev => prev.filter(c => c.id !== id))
+      setError(null)
+      const res = await fetch(`/api/credentials/${id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to delete credential')
       }
+      setCredentials(prev => prev.filter(c => c.id !== id))
     } catch (err) {
-      if (isMountedRef.current) {
-        setError(getErrorMessage(err))
-      }
+      setError(getErrorMessage(err))
+      throw err
     }
   }, [])
 
