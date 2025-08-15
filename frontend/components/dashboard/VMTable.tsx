@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,9 +52,11 @@ export function VMTable({
 		'all' | 'connected' | 'disconnected' | 'error'
 	>('all')
 
-	const getCredentialById = (id: string) => {
-		return credentials.find(credential => credential.id.toString() === id.toString())
-	}
+	const credentialById = useMemo(
+		() => new Map(credentials.map(c => [c.id.toString(), c])),
+		[credentials]
+	)
+	const getCredentialById = (id: string) => credentialById.get(id.toString())
 
 	const filteredVMs = vms.filter(vm => {
 		const matchesSearch =
