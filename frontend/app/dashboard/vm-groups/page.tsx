@@ -30,11 +30,14 @@ export default function VMGroupsPage() {
 		removeVMFromGroup,
 	} = useVMGroups()
 
-	const totalVMsInGroups = groups.reduce(
-		(sum, group) => sum + group.vmIds.length,
-		0
-	)
-	const ungroupedVMs = vms.filter(vm => !vm.group)
+	// Create a set of all unique VM IDs that are in groups (to avoid duplicates)
+	const groupedVmIds = new Set<string>()
+	groups.forEach(group => {
+		group.vmIds.forEach(vmId => groupedVmIds.add(vmId))
+	})
+	
+	const totalVMsInGroups = groupedVmIds.size
+	const ungroupedVMs = vms.filter(vm => !groupedVmIds.has(vm.id))
 	const activeGroups = groups.filter(group => group.vmIds.length > 0)
 
 	if (vmsLoading || groupsLoading) {
@@ -295,11 +298,6 @@ export default function VMGroupsPage() {
 									management.
 								</p>
 								<div className='flex gap-3'>
-									<Link href='/dashboard/vms'>
-										<Button variant='ghost' size='sm' className='glass-btn'>
-											View Ungrouped VMs
-										</Button>
-									</Link>
 									<CreateGroupModal
 										onCreateGroup={createGroup}
 										trigger={

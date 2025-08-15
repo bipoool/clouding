@@ -37,15 +37,13 @@ import { useCredentialsContext } from '@/lib/contexts/credentials-context'
 interface VMTableProps {
 	vms: VM[]
 	onDeleteVM: (id: string) => void
-	onAssignToGroup: (vmId: string) => void
-	onAssignConfig: (vmId: string) => void
+	onEditVM: (vmId: string) => void
 }
 
 export function VMTable({
 	vms,
 	onDeleteVM,
-	onAssignToGroup,
-	onAssignConfig,
+	onEditVM,
 }: VMTableProps) {
 	const [searchTerm, setSearchTerm] = useState('')
 	const [statusFilter, setStatusFilter] = useState<
@@ -57,7 +55,8 @@ export function VMTable({
 	const filteredVMs = vms.filter(vm => {
 		const matchesSearch =
 			vm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			vm.ip.includes(searchTerm)
+			vm.ip.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			vm.os.toLowerCase().includes(searchTerm.toLowerCase())
 		const matchesStatus = statusFilter === 'all' || vm.status === statusFilter
 		return matchesSearch && matchesStatus
 	})
@@ -96,8 +95,8 @@ export function VMTable({
 		)
 	}
 
-	const formatLastSeen = (lastSeen: string) => {
-		const date = new Date(lastSeen)
+	const formatUpdatedAt = (updatedAt: string) => {
+		const date = new Date(updatedAt)
 		const now = new Date()
 		const diffMs = now.getTime() - date.getTime()
 		const diffMins = Math.floor(diffMs / 60000)
@@ -116,7 +115,7 @@ export function VMTable({
 					<div className='relative flex-1 max-w-md'>
 						<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
 						<Input
-							placeholder='Search VMs by name or IP...'
+							placeholder='Search VMs by name, IP, or OS...'
 							value={searchTerm}
 							onChange={e => setSearchTerm(e.target.value)}
 							className='pl-10 glass-input'
@@ -162,19 +161,16 @@ export function VMTable({
 								Status
 							</TableHead>
 							<TableHead className='text-secondary font-medium'>
-								Health
+								IP Address
+							</TableHead>
+							<TableHead className='text-secondary font-medium'>
+								Operating System
 							</TableHead>
 							<TableHead className='text-secondary font-medium'>
 								Credential
 							</TableHead>
 							<TableHead className='text-secondary font-medium'>
-								Group
-							</TableHead>
-							<TableHead className='text-secondary font-medium'>
-								Config
-							</TableHead>
-							<TableHead className='text-secondary font-medium'>
-								Last Seen
+								Last Updated
 							</TableHead>
 							<TableHead className='w-12'></TableHead>
 						</TableRow>
@@ -190,31 +186,20 @@ export function VMTable({
 										{getOSIcon(vm.os)}
 										<div>
 											<div className='font-medium text-primary'>{vm.name}</div>
-											<div className='text-sm text-secondary'>{vm.ip}</div>
-											<div className='text-xs text-gray-500 capitalize'>
-												{vm.os}
-											</div>
 										</div>
 									</div>
 								</TableCell>
 								<TableCell>{getStatusBadge(vm.status)}</TableCell>
 								<TableCell>
+									<div className='font-mono text-sm text-primary'>
+										{vm.ip}
+									</div>
+								</TableCell>
+								<TableCell>
 									<div className='flex items-center gap-2'>
-										<div className='w-20 bg-white/10 rounded-full h-2'>
-											<div
-												className={`h-2 rounded-full transition-all duration-500 ${
-													(vm.health || 0) > 80
-														? 'bg-green-500'
-														: (vm.health || 0) > 50
-															? 'bg-yellow-500'
-															: 'bg-red-500'
-												}`}
-												style={{ width: `${vm.health || 0}%` }}
-											/>
+										<div className='text-sm text-secondary capitalize'>
+											{vm.os}
 										</div>
-										<span className='text-sm text-secondary'>
-											{vm.health || 0}%
-										</span>
 									</div>
 								</TableCell>
 								<TableCell>
@@ -247,60 +232,8 @@ export function VMTable({
 										</div>
 									)}
 								</TableCell>
-								<TableCell>
-									{vm.group ? (
-										<Badge
-											variant='outline'
-											className='bg-blue-500/10 text-blue-400 border-blue-500/30'
-										>
-											{vm.group}
-										</Badge>
-									) : (
-										<Button
-											variant='ghost'
-											size='sm'
-											onClick={() => onAssignToGroup(vm.id)}
-											className='text-xs text-gray-400 hover:text-cyan-400'
-										>
-											<Users className='h-3 w-3 mr-1' />
-											Assign
-										</Button>
-									)}
-								</TableCell>
-								<TableCell>
-									{vm.configId ? (
-										<div className='flex items-center gap-2'>
-											<Badge
-												variant='outline'
-												className='bg-green-500/10 text-green-400 border-green-500/30'
-											>
-												<Settings className='h-3 w-3 mr-1' />
-												Configured
-											</Badge>
-											<Button
-												variant='ghost'
-												size='sm'
-												onClick={() => onAssignConfig(vm.id)}
-												className='text-xs text-gray-400 hover:text-cyan-400'
-												title='Change configuration'
-											>
-												<Settings className='h-3 w-3' />
-											</Button>
-										</div>
-									) : (
-										<Button
-											variant='ghost'
-											size='sm'
-											onClick={() => onAssignConfig(vm.id)}
-											className='text-xs text-gray-400 hover:text-cyan-400'
-										>
-											<Settings className='h-3 w-3 mr-1' />
-											Assign
-										</Button>
-									)}
-								</TableCell>
 								<TableCell className='text-secondary text-sm'>
-									{vm.lastSeen ? formatLastSeen(vm.lastSeen) : 'Never'}
+									{vm.updatedAt ? formatUpdatedAt(vm.updatedAt) : 'Never'}
 								</TableCell>
 								<TableCell>
 									<DropdownMenu>
@@ -313,13 +246,9 @@ export function VMTable({
 											align='end'
 											className='bg-black/90 backdrop-blur-sm border border-white/10'
 										>
-											<DropdownMenuItem onClick={() => onAssignToGroup(vm.id)}>
-												<Users className='h-4 w-4 mr-2' />
-												Assign to Group
-											</DropdownMenuItem>
-											<DropdownMenuItem onClick={() => onAssignConfig(vm.id)}>
+											<DropdownMenuItem onClick={() => onEditVM(vm.id)}>
 												<Settings className='h-4 w-4 mr-2' />
-												Assign Config
+												Edit VM
 											</DropdownMenuItem>
 											<DropdownMenuItem
 												onClick={() => onDeleteVM(vm.id)}

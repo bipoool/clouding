@@ -67,7 +67,6 @@ export function useCredentials(): CredentialsHookReturn {
   const createCredential = useCallback(async (data: CreateCredentialData) => {
     if (!isMountedRef.current) return
     
-    setIsLoading(true)
     try {
       const { data: newCredential } = await httpClient.post<Credential>('/credentials', data)
       
@@ -79,17 +78,12 @@ export function useCredentials(): CredentialsHookReturn {
       if (isMountedRef.current) {
         setError(getErrorMessage(err))
       }
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false)
-      }
     }
   }, [])
 
   const updateCredential = useCallback(async (id: string, updates: Partial<CreateCredentialData>) => {
     if (!isMountedRef.current) return
     
-    setIsLoading(true)
     try {
       const { data: updated } = await httpClient.put<Credential>(`/credentials/${id}`, updates)
       
@@ -100,17 +94,12 @@ export function useCredentials(): CredentialsHookReturn {
       if (isMountedRef.current) {
         setError(getErrorMessage(err))
       }
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false)
-      }
     }
   }, [])
 
   const deleteCredential = useCallback(async (id: string) => {
     if (!isMountedRef.current) return
     
-    setIsLoading(true)
     try {
       await httpClient.delete<void>(`/credentials/${id}`)
       
@@ -120,10 +109,6 @@ export function useCredentials(): CredentialsHookReturn {
     } catch (err) {
       if (isMountedRef.current) {
         setError(getErrorMessage(err))
-      }
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false)
       }
     }
   }, [])

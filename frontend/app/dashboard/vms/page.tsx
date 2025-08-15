@@ -3,13 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/dashboard-layout'
-import { VMTable } from '@/components/dashboard/VMTable'
-import { AddVMModal } from '@/components/dashboard/AddVMModal'
-import { VmsPageSkeleton } from '@/components/dashboard'
+import { VMTable, AddVMModal, VmsPageSkeleton } from '@/components/dashboard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useVMs } from '@/hooks/useVMs'
-import { logger } from '@/lib/utils/logger'
+import type { VM } from '@/hooks/useVMs'
 import {
 	Server,
 	Plus,
@@ -27,15 +25,9 @@ export default function VMsPage() {
 		error,
 		addVM,
 		deleteVM,
-		assignVMToGroup,
-		assignConfigToVM,
+		updateVM,
 	} = useVMs()
-	const [selectedVMForGroup, setSelectedVMForGroup] = useState<string | null>(
-		null
-	)
-	const [selectedVMForConfig, setSelectedVMForConfig] = useState<string | null>(
-		null
-	)
+	const [editingVM, setEditingVM] = useState<VM | null>(null)
 
 	const connectedVMs = vms.filter(vm => vm.status === 'connected')
 	const disconnectedVMs = vms.filter(vm => vm.status === 'disconnected')
@@ -47,16 +39,15 @@ export default function VMsPage() {
 				)
 			: 0
 
-	const handleAssignToGroup = (vmId: string) => {
-		setSelectedVMForGroup(vmId)
-		// In a real app, this would open a dialog to select a group
-		logger.log('Assign VM to group:', vmId)
+	const handleEditVM = (vmId: string) => {
+		const vm = vms.find(v => v.id === vmId)
+		if (vm) {
+			setEditingVM(vm)
+		}
 	}
 
-	const handleAssignConfig = (vmId: string) => {
-		setSelectedVMForConfig(vmId)
-		// In a real app, this would open a dialog to select a config
-		logger.log('Assign config to VM:', vmId)
+	const handleEditComplete = () => {
+		setEditingVM(null)
 	}
 
 	if (isLoading) {
@@ -268,8 +259,15 @@ export default function VMsPage() {
 				<VMTable
 					vms={vms}
 					onDeleteVM={deleteVM}
-					onAssignToGroup={handleAssignToGroup}
-					onAssignConfig={handleAssignConfig}
+					onEditVM={handleEditVM}
+				/>
+
+				{/* Add/Edit VM Modal */}
+				<AddVMModal
+					onAddVM={addVM}
+					onUpdateVM={updateVM}
+					editingVM={editingVM}
+					onEditComplete={handleEditComplete}
 				/>
 			</div>
 		</DashboardLayout>
