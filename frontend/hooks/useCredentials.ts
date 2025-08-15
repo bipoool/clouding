@@ -60,8 +60,9 @@ export function useCredentials(): CredentialsHookReturn {
         throw new Error(errorData.error || 'Failed to create credential')
       }
       const { data: newCredential } = await res.json()
-      setCredentials(prev => [...prev, newCredential])
-      return newCredential
+			const fullCredential: Credential = { ...data, ...newCredential };
+			setCredentials(prev => [...prev, fullCredential])
+			return fullCredential
     } catch (err) {
       setError(getErrorMessage(err))
       throw err
@@ -81,7 +82,9 @@ export function useCredentials(): CredentialsHookReturn {
         throw new Error(errorData.error || 'Failed to update credential')
       }
       const { data: updated } = await res.json()
-      setCredentials(prev => prev.map(c => (c.id === id ? updated : c)))
+      setCredentials(prev =>
+        prev.map(c => (c.id === id ? { ...c, ...updated } : c))
+      );
     } catch (err) {
       setError(getErrorMessage(err))
       throw err
@@ -107,7 +110,7 @@ export function useCredentials(): CredentialsHookReturn {
 
   // Helper method to get credential by ID
   const getCredentialById = useCallback((id: string) => {
-    return credentials.find(credential => credential.id === id)
+    return credentials.find(credential => credential.id.toString() === id.toString())
   }, [credentials])
 
   // Helper method to get SSH credentials (both ssh_key and password types)
