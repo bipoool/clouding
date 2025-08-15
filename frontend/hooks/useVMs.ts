@@ -30,8 +30,6 @@ export function useVMs() {
   const enhanceHostData = (host: Host): VM => ({
     ...host,
     status: 'connected', // Default status, could be determined by connectivity check
-    lastSeen: new Date().toISOString(),
-    group: undefined // Will be set based on host group membership
   })
 
   // Initial fetch
@@ -103,11 +101,12 @@ export function useVMs() {
       }
       const { data: updatedPartial } = (await res.json()) as { data: Partial<Host> };
       setVMs(prev =>
-        prev.map(item =>
-          item.id.toString() === id
-            ? enhanceHostData({ ...item, ...updates, ...updatedPartial })
-            : item
-        )
+        prev.map(item => {
+          if (item.id === id) {
+            return enhanceHostData({ ...item, ...updates, ...updatedPartial })
+          }
+          return item
+        })
       );
     } catch (err) {
       setError(getErrorMessage(err))
@@ -328,8 +327,6 @@ export function useVMGroups() {
       setGroups(prev => prev.filter(g => g.id !== id))
     } catch (err) {
       setError(getErrorMessage(err))
-    } finally {
-      setIsLoading(false);
     }
   }, [])
 

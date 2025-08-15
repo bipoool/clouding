@@ -74,7 +74,6 @@ export const CredentialsProvider = ({ children }: CredentialsProviderProps) => {
 	const clearError = useCallback(() => setError(null), [])
 
 	const createCredential = useCallback(async (data: CreateCredentialData) => {
-		setIsLoading(true)
 		try {
 			const { data: createdPartial } = await httpClient.post<Credential>(
 				'/credentials',
@@ -86,14 +85,11 @@ export const CredentialsProvider = ({ children }: CredentialsProviderProps) => {
 		} catch (err) {
 			setError(getErrorMessage(err))
 			throw err
-		} finally {
-			setIsLoading(false)
 		}
 	}, [])
 
 	const updateCredential = useCallback(
 		async (id: string, updates: Partial<CreateCredentialData>) => {
-			setIsLoading(true)
 			try {
 				const { data: updated } = await httpClient.put<Credential>(
 					`/credentials/${id}`,
@@ -105,23 +101,18 @@ export const CredentialsProvider = ({ children }: CredentialsProviderProps) => {
 			} catch (err) {
 				setError(getErrorMessage(err))
 				throw err
-			} finally {
-				setIsLoading(false)
 			}
 		},
 		[]
 	)
 
 	const deleteCredential = useCallback(async (id: string) => {
-		setIsLoading(true)
 		try {
 			await httpClient.delete<void>(`/credentials/${id}`)
 			setCredentials(prev => prev.filter(c => c.id !== id))
 		} catch (err) {
 			setError(getErrorMessage(err))
 			throw err
-		} finally {
-			setIsLoading(false)
 		}
 	}, [])
 

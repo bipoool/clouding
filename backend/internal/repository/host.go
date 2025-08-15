@@ -95,10 +95,6 @@ func (r *hostRepository) UpdateHost(ctx context.Context, h *host.Host) error {
 		Suffix("RETURNING updated_at").
 		PlaceholderFormat(sq.Dollar)
 
-	// Add only fields that are non-nil
-	if h.UserID != nil {
-		builder = builder.Set("user_id", *h.UserID)
-	}
 	if h.Name != nil {
 		builder = builder.Set("name", *h.Name)
 	}
@@ -107,6 +103,9 @@ func (r *hostRepository) UpdateHost(ctx context.Context, h *host.Host) error {
 	}
 	if h.Os != nil {
 		builder = builder.Set("os", *h.Os)
+	}
+	if h.CredentialID != nil {
+		builder = builder.Set("credential_id", *h.CredentialID)
 	}
 	if h.MetaData != nil {
 		builder = builder.Set("meta_data", *h.MetaData)
