@@ -60,7 +60,10 @@ NodeContent.displayName = 'NodeContent'
 const ConfigurationButton: React.FC<{
 	nodeData: CustomNodeData
 }> = memo(({ nodeData }) => (
-	<NodeConfigurationDialog nodeData={nodeData}>
+	<NodeConfigurationDialog 
+		nodeData={nodeData}
+		components={nodeData.components || []}
+	>
 		<Button
 			variant='ghost'
 			size='sm'

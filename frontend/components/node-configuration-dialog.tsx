@@ -1,172 +1,124 @@
 'use client'
 
 import type React from 'react'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-	DialogPortal,
-	DialogOverlay,
-	DialogClose,
+	DialogDescription,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { X } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
 import {
 	type CustomNodeData,
-	isNodeType,
-	VERSION_PLACEHOLDERS,
-	FORM_FIELD_CLASSES,
 } from '@/lib/node-types'
 import { logger } from '@/lib/utils/logger'
+import { getFormFieldsByNodeType, type ExtendedComponentParameter } from '@/lib/infrastructure-components'
+import type { Component } from '@/hooks/useComponents'
 
 interface NodeConfigurationDialogProps {
 	nodeData: CustomNodeData
+	components: Component[]
 	children: React.ReactNode
-}
-
-interface FormFieldConfig {
-	id: string
-	label: string
-	type: 'input' | 'password' | 'email' | 'textarea'
-	placeholder?: string
-	rows?: number
-	className?: string
-}
-
-// Constants
-const NODE_TYPE_CONFIGS: Record<string, FormFieldConfig[]> = {
-	port: [
-		{
-			id: 'port-number',
-			label: 'Port Number',
-			type: 'input',
-			placeholder: '8080',
-			className: FORM_FIELD_CLASSES.focus.pink,
-		},
-	],
-	script: [
-		{
-			id: 'script-content',
-			label: 'Script Content',
-			type: 'textarea',
-			placeholder: "#!/bin/bash\necho 'Hello World'",
-			rows: 4,
-			className: `${FORM_FIELD_CLASSES.focus.blue} font-mono`,
-		},
-	],
-	nginx: [
-		{
-			id: 'webserver-config',
-			label: 'Configuration',
-			type: 'textarea',
-			placeholder: 'server_name example.com;\nlisten 80;',
-			rows: 3,
-			className: `${FORM_FIELD_CLASSES.focus.green} font-mono`,
-		},
-	],
-	apache: [
-		{
-			id: 'webserver-config',
-			label: 'Configuration',
-			type: 'textarea',
-			placeholder: 'ServerName example.com\nListen 80',
-			rows: 3,
-			className: `${FORM_FIELD_CLASSES.focus.green} font-mono`,
-		},
-	],
-	ssl: [
-		{
-			id: 'domain',
-			label: 'Domain Name',
-			type: 'input',
-			placeholder: 'example.com',
-		},
-		{
-			id: 'email',
-			label: 'Contact Email',
-			type: 'email',
-			placeholder: 'admin@example.com',
-		},
-	],
-	docker: [
-		{
-			id: 'container-config',
-			label: 'Configuration',
-			type: 'textarea',
-			placeholder: 'version: "3.8"\nservices:\n  app:\n    image: nginx',
-			rows: 4,
-			className: `${FORM_FIELD_CLASSES.focus.blue} font-mono`,
-		},
-	],
-	kubernetes: [
-		{
-			id: 'container-config',
-			label: 'Configuration',
-			type: 'textarea',
-			placeholder: 'apiVersion: v1\nkind: Pod\nmetadata:\n  name: my-pod',
-			rows: 4,
-			className: `${FORM_FIELD_CLASSES.focus.blue} font-mono`,
-		},
-	],
-	firewall: [
-		{
-			id: 'firewall-rules',
-			label: 'Firewall Rules',
-			type: 'textarea',
-			placeholder: 'allow 22/tcp\nallow 80/tcp\nallow 443/tcp',
-			rows: 3,
-			className: `${FORM_FIELD_CLASSES.focus.red} font-mono`,
-		},
-	],
-	loadbalancer: [
-		{
-			id: 'backend-servers',
-			label: 'Backend Servers',
-			type: 'input',
-			placeholder: '192.168.1.10,192.168.1.11',
-		},
-		{
-			id: 'algorithm',
-			label: 'Load Balancing Algorithm',
-			type: 'input',
-			placeholder: 'round-robin',
-		},
-	],
 }
 
 // Components
 const FormField: React.FC<{
-	config: FormFieldConfig
-	isTextarea?: boolean
-}> = memo(({ config, isTextarea = false }) => {
-	const baseClassName =
-		'glass border-white/20 text-white placeholder:text-gray-500 focus:border-cyan-400/50 focus:ring-cyan-400/20'
-	const combinedClassName = `${baseClassName} ${config.className || ''}`
+	config: ExtendedComponentParameter
+	onChange?: (fieldId: string, value: any) => void
+	isRequired?: boolean
+}> = memo(({ config, onChange, isRequired = false }) => {
+	const renderField = () => {
+		switch (config.uiType) {
+			case 'textarea':
+				return (
+					<textarea
+						id={config.name}
+						rows={config.rows || 3}
+						placeholder={config.placeholder || config.default || ''}
+						className='w-full p-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-gray-500 text-sm resize-none focus:outline-none focus:bg-white/15 focus:border-cyan-400/50 focus:ring-cyan-400/20'
+						onChange={(e) => onChange?.(config.name, e.target.value)}
+					/>
+				)
+			
+			case 'select':
+				return (
+					<Select 
+						defaultValue={config.default}
+						onValueChange={(value) => onChange?.(config.name, value)}
+					>
+						<SelectTrigger className='glass-input'>
+							<SelectValue placeholder={config.placeholder || 'Select an option'} />
+						</SelectTrigger>
+						<SelectContent className='bg-black/90 backdrop-blur-sm border border-white/10'>
+							{config.options?.map((option) => (
+								<SelectItem key={option} value={option}>
+									{option}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				)
+			
+			case 'checkbox':
+				return (
+					<div className='flex items-center space-x-2'>
+						<Checkbox 
+							id={config.name} 
+							onCheckedChange={(checked) => onChange?.(config.name, checked)}
+						/>
+						<label htmlFor={config.name} className='text-sm text-secondary'>
+							{config.description || config.name}
+						</label>
+					</div>
+				)
+			
+			case 'password':
+				return (
+					<Input
+						id={config.name}
+						type='password'
+						placeholder={config.placeholder || config.default || ''}
+						className='glass-input'
+						onChange={(e) => onChange?.(config.name, e.target.value)}
+					/>
+				)
+			
+			default: // text, file, etc.
+				return (
+					<Input
+						id={config.name}
+						type={config.uiType === 'text' ? 'text' : 'text'}
+						placeholder={config.placeholder || config.default || ''}
+						className='glass-input'
+						onChange={(e) => onChange?.(config.name, e.target.value)}
+					/>
+				)
+		}
+	}
 
 	return (
-		<div className='space-y-3'>
-			<Label htmlFor={config.id} className='text-gray-300 font-semibold'>
-				{config.label}
-			</Label>
-			{isTextarea ? (
-				<textarea
-					id={config.id}
-					rows={config.rows || 3}
-					placeholder={config.placeholder}
-					className={`w-full p-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-gray-500 text-sm resize-none focus:outline-none focus:bg-white/15 ${config.className || ''}`}
-				/>
-			) : (
-				<Input
-					id={config.id}
-					type={config.type === 'input' ? 'text' : config.type}
-					placeholder={config.placeholder}
-					className={combinedClassName}
-				/>
+		<div className='space-y-2'>
+			{config.uiType !== 'checkbox' && (
+				<label htmlFor={config.name} className='text-sm font-medium text-secondary'>
+					{config.name}
+					{isRequired && <span className='text-red-400 ml-1'>*</span>}
+				</label>
+			)}
+			{renderField()}
+			{config.description && config.uiType !== 'checkbox' && (
+				<p className='text-xs text-gray-500'>{config.description}</p>
 			)}
 		</div>
 	)
@@ -174,133 +126,123 @@ const FormField: React.FC<{
 
 FormField.displayName = 'FormField'
 
-const DatabaseFields: React.FC = memo(() => (
-	<div className='space-y-3'>
-		<div className='grid grid-cols-2 gap-3'>
-			<FormField
-				config={{
-					id: 'db-username',
-					label: 'Username',
-					type: 'input',
-					placeholder: 'admin',
-				}}
-			/>
-			<FormField
-				config={{
-					id: 'db-password',
-					label: 'Password',
-					type: 'password',
-					placeholder: '••••••••',
-				}}
-			/>
-		</div>
-		<FormField
-			config={{
-				id: 'db-name',
-				label: 'Database Name',
-				type: 'input',
-				placeholder: 'myapp_db',
-			}}
-		/>
-	</div>
-))
 
-DatabaseFields.displayName = 'DatabaseFields'
-
-const ConfigurationForm: React.FC<{
-	nodeData: CustomNodeData
-}> = memo(({ nodeData }) => {
-	const formFields = useMemo(() => {
-		const { nodeType } = nodeData
-
-		// Handle programming languages
-		if (isNodeType.programmingLanguage(nodeType)) {
-			return [
-				{
-					id: 'version',
-					label: 'Version',
-					type: 'input' as const,
-					placeholder: VERSION_PLACEHOLDERS[nodeType] || 'latest',
-				},
-			]
-		}
-
-		// Handle databases
-		if (isNodeType.database(nodeType)) {
-			return null // Special case handled by DatabaseFields component
-		}
-
-		// Handle other node types
-		return NODE_TYPE_CONFIGS[nodeType] || []
-	}, [nodeData.nodeType])
-
-	const handleSaveConfiguration = () => {
-		// TODO: Implement configuration save logic
-		logger.log('Saving configuration for node:', nodeData.label)
-	}
-
-	return (
-		<div className='space-y-6 pt-4'>
-			{/* Common name field for all nodes */}
-			<FormField
-				config={{
-					id: 'node-name',
-					label: 'Name',
-					type: 'input',
-					placeholder: nodeData.label,
-				}}
-			/>
-
-			{/* Database-specific fields */}
-			{isNodeType.database(nodeData.nodeType) && <DatabaseFields />}
-
-			{/* Other node type-specific fields */}
-			{formFields &&
-				formFields.map(field => (
-					<FormField
-						key={field.id}
-						config={field}
-						isTextarea={field.type === 'textarea'}
-					/>
-				))}
-
-			<Button
-				onClick={handleSaveConfiguration}
-				className='w-full btn-gradient text-white font-semibold py-3 rounded-lg'
-			>
-				Save Configuration
-			</Button>
-		</div>
-	)
-})
-
-ConfigurationForm.displayName = 'ConfigurationForm'
 
 export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
-	memo(({ nodeData, children }) => {
+	memo(({ nodeData, components, children }) => {
 		const IconComponent = nodeData.icon
+		const [isSubmitting, setIsSubmitting] = useState(false)
+		const [formValues, setFormValues] = useState<Record<string, any>>({})
+
+		const formFields = useMemo(() => {
+			const { nodeType } = nodeData
+			return getFormFieldsByNodeType(nodeType, components)
+		}, [nodeData.nodeType, components])
+
+		// Check if a field should be shown based on required_if rules
+		const shouldShowField = (field: ExtendedComponentParameter): boolean => {
+			if (!field.rules?.required_if) {
+				return true
+			}
+
+			const requiredIf = field.rules.required_if
+			for (const [dependentField, requiredValue] of Object.entries(requiredIf)) {
+				const currentValue = formValues[dependentField]
+				if (currentValue !== requiredValue) {
+					return false
+				}
+			}
+			return true
+		}
+
+		// Check if a field is required (either directly required or conditionally required)
+		const isFieldRequired = (field: ExtendedComponentParameter): boolean => {
+			// Directly required
+			if (field.rules?.required) {
+				return true
+			}
+
+			// Conditionally required - check if the field should be shown AND has required_if
+			if (field.rules?.required_if && shouldShowField(field)) {
+				return true
+			}
+
+			return false
+		}
+
+		// Handle field value changes
+		const handleFieldChange = (fieldId: string, value: any) => {
+			setFormValues(prev => ({
+				...prev,
+				[fieldId]: value
+			}))
+		}
+
+		const handleSaveConfiguration = async () => {
+			setIsSubmitting(true)
+			try {
+				// TODO: Implement configuration save logic
+				logger.log('Saving configuration for node:', nodeData.label)
+				// Simulate API call
+				await new Promise(resolve => setTimeout(resolve, 1000))
+			} catch (error) {
+				logger.error('Failed to save configuration:', error)
+			} finally {
+				setIsSubmitting(false)
+			}
+		}
 
 		return (
-			<Dialog modal={true}>
+			<Dialog>
 				<DialogTrigger asChild>{children}</DialogTrigger>
-				<DialogPortal>
-					<DialogOverlay className='fixed inset-0 z-[9998] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0' />
-					<DialogContent className='fixed left-[50%] top-[50%] z-[9999] translate-x-[-50%] translate-y-[-50%] bg-black/90 backdrop-blur-xl border-white/20 max-w-md rounded-lg shadow-2xl p-6'>
-						<DialogClose className='absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none'>
-							<X className='h-4 w-4 text-white' />
-							<span className='sr-only'>Close</span>
-						</DialogClose>
-						<DialogHeader>
-							<DialogTitle className='text-white flex items-center gap-3 text-xl'>
-								<div className='p-2 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20'>
-									<IconComponent className={`h-5 w-5 ${nodeData.color}`} />
-								</div>
-								Configure {nodeData.label}
-							</DialogTitle>
-						</DialogHeader>
-						<ConfigurationForm nodeData={nodeData} />
-					</DialogContent>
-				</DialogPortal>
+				<DialogContent className='bg-black/90 backdrop-blur-md border border-white/10 max-w-lg max-h-[90vh] flex flex-col'>
+					<DialogHeader className='flex-shrink-0'>
+						<DialogTitle className='text-primary flex items-center gap-2'>
+							<div className='p-2 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20'>
+								<IconComponent className={`h-5 w-5 ${nodeData.color}`} />
+							</div>
+							Configure {nodeData.label}
+						</DialogTitle>
+						<DialogDescription className='text-secondary'>
+							Configure the parameters and settings for this infrastructure component.
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className='flex-1 overflow-y-auto px-2'>
+						<form className='space-y-4'>
+
+							{formFields &&
+								formFields
+									.filter(shouldShowField)
+									.map((field: ExtendedComponentParameter) => (
+										<FormField
+											key={field.name}
+											config={field}
+											onChange={handleFieldChange}
+											isRequired={isFieldRequired(field)}
+										/>
+									))}
+						</form>
+					</div>
+
+					<div className='flex gap-3 pt-4 flex-shrink-0'>
+						<Button
+							type='button'
+							variant='ghost'
+							className='flex-1 glass-btn'
+						>
+							Cancel
+						</Button>
+						<Button
+							type='button'
+							onClick={handleSaveConfiguration}
+							disabled={isSubmitting}
+							className='flex-1 gradient-border-btn'
+						>
+							{isSubmitting ? 'Saving...' : 'Save Configuration'}
+						</Button>
+					</div>
+				</DialogContent>
 			</Dialog>
 		)
 	})

@@ -24,15 +24,16 @@ import { NavigationHeader } from '@/components/infrastructure/navigation-header'
 import { ComponentsSidebar } from '@/components/infrastructure/components-sidebar'
 import { EmptyState } from '@/components/infrastructure/empty-state'
 import { ViewPlanModal } from '@/components/dashboard/ViewPlanModal'
-import { componentCategories, nodeTypes } from '@/lib/infrastructure-components'
+import { buildComponentCategories, getNodeTypes } from '@/lib/infrastructure-components'
 import { useInfraConfigs } from '@/hooks/useInfraConfigs'
+import { useComponents } from '@/hooks/useComponents'
 import { DashboardFooter } from '@/components/dashboard-footer'
 
 const initialNodes: Node[] = []
 const initialEdges: Edge[] = []
 
-// Initialize expanded categories state
-const initialExpandedCategories = componentCategories.reduce(
+// Initialize expanded categories state - will be updated when components are loaded
+const getInitialExpandedCategories = (categories: any[]) => categories.reduce(
 	(acc, category) => ({
 		...acc,
 		[category.name]: true,
@@ -55,17 +56,49 @@ interface InfrastructureBuilderState {
 function InfrastructureBuilder() {
 	const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
 	const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+	
+	// Fetch components from API
+	const { components, isLoading, error } = useComponents()
+	
+	// Build component categories from API data
+	const componentCategories = useMemo(() => {
+		if (isLoading || error || !components.length) {
+			return []
+		}
+		return buildComponentCategories(components)
+	}, [components, isLoading, error])
+	
+	// Build node types from API data
+	const nodeTypes = useMemo(() => {
+		if (isLoading || error || !components.length) {
+			return []
+		}
+		return getNodeTypes(components)
+	}, [components, isLoading, error])
+	
+	// Initialize expanded categories when components are loaded
 	const [state, setState] = useState<InfrastructureBuilderState>({
 		agentConnected: true,
 		sidebarCollapsed: false,
 		mobileMenuOpen: false,
 		searchTerm: '',
-		expandedCategories: initialExpandedCategories,
+		expandedCategories: {},
 		draggedNodeType: null,
 		isViewPlanOpen: false,
 		generatedPlan: '',
 		configName: '',
 	})
+	
+	// Update expanded categories when componentCategories change
+	useEffect(() => {
+		if (componentCategories.length > 0) {
+			const expandedCategories = getInitialExpandedCategories(componentCategories)
+			setState(prev => ({
+				...prev,
+				expandedCategories
+			}))
+		}
+	}, [componentCategories])
 
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition } = useReactFlow()
@@ -178,7 +211,7 @@ function InfrastructureBuilder() {
 				y: event.clientY,
 			})
 
-			const nodeTypeData = nodeTypes.find(n => n.id === state.draggedNodeType)
+			const nodeTypeData = nodeTypes.find(n => n.name === state.draggedNodeType)
 			if (!nodeTypeData) return
 
 			const newNode: Node = {
@@ -186,12 +219,13 @@ function InfrastructureBuilder() {
 				type: 'customNode',
 				position,
 				data: {
-					label: nodeTypeData.name,
+					label: nodeTypeData.displayName,
 					nodeType: state.draggedNodeType,
 					icon: nodeTypeData.icon,
 					color: nodeTypeData.color,
 					bgColor: nodeTypeData.bgColor,
 					borderColor: nodeTypeData.borderColor,
+					components: components,
 				},
 			}
 
@@ -343,6 +377,30 @@ function InfrastructureBuilder() {
 		setState(prev => ({ ...prev, configName: name }))
 	}, [])
 
+	// Show loading state
+	if (isLoading) {
+		return (
+			<div className='h-screen gradient-bg noise-overlay flex items-center justify-center'>
+				<div className='text-center'>
+					<div className='animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4'></div>
+					<p className='text-white'>Loading components...</p>
+				</div>
+			</div>
+		)
+	}
+
+	// Show error state
+	if (error) {
+		return (
+			<div className='h-screen gradient-bg noise-overlay flex items-center justify-center'>
+				<div className='text-center'>
+					<p className='text-red-400 mb-4'>Failed to load components</p>
+					<p className='text-gray-400 text-sm'>{error}</p>
+				</div>
+			</div>
+		)
+	}
+
 	return (
 		<div className='h-screen gradient-bg noise-overlay flex flex-col overflow-hidden'>
 			{/* Top Navigation Bar */}
@@ -361,6 +419,7 @@ function InfrastructureBuilder() {
 			<div className='flex flex-1 overflow-hidden relative h-full'>
 				{/* Desktop Sidebar */}
 				<ComponentsSidebar
+					componentCategories={componentCategories}
 					isCollapsed={state.sidebarCollapsed}
 					searchTerm={state.searchTerm}
 					expandedCategories={state.expandedCategories}
@@ -380,6 +439,7 @@ function InfrastructureBuilder() {
 						/>
 						{/* Mobile Sidebar */}
 						<ComponentsSidebar
+							componentCategories={componentCategories}
 							isCollapsed={false}
 							isMobile
 							searchTerm={state.searchTerm}

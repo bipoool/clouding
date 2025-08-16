@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { componentCategories } from '@/lib/infrastructure-components'
+import type { ExtendedComponentCategory } from '@/lib/infrastructure-components'
 import { ComponentCategoryComponent } from './component-category'
 import { SearchBar } from './search-bar'
 
 interface ComponentsSidebarProps {
+	componentCategories: ExtendedComponentCategory[]
 	isCollapsed: boolean
 	isMobile?: boolean
 	searchTerm: string
@@ -18,6 +19,7 @@ interface ComponentsSidebarProps {
 }
 
 export function ComponentsSidebar({
+	componentCategories,
 	isCollapsed,
 	isMobile = false,
 	searchTerm,
@@ -32,10 +34,10 @@ export function ComponentsSidebar({
 	const filteredCategories = useMemo(
 		() =>
 			componentCategories
-				.map(category => ({
+				.map((category: ExtendedComponentCategory) => ({
 					...category,
 					components: category.components.filter(
-						component =>
+						(component) =>
 							component.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 							component.description
 								.toLowerCase()
@@ -43,9 +45,9 @@ export function ComponentsSidebar({
 					),
 				}))
 				.filter(
-					category => category.components.length > 0 || searchTerm === ''
+					(category: ExtendedComponentCategory) => category.components.length > 0 || searchTerm === ''
 				),
-		[searchTerm]
+		[componentCategories, searchTerm]
 	)
 
 	const sidebarContent = (

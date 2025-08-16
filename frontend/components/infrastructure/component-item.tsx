@@ -1,8 +1,8 @@
 import React from 'react'
-import type { ComponentItem } from '@/lib/infrastructure-components'
+import type { ExtendedComponent } from '@/lib/infrastructure-components'
 
 interface ComponentItemProps {
-	component: ComponentItem
+	component: ExtendedComponent
 	isCollapsed?: boolean
 	onDragStart: (event: React.DragEvent, nodeType: string) => void
 	onMobileDrag?: () => void
@@ -15,7 +15,7 @@ export function ComponentItemComponent({
 	onMobileDrag,
 }: ComponentItemProps) {
 	const handleDragStart = (event: React.DragEvent) => {
-		onDragStart(event, component.id)
+		onDragStart(event, component.name)
 		onMobileDrag?.()
 	}
 
@@ -40,7 +40,7 @@ export function ComponentItemComponent({
 					/>
 					<div className='min-w-0 flex-1'>
 						<div className='font-medium text-white text-sm truncate'>
-							{component.name}
+							{component.displayName}
 						</div>
 						<div className='text-xs text-gray-400 truncate'>
 							{component.description}
