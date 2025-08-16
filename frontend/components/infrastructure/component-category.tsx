@@ -5,11 +5,11 @@ import {
 	CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { ChevronDown } from 'lucide-react'
-import type { ComponentCategory } from '@/lib/infrastructure-components'
+import type { ExtendedComponentCategory } from '@/lib/infrastructure-components'
 import { ComponentItemComponent } from './component-item'
 
 interface ComponentCategoryProps {
-	category: ComponentCategory
+	category: ExtendedComponentCategory
 	isExpanded: boolean
 	isCollapsed?: boolean
 	searchTerm?: string

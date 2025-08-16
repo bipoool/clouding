@@ -31,7 +31,7 @@ VALUES (
       "id": "f80ec8dc-1b3e-401a-9170-5db4fabc0bc6",
       "name": "nginx_license_certificate",
       "valueType": "string",
-      "uiType": "file",
+      "uiType": "textarea",
       "rules": {
         "required": false,
         "required_if": { "nginx_type": "plus" }
@@ -43,7 +43,7 @@ VALUES (
       "id": "d04c00c2-2b10-42e1-9816-7673e9a11f8a",
       "name": "nginx_license_key",
       "valueType": "string",
-      "uiType": "file",
+      "uiType": "textarea",
       "rules": {
         "required": false,
         "required_if": { "nginx_type": "plus" }
@@ -55,7 +55,7 @@ VALUES (
       "id": "d40f4bc4-302d-4a54-bc20-d44ad71d9739",
       "name": "nginx_license_jwt",
       "valueType": "string",
-      "uiType": "file",
+      "uiType": "textarea",
       "rules": {
         "required": false,
         "required_if": { "nginx_type": "plus" }
@@ -66,15 +66,10 @@ VALUES (
     {
       "id": "8f8c65fc-4570-4560-b81d-5c1727a66d70",
       "name": "sites_available",
-      "valueType": "fileList",
-      "uiType": "fileList",
+      "valueType": "string",
+      "uiType": "textarea",
       "rules": { "required": false },
-      "default": [
-        {
-          "filename": "default",
-          "url": "https://ikzofffjwkqpiwrqsttb.supabase.co/storage/v1/object/public/clouding-parameter-files/install_nginx/defaults/default"
-        }
-      ],
+      "default": "server {\n  listen 80 default_server;\n  listen [::]:80 default_server;\n}",
       "description": "List of site configuration files"
     }
   ]'::jsonb
@@ -116,7 +111,7 @@ VALUES (
       "id": "9b6c1552-0d0a-4874-8f22-3f94d5ef234c",
       "name": "bash_file",
       "valueType": "string",
-      "uiType": "file",
+      "uiType": "textarea",
       "rules": { "required": true },
       "default": null,
       "description": "Bash script file to run"
