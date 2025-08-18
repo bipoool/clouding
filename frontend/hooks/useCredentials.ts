@@ -82,9 +82,10 @@ export function useCredentials(): CredentialsHookReturn {
         throw new Error(errorData.error || 'Failed to update credential')
       }
       const { data: updated } = await res.json()
-      setCredentials(prev =>
-        prev.map(c => (c.id === id ? { ...c, ...updated } : c))
-      );
+      setCredentials(prev => {
+        const updatedCredentials = prev.map(c => (c.id === id ? { ...c, ...updates, ...updated } : c))
+        return updatedCredentials
+      })
     } catch (err) {
       setError(getErrorMessage(err))
       throw err
