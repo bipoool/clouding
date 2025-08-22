@@ -18,7 +18,7 @@ type LokiLog struct {
 
 func QueryLokiLogs(jobId string, since int64) ([]string, int64, error) {
 
-	baseURL := config.Config.Loki.BaseURL
+	baseURL := config.Config.Loki.URL
 
 	params := url.Values{}
 	params.Add("query", fmt.Sprintf(`{jobId="%s"}`, jobId))
@@ -26,8 +26,6 @@ func QueryLokiLogs(jobId string, since int64) ([]string, int64, error) {
 
 	reqURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
 
-
-	
 	resp, err := http.Get(reqURL)
 	if err != nil {
 		return nil, since, fmt.Errorf("failed to query Loki: %w", err)
@@ -50,7 +48,6 @@ func QueryLokiLogs(jobId string, since int64) ([]string, int64, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, since, fmt.Errorf("failed to decode Loki response: %w", err)
 	}
-
 
 	var logs []string
 	var latestTs int64 = since

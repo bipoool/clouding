@@ -101,7 +101,7 @@ class AnsibleRunner:
 
         try:
             response = requests.post(
-                self.lokiEndPoint,
+                self.lokiEndPoint + "/loki/api/v1/push",
                 data=json.dumps(payload),
                 headers={"Content-Type": "application/json"},
                 timeout=3

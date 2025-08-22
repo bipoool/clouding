@@ -5,15 +5,17 @@ import (
 	"clouding/backend/internal/queue"
 	"clouding/backend/internal/repository"
 	"clouding/backend/internal/service"
+	"clouding/backend/internal/utils/logStreamer"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 )
 
 func RegisterDeploymentRoutes(rg *gin.RouterGroup, db *sqlx.DB, publisher *queue.Publisher) {
+	ls := logStreamer.NewLogStreamer()
 	deploymentRepository := repository.NewDeploymentRepository(db)
 	deploymentService := service.NewDeploymentService(deploymentRepository, publisher)
-	deploymentController := v1.NewDeploymentController(deploymentService)
+	deploymentController := v1.NewDeploymentController(deploymentService, ls)
 
 	rg.POST("/deployments/type/:type", deploymentController.Create)
 	rg.PUT("/deployments/:id/status", deploymentController.UpdateStatus)

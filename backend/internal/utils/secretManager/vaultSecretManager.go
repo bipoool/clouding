@@ -10,8 +10,8 @@ import (
 )
 
 type VaultSecretsManager struct {
-	client *vault.Client
-	path   string
+	client       *vault.Client
+	path         string
 	metadataPath string
 }
 
@@ -24,9 +24,9 @@ func NewVaultSecretManager() SecretsManager {
 	}
 
 	return &VaultSecretsManager{
-		client: client,
-		path:   config.Config.Vault.VaultSecretEnginePath,
-		metadataPath:  config.Config.Vault.VaultSecretEnginePath,
+		client:       client,
+		path:         config.Config.Vault.VaultSecretEnginePath,
+		metadataPath: config.Config.Vault.VaultSecretEnginePath,
 	}
 }
 

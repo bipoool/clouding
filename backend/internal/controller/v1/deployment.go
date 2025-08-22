@@ -4,22 +4,22 @@ import (
 	"clouding/backend/internal/model/deployment"
 	"clouding/backend/internal/service"
 	"clouding/backend/internal/utils"
-	"strings"
-	"fmt"
-	"log"
+	"clouding/backend/internal/utils/logStreamer"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type DeploymentController struct {
-	Service service.DeploymentService
+	Service     service.DeploymentService
+	LogStreamer logStreamer.LogStreamer
 }
 
-func NewDeploymentController(s service.DeploymentService) *DeploymentController {
-	return &DeploymentController{Service: s}
+func NewDeploymentController(s service.DeploymentService, ls logStreamer.LogStreamer) *DeploymentController {
+	return &DeploymentController{Service: s, LogStreamer: ls}
 }
 
 func (c *DeploymentController) Create(ctx *gin.Context) {
@@ -108,59 +108,49 @@ func (c *DeploymentController) GetDeploymentHostMappingByIds(ctx *gin.Context) {
 func (c *DeploymentController) StreamJobProgress(ctx *gin.Context) {
 	jobId := ctx.Param("jobId")
 
+	h := ctx.Writer.Header()
+	h.Set("Content-Type", "text/event-stream")
+	h.Set("Cache-Control", "no-cache")
+	h.Set("Connection", "keep-alive")
+	h.Set("X-Accel-Buffering", "no") // disable Nginx buffering
 
-	ctx.Header("Content-Type", "text/event-stream")
-	ctx.Header("Cache-Control", "no-cache")
-	ctx.Header("Connection", "keep-alive")
+	flusher, ok := ctx.Writer.(http.Flusher)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse("streaming unsupported"))
+		return
+	}
 
+	ctx.Status(http.StatusOK)
+	flusher.Flush()
 
-	logChan := make(chan string)
-	done := make(chan struct{})
+	// Heartbeat to keep connection alive
+	heartbeat := time.NewTicker(15 * time.Second)
+	defer heartbeat.Stop()
 
-	go func() {
-		defer close(logChan)
-		defer close(done)
-
-		lastTimestamp := time.Now().Add(-1 * time.Minute).UnixNano()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				logs, newTs, err := utils.QueryLokiLogs(jobId, lastTimestamp)
-				if err != nil {
-					logChan <- fmt.Sprintf(`{"error": "%s"}`, err.Error())
-					return
-				}
-
-				for _, log := range logs {
-					logChan <- log
-				}
-				
-				lastTimestamp = newTs
-
-				if utils.CheckIfJobFinished(logs) {
-					log.Println(" Job finished detected in logs")
-					return
-				}
-
-				time.Sleep(2 * time.Second)
-			}
-		}
-	}()
+	reqCtx := ctx.Request.Context()
+	logChan, err := c.LogStreamer.StreamLogs(reqCtx, jobId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-reqCtx.Done():
 			return
 		case log, ok := <-logChan:
 			if !ok {
 				return
 			}
-			ctx.SSEvent("message", log)
-			ctx.Writer.Flush()
+			if log.Error != "" {
+				ctx.SSEvent("error", utils.NewInternalErrorResponse(log.Error))
+				return
+			}
+			ctx.SSEvent("logs", utils.NewSuccessResponse(log))
+			flusher.Flush()
+		case <-heartbeat.C:
+			ctx.SSEvent("heartbeat", utils.NewSuccessResponse("heartbeat"))
+			flusher.Flush()
 		}
 	}
 }
-

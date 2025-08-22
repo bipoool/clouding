@@ -41,7 +41,7 @@ type CloudingConfig struct {
 	} `mapstructure:"rabbitmq"`
 
 	Loki struct {
-		BaseURL string
+		URL string `mapstructure:"url" description:"Loki URL"`
 	}
 }
 
@@ -76,6 +76,6 @@ func LoadCloudingConfig(path string) {
 	Config.RabbitMQ.Password = os.Getenv("RABBITMQ.PASSWORD")
 	Config.RabbitMQ.QueueName = os.Getenv("RABBITMQ.QUEUE.NAME")
 
-	Config.Loki.BaseURL = os.Getenv("LOKI_BASE_URL")
+	Config.Loki.URL = os.Getenv("LOKI.URL")
 
 }
