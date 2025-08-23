@@ -4,19 +4,22 @@ import (
 	"clouding/backend/internal/model/deployment"
 	"clouding/backend/internal/service"
 	"clouding/backend/internal/utils"
+	"clouding/backend/internal/utils/logStreamer"
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type DeploymentController struct {
-	Service service.DeploymentService
+	Service     service.DeploymentService
+	LogStreamer logStreamer.LogStreamer
 }
 
-func NewDeploymentController(s service.DeploymentService) *DeploymentController {
-	return &DeploymentController{Service: s}
+func NewDeploymentController(s service.DeploymentService, ls logStreamer.LogStreamer) *DeploymentController {
+	return &DeploymentController{Service: s, LogStreamer: ls}
 }
 
 func (c *DeploymentController) Create(ctx *gin.Context) {
@@ -100,4 +103,63 @@ func (c *DeploymentController) GetDeploymentHostMappingByIds(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(result))
+}
+
+func (c *DeploymentController) StreamJobProgress(ctx *gin.Context) {
+	jobId := ctx.Param("jobId")
+	job, err := c.Service.GetByID(ctx.Request.Context(), jobId)
+	if err != nil || job == nil {
+		slog.Error("Error fetching job", "err", err)
+		ctx.JSON(http.StatusNotFound, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
+
+	h := ctx.Writer.Header()
+	h.Set("Content-Type", "text/event-stream")
+	h.Set("Cache-Control", "no-cache")
+	h.Set("Connection", "keep-alive")
+	h.Set("X-Accel-Buffering", "no") // disable Nginx buffering
+
+	flusher, ok := ctx.Writer.(http.Flusher)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse("streaming unsupported"))
+		return
+	}
+
+	reqCtx := ctx.Request.Context()
+	logChan, err := c.LogStreamer.StreamLogs(reqCtx, jobId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+	flusher.Flush()
+
+	// Heartbeat to keep connection alive
+	heartbeat := time.NewTicker(15 * time.Second)
+	defer heartbeat.Stop()
+
+	for {
+		select {
+		case <-reqCtx.Done():
+			return
+		case log, ok := <-logChan:
+			if !ok {
+				ctx.SSEvent("end", utils.NewSuccessResponse("complete"))
+				flusher.Flush()
+				return
+			}
+			if log.Error != "" {
+				ctx.SSEvent("error", utils.NewInternalErrorResponse(log.Error))
+				flusher.Flush()
+				return
+			}
+			ctx.SSEvent("logs", utils.NewSuccessResponse(log))
+			flusher.Flush()
+		case <-heartbeat.C:
+			ctx.SSEvent("heartbeat", utils.NewSuccessResponse("heartbeat"))
+			flusher.Flush()
+		}
+	}
 }
