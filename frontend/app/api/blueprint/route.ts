@@ -1,15 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withAuth, AuthenticatedRequest } from '@/app/api/auth/middleware'
-import { 
-  CreateBlueprintRequest, 
-  UpdateBlueprintRequest,
-  Blueprint, 
-  ApiResponse, 
-  ApiError 
-} from '../types'
 import { logger } from '@/lib/utils/logger'
-import { backendClient, BackendClientError } from '@/lib/backend-client'
+import { backendClient } from '@/lib/backend-client'
 import { handleApiError } from '@/app/api/utils/error-handler'
+
+interface CreateBlueprintRequest {
+  name: string
+  description: string
+  status?: string
+}
 
 // Type guard function to validate CreateBlueprintRequest
 function isValidCreateBlueprintRequest(body: unknown): body is CreateBlueprintRequest {
@@ -24,7 +23,7 @@ function isValidCreateBlueprintRequest(body: unknown): body is CreateBlueprintRe
     obj.name.trim().length > 0 &&
     typeof obj.description === 'string' &&
     obj.description.trim().length > 0 &&
-    (obj.status === undefined || typeof obj.status === 'string')
+    (obj.status === undefined || (typeof obj.status === 'string' && ['draft', 'deployed', 'archived'].includes(obj.status as string)))
   )
 }
 
@@ -49,7 +48,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     // Type-safe validation using type guard
     if (!isValidCreateBlueprintRequest(body)) {
       return NextResponse.json(
-        { error: 'Invalid request body', message: 'name and description are required' },
+        { error: 'Invalid request body', message: 'Parameters are missing or invalid' },
         { status: 400 }
       )
     }

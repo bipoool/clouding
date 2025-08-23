@@ -1,6 +1,30 @@
 import { useState, useCallback, useEffect } from 'react'
-import type { Host, HostGroup } from '@/app/api/types'
 import { getErrorMessage } from '@/lib/utils'
+
+interface Host {
+  id: string
+  name: string
+  ip: string
+  os: string
+  credentialId: string
+  userId: string
+  metaData?: {
+    tag?: {
+      [key: string]: string
+    }
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+interface HostGroup {
+  id: string
+  name: string
+  description: string
+  hostIds: string[]
+  createdAt: string
+  updatedAt: string
+}
 
 // Type alias for backward compatibility
 export type VM = Host & {

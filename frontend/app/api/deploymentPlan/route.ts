@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateSupabaseJWT } from '../auth/middleware'
-import { DeploymentPlan } from '../types'
 import { logger } from '@/lib/utils/logger'
+
+interface DeploymentPlan {
+  id: string
+  hostId: string
+  blueprintId: string
+  status: 'pending' | 'planning' | 'ready' | 'error'
+  createdAt: string
+  updatedAt: string
+}
 
 // Mock data store - in production, this would be replaced with a database
 const deploymentPlans: DeploymentPlan[] = []

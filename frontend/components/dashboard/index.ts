@@ -3,7 +3,7 @@ export { AddCredentialModal } from './AddCredentialModal'
 export { CredentialFormFields } from './credential-form-fields'
 export { AddVMModal } from './AddVMModal'
 export { CreateGroupModal } from './CreateGroupModal'
-export { InfraConfigCard } from './InfraConfigCard'
+
 export { ViewPlanModal } from './ViewPlanModal'
 export { VMGroupCard } from './VMGroupCard'
 export { VMTable } from './VMTable'

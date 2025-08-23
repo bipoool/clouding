@@ -65,16 +65,18 @@ export function useBlueprints() {
       const data = await response.json()
       
       // Handle the API response structure
+      let fetchedBlueprints: Blueprint[]
       if (data.success && data.data) {
-        setBlueprints(data.data)
+        fetchedBlueprints = data.data
       } else if (Array.isArray(data)) {
         // Fallback for direct array response
-        setBlueprints(data)
+        fetchedBlueprints = data
       } else {
         throw new Error('Invalid response format')
       }
       
-      logger.info(`Fetched ${blueprints.length} blueprints`)
+      setBlueprints(fetchedBlueprints)
+      logger.info(`Fetched ${fetchedBlueprints.length} blueprints`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch blueprints'
       setError(errorMessage)
