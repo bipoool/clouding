@@ -18,11 +18,11 @@ import {
 	Layers,
 	Clock,
 } from 'lucide-react'
-import type { InfraConfig } from '@/hooks/useInfraConfigs'
+import type { Blueprint } from '@/hooks/useBlueprint'
 
 interface InfraConfigCardProps {
-	config: InfraConfig
-	onViewPlan: (config: InfraConfig) => void
+	config: Blueprint
+	onViewPlan: (config: Blueprint) => void
 	onDeploy: (configId: string) => void
 	onAssign: (configId: string) => void
 	onDelete: (configId: string) => void
@@ -37,7 +37,7 @@ export function InfraConfigCard({
 	onDelete,
 	onEdit,
 }: InfraConfigCardProps) {
-	const getTypeIcon = (type: InfraConfig['type']) => {
+	const getTypeIcon = (type: Blueprint['type']) => {
 		switch (type) {
 			case 'web-service':
 				return '🌐'
@@ -52,7 +52,7 @@ export function InfraConfigCard({
 		}
 	}
 
-	const getTypeColor = (type: InfraConfig['type']) => {
+	const getTypeColor = (type: Blueprint['type']) => {
 		switch (type) {
 			case 'web-service':
 				return 'from-green-500/20 to-emerald-500/10'
@@ -67,7 +67,7 @@ export function InfraConfigCard({
 		}
 	}
 
-	const getStatusBadge = (status: InfraConfig['deploymentStatus']) => {
+	const getStatusBadge = (status: Blueprint['deploymentStatus']) => {
 		switch (status) {
 			case 'deployed':
 				return (

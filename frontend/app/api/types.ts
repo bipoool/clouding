@@ -122,23 +122,48 @@ export interface AddHostsToGroupRequest {
 
 // Blueprint Types
 export interface Blueprint {
-  id: string
-  plan: string[]
+  id: number
+  name: string
   description: string
   userId: string
+  status: string
   createdAt: string
   updatedAt: string
 }
 
 export interface CreateBlueprintRequest {
-  plan: string[]
+  name: string
   description: string
-  userId: string
+  status?: string
 }
 
 export interface UpdateBlueprintRequest {
-  plan: string[]
-  description: string
+  name?: string
+  description?: string
+  status?: string
+}
+
+// Blueprint Component Types
+export interface BlueprintComponentParameter {
+  id: string
+  value: string
+  name: string
+}
+
+export interface BlueprintComponent {
+  id: number
+  blueprintId: number
+  componentId: number
+  position: number
+  parameters: BlueprintComponentParameter[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UpdateBlueprintComponentRequest {
+  componentId: number
+  position: number
+  parameters: BlueprintComponentParameter[]
 }
 
 // Component Types

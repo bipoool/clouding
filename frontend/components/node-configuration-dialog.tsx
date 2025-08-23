@@ -31,6 +31,7 @@ interface NodeConfigurationDialogProps {
 	nodeData: CustomNodeData
 	components: Component[]
 	children: React.ReactNode
+	onConfigurationSave: (nodeId: string, parameters: Record<string, any>) => void
 }
 
 // Components
@@ -129,10 +130,10 @@ FormField.displayName = 'FormField'
 
 
 export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
-	memo(({ nodeData, components, children }) => {
+	memo(({ nodeData, components, children, onConfigurationSave }) => {
 		const IconComponent = nodeData.icon
 		const [isSubmitting, setIsSubmitting] = useState(false)
-		const [formValues, setFormValues] = useState<Record<string, any>>({})
+		const [formValues, setFormValues] = useState<Record<string, any>>(nodeData.parameters || {})
 
 		const formFields = useMemo(() => {
 			const { nodeType } = nodeData
@@ -181,8 +182,14 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 		const handleSaveConfiguration = async () => {
 			setIsSubmitting(true)
 			try {
-				// TODO: Implement configuration save logic
-				logger.log('Saving configuration for node:', nodeData.label)
+				// Save configuration parameters
+				logger.log('Saving configuration for node:', nodeData.label, 'with parameters:', formValues)
+				
+				// Call the callback to update the node with parameters
+				if (onConfigurationSave) {
+					onConfigurationSave(nodeData.id, formValues)
+				}
+				
 				// Simulate API call
 				await new Promise(resolve => setTimeout(resolve, 1000))
 			} catch (error) {

@@ -13,18 +13,9 @@ import { z } from 'zod'
 
 // Zod schema for UpdateBlueprintRequest validation
 const UpdateBlueprintSchema = z.object({
-  plan: z.array(z.string().min(1, 'Plan items cannot be empty'))
-    .min(1, 'Plan must contain at least one item')
-    .refine(
-      (plan) => plan.every(item => item.trim().length > 0),
-      'All plan items must be non-empty strings'
-    ),
-  description: z.string()
-    .min(1, 'Description is required')
-    .refine(
-      (desc) => desc.trim().length > 0,
-      'Description cannot be empty or whitespace only'
-    )
+  name: z.string().min(1, 'Name cannot be empty').optional(),
+  description: z.string().min(1, 'Description cannot be empty').optional(),
+  status: z.string().optional()
 })
 
 // Type for validated request body

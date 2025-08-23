@@ -25,7 +25,7 @@ import { ComponentsSidebar } from '@/components/infrastructure/components-sideba
 import { EmptyState } from '@/components/infrastructure/empty-state'
 import { ViewPlanModal } from '@/components/dashboard/ViewPlanModal'
 import { buildComponentCategories, getNodeTypes } from '@/lib/infrastructure-components'
-import { useInfraConfigs } from '@/hooks/useInfraConfigs'
+import { useBlueprints } from '@/hooks/useBlueprint'
 import { useComponents } from '@/hooks/useComponents'
 import { DashboardFooter } from '@/components/dashboard-footer'
 
@@ -102,10 +102,32 @@ function InfrastructureBuilder() {
 
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition } = useReactFlow()
-	const { saveConfig, generatePlan } = useInfraConfigs()
+	const { createBlueprint, generatePlan } = useBlueprints()
+
+	// Handle node configuration save
+	const handleNodeConfigurationSave = useCallback((nodeId: string, parameters: Record<string, any>) => {
+		setNodes(nds =>
+			nds.map(node =>
+				node.id === nodeId
+					? {
+							...node,
+							data: {
+								...node.data,
+								parameters,
+							},
+					  }
+					: node
+			)
+		)
+	}, [setNodes])
 
 	// Memoized node types for React Flow
-	const nodeTypesMap = useMemo(() => ({ customNode: CustomNode as any }), [])
+	const nodeTypesMap = useMemo(() => {
+		const CustomNodeWrapper = (props: any) => (
+			<CustomNode {...props} onConfigurationSave={handleNodeConfigurationSave} />
+		)
+		return { customNode: CustomNodeWrapper }
+	}, [handleNodeConfigurationSave])
 
 	// Keyboard event handler for deleting selected nodes and edges
 	useEffect(() => {
@@ -219,6 +241,7 @@ function InfrastructureBuilder() {
 				type: 'customNode',
 				position,
 				data: {
+					id: `${state.draggedNodeType}-${Date.now()}`,
 					label: nodeTypeData.displayName,
 					nodeType: state.draggedNodeType,
 					icon: nodeTypeData.icon,
@@ -323,10 +346,23 @@ function InfrastructureBuilder() {
 			assignedVMs: [],
 			assignedGroups: [],
 		}
-
-		saveConfig(newConfig)
+		
+		// Log nodes with their configured parameters
+		console.log('Configuration saved with nodes and parameters:')
+		nodes.forEach(node => {
+			console.log(`Node: ${node.data.label} (${node.data.nodeType})`)
+			if (node.data.parameters) {
+				console.log('Parameters:', node.data.parameters)
+			} else {
+				console.log('No parameters configured')
+			}
+			console.log('---')
+		})
+		
+		console.log('Full configuration:', nodes)
+		createBlueprint(configName, 'draft')
 		alert(`Configuration "${configName}" saved successfully!`)
-	}, [nodes, edges, state.configName, saveConfig])
+	}, [nodes, edges, state.configName, createBlueprint])
 
 	const handleClearCanvas = useCallback(() => {
 		if (nodes.length === 0 && edges.length === 0) return
@@ -361,12 +397,12 @@ function InfrastructureBuilder() {
 			assignedGroups: [],
 		}
 
-		const plan = generatePlan(mockConfig)
-		setState(prev => ({
-			...prev,
-			generatedPlan: plan,
-			isViewPlanOpen: true,
-		}))
+		// const plan = generatePlan(mockConfig)
+		// setState(prev => ({
+		// 	...prev,
+		// 	generatedPlan: plan,
+		// 	isViewPlanOpen: true,
+		// }))
 	}, [nodes, edges, state.configName, generatePlan])
 
 	const handleClosePlanModal = useCallback(() => {
@@ -519,16 +555,12 @@ function InfrastructureBuilder() {
 			{/* View Plan Modal */}
 			<ViewPlanModal
 				config={{
-					id: 'temp-config',
+					id: 0,
 					name: state.configName || 'Untitled Configuration',
-					type: 'custom' as const,
-					nodes,
-					edges,
+					description: 'Draft',
+					status: 'draft',
 					createdAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
-					deploymentStatus: 'draft' as const,
-					assignedVMs: [],
-					assignedGroups: [],
+					updatedAt: new Date().toISOString()
 				}}
 				plan={state.generatedPlan}
 				isOpen={state.isViewPlanOpen}

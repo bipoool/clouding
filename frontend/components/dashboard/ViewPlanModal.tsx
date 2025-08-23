@@ -13,10 +13,10 @@ import { logger } from '@/lib/utils/logger'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Copy, Download, FileCode, CheckCircle } from 'lucide-react'
-import type { InfraConfig } from '@/hooks/useInfraConfigs'
+import type { Blueprint } from '@/hooks/useBlueprint'
 
 interface ViewPlanModalProps {
-	config: InfraConfig | null
+	config: Blueprint | null
 	plan: string
 	isOpen: boolean
 	onClose: () => void

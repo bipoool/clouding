@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-	title: 'Clouding - Modern Infrastructure Management',
+	title: 'Clouding - The Infra Manager',
 	description:
 		'Simplify your cloud infrastructure with our modern, intuitive platform.',
 	icons: {
