@@ -120,19 +120,19 @@ func (c *DeploymentController) StreamJobProgress(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Status(http.StatusOK)
-	flusher.Flush()
-
-	// Heartbeat to keep connection alive
-	heartbeat := time.NewTicker(15 * time.Second)
-	defer heartbeat.Stop()
-
 	reqCtx := ctx.Request.Context()
 	logChan, err := c.LogStreamer.StreamLogs(reqCtx, jobId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
+
+	ctx.Status(http.StatusOK)
+	flusher.Flush()
+
+	// Heartbeat to keep connection alive
+	heartbeat := time.NewTicker(15 * time.Second)
+	defer heartbeat.Stop()
 
 	for {
 		select {

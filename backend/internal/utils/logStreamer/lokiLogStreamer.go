@@ -57,7 +57,9 @@ func (l *LokiLogStreamer) StreamLogs(ctx context.Context, jobId string) (<-chan 
 					logsChan <- &joblogs.Log{Error: err.Error()}
 					return
 				}
-				start = time.Unix(0, latestTs).Add(1 * time.Nanosecond)
+				if latestTs > 0 {
+					start = time.Unix(0, latestTs).Add(1 * time.Nanosecond)
+				}
 				for _, log := range logs {
 					logsChan <- log
 					// End the stream when the job is finished
@@ -76,7 +78,7 @@ func (l *LokiLogStreamer) GetLogs(ctx context.Context, jobId string, start, end 
 	u, _ := url.Parse(l.URL)
 	u.Path = "/loki/api/v1/query_range"
 	q := u.Query()
-	q.Set("query", fmt.Sprintf(`{jobId="%s"}`, jobId))
+	q.Set("query", fmt.Sprintf(`{jobId="%s"}`, strconv.Quote(jobId)))
 
 	// Loki accepts RFC3339Nano or unix ns; we’ll send RFC3339Nano
 	q.Set("start", start.UTC().Format(time.RFC3339Nano))
