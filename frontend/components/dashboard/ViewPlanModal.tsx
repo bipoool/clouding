@@ -72,16 +72,7 @@ export function ViewPlanModal({
 
 					<div className='flex items-center gap-2 pt-2'>
 						<Badge variant='outline' className='bg-white/5 border-white/20'>
-							{config.type.replace('-', ' ')}
-						</Badge>
-						<Badge
-							className={
-								config.deploymentStatus === 'deployed'
-									? 'bg-green-500/20 text-green-400 border-green-500/30'
-									: 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-							}
-						>
-							{config.deploymentStatus}
+							{config.status}
 						</Badge>
 					</div>
 				</DialogHeader>
@@ -169,9 +160,9 @@ export function ViewPlanModal({
 				</div>
 
 				<div className='flex items-center justify-between pt-4 border-t border-white/10'>
-					<div className='text-xs text-secondary'>
+					{/* <div className='text-xs text-secondary'>
 						{config.nodes.length} components • {config.edges.length} connections
-					</div>
+					</div> */}
 
 					<div className='flex gap-3'>
 						<Button variant='ghost' onClick={onClose} className='glass-btn'>

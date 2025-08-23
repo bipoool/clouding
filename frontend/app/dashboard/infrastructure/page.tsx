@@ -103,7 +103,7 @@ export default function InfrastructurePage() {
 								Loading Blueprints...
 							</h3>
 							<p className='text-secondary'>
-								Fetching your infrastructure configurations
+								Fetching your infrastructure blueprints
 							</p>
 						</div>
 					</div>
