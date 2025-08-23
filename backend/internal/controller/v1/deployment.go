@@ -107,6 +107,12 @@ func (c *DeploymentController) GetDeploymentHostMappingByIds(ctx *gin.Context) {
 
 func (c *DeploymentController) StreamJobProgress(ctx *gin.Context) {
 	jobId := ctx.Param("jobId")
+	job, err := c.Service.GetByID(ctx.Request.Context(), jobId)
+	if err != nil || job == nil {
+		slog.Error("Error fetching job", "err", err)
+		ctx.JSON(http.StatusNotFound, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
 
 	h := ctx.Writer.Header()
 	h.Set("Content-Type", "text/event-stream")
@@ -140,10 +146,13 @@ func (c *DeploymentController) StreamJobProgress(ctx *gin.Context) {
 			return
 		case log, ok := <-logChan:
 			if !ok {
+				ctx.SSEvent("end", utils.NewSuccessResponse("complete"))
+				flusher.Flush()
 				return
 			}
 			if log.Error != "" {
 				ctx.SSEvent("error", utils.NewInternalErrorResponse(log.Error))
+				flusher.Flush()
 				return
 			}
 			ctx.SSEvent("logs", utils.NewSuccessResponse(log))
