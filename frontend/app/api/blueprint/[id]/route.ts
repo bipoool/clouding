@@ -7,10 +7,18 @@ import { z } from 'zod'
 
 // Zod schema for UpdateBlueprintRequest validation
 const UpdateBlueprintSchema = z.object({
-  name: z.string().min(1, 'Name cannot be empty'),
+  name: z.string().min(1, 'Name cannot be empty').optional(),
   description: z.string().min(1, 'Description cannot be empty').optional(),
   status: z.enum(['draft', 'deployed', 'archived']).optional()
-})
+}).refine(
+  (data) => {
+    return data.name !== undefined || data.description !== undefined || data.status !== undefined
+  },
+  {
+    message: 'At least one field (name, description, or status) must be provided',
+    path: ['name', 'description', 'status']
+  }
+)
 
 // Type for validated request body
 type ValidatedUpdateBlueprintRequest = z.infer<typeof UpdateBlueprintSchema>
