@@ -3,11 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/dashboard-layout'
-import { InfraConfigCard } from '@/components/dashboard/InfraConfigCard'
-import { ViewPlanModal } from '@/components/dashboard/ViewPlanModal'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useInfraConfigs } from '@/hooks/useInfraConfigs'
+import { EditBlueprintModal } from '@/components/dashboard/EditBlueprintModal'
+import { useBlueprints, getEmojiForBlueprint, formatDate } from '@/hooks/useBlueprint'
 import { logger } from '@/lib/utils/logger'
 import {
 	ArrowLeft,
@@ -17,62 +16,131 @@ import {
 	Activity,
 	FileCode,
 	Play,
+	Calendar,
+	Clock,
+	Trash2,
 } from 'lucide-react'
-import type { InfraConfig } from '@/hooks/useInfraConfigs'
+import type { Blueprint } from '@/hooks/useBlueprint'
 
 export default function InfrastructurePage() {
 	const {
-		configs,
-		saveConfig,
-		updateConfig,
-		deleteConfig,
-		deployConfig,
+		blueprints,
+		loading,
+		error,
+		createBlueprint,
+		updateBlueprint,
+		deleteBlueprint,
 		generatePlan,
-	} = useInfraConfigs()
-	const [viewPlanConfig, setViewPlanConfig] = useState<InfraConfig | null>(null)
+		refreshBlueprints,
+	} = useBlueprints()
+	const [viewPlanConfig, setViewPlanConfig] = useState<Blueprint | null>(null)
 	const [generatedPlan, setGeneratedPlan] = useState('')
 	const [isViewPlanOpen, setIsViewPlanOpen] = useState(false)
+	const [editBlueprint, setEditBlueprint] = useState<Blueprint | null>(null)
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
-	const deployedConfigs = configs.filter(
-		config => config.deploymentStatus === 'deployed'
+	const deployedConfigs = blueprints.filter(
+		config => config.status === 'deployed'
 	)
-	const draftConfigs = configs.filter(
-		config => config.deploymentStatus === 'draft'
+	const draftConfigs = blueprints.filter(
+		config => config.status === 'draft'
 	)
-	const totalAssignments = configs.reduce(
-		(sum, config) =>
-			sum + config.assignedVMs.length + config.assignedGroups.length,
-		0
+	const archivedConfigs = blueprints.filter(
+		config => config.status === 'archived'
 	)
 
-	const handleViewPlan = (config: InfraConfig) => {
+	const handleViewPlan = (config: Blueprint) => {
 		const plan = generatePlan(config)
 		setViewPlanConfig(config)
 		setGeneratedPlan(plan)
 		setIsViewPlanOpen(true)
 	}
 
-	const handleDeploy = async (configId: string) => {
-		// In a real app, this would open a dialog to select VMs/groups and confirm deployment
-		logger.log('Deploy config:', configId)
-		// Placeholder deployment
-		await deployConfig(configId, 'vm', 'vm-1')
-	}
-
-	const handleAssign = (configId: string) => {
-		// In a real app, this would open a dialog to assign to VMs/groups
-		logger.log('Assign config:', configId)
-	}
-
-	const handleDelete = (configId: string) => {
-		if (confirm('Are you sure you want to delete this configuration?')) {
-			deleteConfig(configId)
+	const handleDelete = async (configId: number) => {
+		if (confirm('Are you sure you want to delete this blueprint?')) {
+			try {
+				await deleteBlueprint(configId)
+			} catch (error) {
+				logger.error('Failed to delete blueprint:', error)
+			}
 		}
 	}
 
-	const handleEdit = (configId: string) => {
-		// In a real app, this would navigate to the config editor
-		logger.log('Edit config:', configId)
+	const handleEdit = (configId: number) => {
+		const blueprint = blueprints.find(b => b.id === configId)
+		if (blueprint) {
+			setEditBlueprint(blueprint)
+			setIsEditModalOpen(true)
+		}
+	}
+
+	const handleSaveEdit = async (id: number, updates: { name: string; description: string }) => {
+		try {
+			await updateBlueprint(id, updates)
+			setIsEditModalOpen(false)
+			setEditBlueprint(null)
+		} catch (error) {
+			logger.error('Failed to update blueprint:', error)
+			throw error
+		}
+	}
+
+	// Loading state
+	if (loading) {
+		return (
+			<DashboardLayout>
+				<div className='space-y-8'>
+					<Link href='/dashboard' className='interactive-element'>
+						<Button variant='ghost' size='sm' className='glass-btn'>
+							<ArrowLeft className='h-4 w-4 mr-2' />
+							Back to Dashboard
+						</Button>
+					</Link>
+					<div className='glass-card'>
+						<div className='text-center py-12'>
+							<div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4'></div>
+							<h3 className='text-xl font-semibold text-primary mb-2'>
+								Loading Blueprints...
+							</h3>
+							<p className='text-secondary'>
+								Fetching your infrastructure blueprints
+							</p>
+						</div>
+					</div>
+				</div>
+			</DashboardLayout>
+		)
+	}
+
+	// Error state
+	if (error) {
+		return (
+			<DashboardLayout>
+				<div className='space-y-8'>
+					<Link href='/dashboard' className='interactive-element'>
+						<Button variant='ghost' size='sm' className='glass-btn'>
+							<ArrowLeft className='h-4 w-4 mr-2' />
+							Back to Dashboard
+						</Button>
+					</Link>
+					<div className='glass-card'>
+						<div className='text-center py-12'>
+							<FileCode className='h-16 w-16 text-red-400 mx-auto mb-4' />
+							<h3 className='text-xl font-semibold text-primary mb-2'>
+								Error Loading Blueprints
+							</h3>
+							<p className='text-secondary mb-6 max-w-md mx-auto'>
+								{error}
+							</p>
+							<Button onClick={refreshBlueprints} className='gradient-border-btn'>
+								<Plus className='h-4 w-4 mr-2' />
+								Retry
+							</Button>
+						</div>
+					</div>
+				</div>
+			</DashboardLayout>
+		)
 	}
 
 	return (
@@ -90,11 +158,10 @@ export default function InfrastructurePage() {
 						<div className='flex items-center gap-4'>
 							<div>
 								<h1 className='text-3xl md:text-4xl font-bold text-primary mb-2 font-jetbrains'>
-									Infrastructure Configuration
+									Infrastructure Blueprints
 								</h1>
 								<p className='text-lg text-gray-200'>
-									Create, manage, and deploy infrastructure configurations using
-									visual canvas.
+									Create, manage, and plan infrastructure configurations.
 								</p>
 							</div>
 						</div>
@@ -104,7 +171,7 @@ export default function InfrastructurePage() {
 						>
 							<Button className='gradient-border-btn'>
 								<Plus className='h-4 w-4 mr-2' />
-								Create Configuration
+								Create Blueprint
 							</Button>
 						</Link>
 					</div>
@@ -113,18 +180,18 @@ export default function InfrastructurePage() {
 				{/* Stats Overview */}
 				<div className='glass-card'>
 					<h3 className='text-2xl font-bold text-primary mb-6'>
-						Configuration Overview
+						Blueprint Overview
 					</h3>
 					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-						{/* Total Configs */}
+						{/* Total Blueprints */}
 						<div className='bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 group hover:bg-white/10 transition-all duration-300'>
 							<div className='flex items-center justify-between'>
 								<div className='flex-1'>
 									<p className='text-sm font-medium text-secondary mb-1'>
-										Total Configs
+										Total Blueprints
 									</p>
 									<p className='text-3xl font-bold text-primary mb-2'>
-										{configs.length}
+										{blueprints.length}
 									</p>
 								</div>
 								<div className='p-3 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/10 backdrop-blur-sm'>
@@ -133,7 +200,7 @@ export default function InfrastructurePage() {
 							</div>
 						</div>
 
-						{/* Deployed Configs */}
+						{/* Deployed Blueprints */}
 						<div className='bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 group hover:bg-white/10 transition-all duration-300'>
 							<div className='flex items-center justify-between'>
 								<div className='flex-1'>
@@ -150,7 +217,7 @@ export default function InfrastructurePage() {
 							</div>
 						</div>
 
-						{/* Draft Configs */}
+						{/* Draft Blueprints */}
 						<div className='bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 group hover:bg-white/10 transition-all duration-300'>
 							<div className='flex items-center justify-between'>
 								<div className='flex-1'>
@@ -167,94 +234,26 @@ export default function InfrastructurePage() {
 							</div>
 						</div>
 
-						{/* Total Assignments */}
+						{/* Archived Blueprints */}
 						<div className='bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 group hover:bg-white/10 transition-all duration-300'>
 							<div className='flex items-center justify-between'>
 								<div className='flex-1'>
 									<p className='text-sm font-medium text-secondary mb-1'>
-										Assignments
+										Archived
 									</p>
-									<p className='text-3xl font-bold text-purple-400 mb-2'>
-										{totalAssignments}
+									<p className='text-3xl font-bold text-gray-400 mb-2'>
+										{archivedConfigs.length}
 									</p>
 								</div>
-								<div className='p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/10 backdrop-blur-sm'>
-									<Settings className='h-6 w-6 text-purple-400 group-hover:scale-110 transition-transform duration-300' />
+								<div className='p-3 rounded-xl bg-gradient-to-br from-gray-500/20 to-slate-500/10 backdrop-blur-sm'>
+									<Settings className='h-6 w-6 text-gray-400 group-hover:scale-110 transition-transform duration-300' />
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				{/* Quick Actions */}
-				{/* <div className='glass-card'>
-					<h3 className='text-2xl font-bold text-primary mb-6'>
-						Quick Actions
-					</h3>
-					<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-						<Link
-							href='/dashboard/infrastructure/create'
-							className='interactive-element'
-						>
-							<Button
-								variant='ghost'
-								className='h-auto p-6 text-left justify-start bg-white/5 hover:bg-white/10 border border-white/10 group interactive-element w-full transition-all duration-300'
-							>
-								<div className='p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/10 mr-4'>
-									<Plus className='h-6 w-6 text-green-400 group-hover:scale-110 transition-transform' />
-								</div>
-								<div>
-									<div className='font-semibold text-primary text-lg mb-1'>
-										Create Configuration
-									</div>
-									<div className='text-sm text-secondary'>
-										Build infrastructure using visual canvas
-									</div>
-								</div>
-							</Button>
-						</Link>
-
-						<Link href='/dashboard/vms' className='interactive-element'>
-							<Button
-								variant='ghost'
-								className='h-auto p-6 text-left justify-start bg-white/5 hover:bg-white/10 border border-white/10 group interactive-element w-full transition-all duration-300'
-							>
-								<div className='p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/10 mr-4'>
-									<Settings className='h-6 w-6 text-blue-400 group-hover:scale-110 transition-transform' />
-								</div>
-								<div>
-									<div className='font-semibold text-primary text-lg mb-1'>
-										Manage VMs
-									</div>
-									<div className='text-sm text-secondary'>
-										View and configure virtual machines
-									</div>
-								</div>
-							</Button>
-						</Link>
-
-						<Link href='/dashboard/vm-groups' className='interactive-element'>
-							<Button
-								variant='ghost'
-								className='h-auto p-6 text-left justify-start bg-white/5 hover:bg-white/10 border border-white/10 group interactive-element w-full transition-all duration-300'
-							>
-								<div className='p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/10 mr-4'>
-									<Layers className='h-6 w-6 text-purple-400 group-hover:scale-110 transition-transform' />
-								</div>
-								<div>
-									<div className='font-semibold text-primary text-lg mb-1'>
-										VM Groups
-									</div>
-									<div className='text-sm text-secondary'>
-										Assign configs to VM groups
-									</div>
-								</div>
-							</Button>
-						</Link>
-					</div>
-				</div> */}
-
-				{/* Configurations */}
+				{/* Blueprints */}
 				<div className='glass-card'>
 					<Tabs defaultValue='all' className='w-full'>
 						<div className='flex items-center justify-between mb-6'>
@@ -263,7 +262,7 @@ export default function InfrastructurePage() {
 									value='all'
 									className='data-[state=active]:bg-white/10'
 								>
-									All Configurations ({configs.length})
+									All Blueprints ({blueprints.length})
 								</TabsTrigger>
 								<TabsTrigger
 									value='deployed'
@@ -277,19 +276,23 @@ export default function InfrastructurePage() {
 								>
 									Drafts ({draftConfigs.length})
 								</TabsTrigger>
+								<TabsTrigger
+									value='archived'
+									className='data-[state=active]:bg-white/10'
+								>
+									Archived ({archivedConfigs.length})
+								</TabsTrigger>
 							</TabsList>
 						</div>
 
 						<TabsContent value='all' className='space-y-6'>
-							{configs.length > 0 ? (
+							{blueprints.length > 0 ? (
 								<div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
-									{configs.map(config => (
-										<InfraConfigCard
-											key={config.id}
-											config={config}
+									{blueprints.map(blueprint => (
+										<BlueprintCard
+											key={blueprint.id}
+											blueprint={blueprint}
 											onViewPlan={handleViewPlan}
-											onDeploy={handleDeploy}
-											onAssign={handleAssign}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
 										/>
@@ -299,16 +302,15 @@ export default function InfrastructurePage() {
 								<div className='text-center py-12'>
 									<Layers className='h-16 w-16 text-gray-400 mx-auto mb-4' />
 									<h3 className='text-xl font-semibold text-primary mb-2'>
-										No Configurations Found
+										No Blueprints Found
 									</h3>
 									<p className='text-secondary mb-6 max-w-md mx-auto'>
-										Create your first infrastructure configuration using the
-										visual canvas editor.
+										Create your first infrastructure blueprint to get started.
 									</p>
 									<Link href='/dashboard/infrastructure/create'>
 										<Button className='gradient-border-btn'>
 											<Plus className='h-4 w-4 mr-2' />
-											Create Configuration
+											Create Blueprint
 										</Button>
 									</Link>
 								</div>
@@ -318,13 +320,11 @@ export default function InfrastructurePage() {
 						<TabsContent value='deployed' className='space-y-6'>
 							{deployedConfigs.length > 0 ? (
 								<div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
-									{deployedConfigs.map(config => (
-										<InfraConfigCard
-											key={config.id}
-											config={config}
+									{deployedConfigs.map(blueprint => (
+										<BlueprintCard
+											key={blueprint.id}
+											blueprint={blueprint}
 											onViewPlan={handleViewPlan}
-											onDeploy={handleDeploy}
-											onAssign={handleAssign}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
 										/>
@@ -334,11 +334,10 @@ export default function InfrastructurePage() {
 								<div className='text-center py-12'>
 									<Activity className='h-16 w-16 text-gray-400 mx-auto mb-4' />
 									<h3 className='text-xl font-semibold text-primary mb-2'>
-										No Deployed Configurations
+										No Deployed Blueprints
 									</h3>
 									<p className='text-secondary mb-6 max-w-md mx-auto'>
-										Deploy your configurations to start managing your
-										infrastructure.
+										Deploy your blueprints to start managing your infrastructure.
 									</p>
 								</div>
 							)}
@@ -347,13 +346,11 @@ export default function InfrastructurePage() {
 						<TabsContent value='drafts' className='space-y-6'>
 							{draftConfigs.length > 0 ? (
 								<div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
-									{draftConfigs.map(config => (
-										<InfraConfigCard
-											key={config.id}
-											config={config}
+									{draftConfigs.map(blueprint => (
+										<BlueprintCard
+											key={blueprint.id}
+											blueprint={blueprint}
 											onViewPlan={handleViewPlan}
-											onDeploy={handleDeploy}
-											onAssign={handleAssign}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
 										/>
@@ -363,11 +360,36 @@ export default function InfrastructurePage() {
 								<div className='text-center py-12'>
 									<FileCode className='h-16 w-16 text-gray-400 mx-auto mb-4' />
 									<h3 className='text-xl font-semibold text-primary mb-2'>
-										No Draft Configurations
+										No Draft Blueprints
 									</h3>
 									<p className='text-secondary mb-6 max-w-md mx-auto'>
-										All your configurations are deployed. Create new ones to see
-										drafts here.
+										All your blueprints are deployed. Create new ones to see drafts here.
+									</p>
+								</div>
+							)}
+						</TabsContent>
+
+						<TabsContent value='archived' className='space-y-6'>
+							{archivedConfigs.length > 0 ? (
+								<div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
+									{archivedConfigs.map(blueprint => (
+										<BlueprintCard
+											key={blueprint.id}
+											blueprint={blueprint}
+											onViewPlan={handleViewPlan}
+											onDelete={handleDelete}
+											onEdit={handleEdit}
+										/>
+									))}
+								</div>
+							) : (
+								<div className='text-center py-12'>
+									<Settings className='h-16 w-16 text-gray-400 mx-auto mb-4' />
+									<h3 className='text-xl font-semibold text-primary mb-2'>
+										No Archived Blueprints
+									</h3>
+									<p className='text-secondary mb-6 max-w-md mx-auto'>
+										Archived blueprints will appear here when you archive them.
 									</p>
 								</div>
 							)}
@@ -376,13 +398,109 @@ export default function InfrastructurePage() {
 				</div>
 
 				{/* View Plan Modal */}
-				<ViewPlanModal
-					config={viewPlanConfig}
-					plan={generatedPlan}
-					isOpen={isViewPlanOpen}
-					onClose={() => setIsViewPlanOpen(false)}
+				{/* TODO: Update ViewPlanModal to work with new Blueprint interface */}
+
+				{/* Edit Blueprint Modal */}
+				<EditBlueprintModal
+					blueprint={editBlueprint}
+					isOpen={isEditModalOpen}
+					onClose={() => {
+						setIsEditModalOpen(false)
+						setEditBlueprint(null)
+					}}
+					onSave={handleSaveEdit}
 				/>
 			</div>
 		</DashboardLayout>
+	)
+}
+
+// Blueprint Card Component
+interface BlueprintCardProps {
+	blueprint: Blueprint
+	onViewPlan: (blueprint: Blueprint) => void
+	onDelete: (id: number) => void
+	onEdit: (id: number) => void
+}
+
+function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit }: BlueprintCardProps) {
+	const emoji = getEmojiForBlueprint(blueprint.name)
+	
+	const getStatusColor = (status: string) => {
+		switch (status) {
+			case 'deployed':
+				return 'text-green-400 bg-green-500/10 border-green-500/20'
+			case 'draft':
+				return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
+			case 'archived':
+				return 'text-gray-400 bg-gray-500/10 border-gray-500/20'
+			default:
+				return 'text-gray-400 bg-gray-500/10 border-gray-500/20'
+		}
+	}
+
+	return (
+		<div className='bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 group'>
+			<div className='flex items-start justify-between mb-4'>
+				<div className='flex items-center gap-3'>
+					<div className='text-3xl'>{emoji}</div>
+					<div className='flex-1 min-w-0'>
+						<h3 
+							className='font-semibold text-primary text-lg mb-1 group-hover:text-primary/80 transition-colors truncate'
+							title={blueprint.name}
+						>
+							{blueprint.name}
+						</h3>
+						<p className='text-secondary text-sm line-clamp-2'>
+							{blueprint.description}
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<div className='space-y-3'>
+				{/* Status */}
+				<div className='flex items-center gap-2'>
+					<span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(blueprint.status)}`}>
+						{blueprint.status}
+					</span>
+				</div>
+
+				{/* Last Updated */}
+				<div className='flex items-center gap-2 text-xs text-secondary'>
+					<Clock className='h-3 w-3' />
+					<span>Updated {formatDate(blueprint.updatedAt)}</span>
+				</div>
+
+				{/* Actions */}
+				<div className='flex items-center gap-2 pt-3 border-t border-white/10'>
+					<Button
+						size='sm'
+						variant='ghost'
+						onClick={() => onViewPlan(blueprint)}
+						className='flex-1 bg-white/5 hover:bg-white/10 text-primary'
+					>
+						<Play className='h-3 w-3 mr-1' />
+						Plan
+					</Button>
+					<Button
+						size='sm'
+						variant='ghost'
+						onClick={() => onEdit(blueprint.id)}
+						className='bg-white/5 hover:bg-white/10 text-primary'
+					>
+						<Settings className='h-3 w-3' />
+					</Button>
+					<Button
+						size='sm'
+						variant='ghost'
+						onClick={() => onDelete(blueprint.id)}
+						className='bg-red-500/10 hover:bg-red-500/20 text-red-400'
+					>
+						<Trash2 className='h-3 w-3' />
+					</Button>
+				</div>
+			</div>
+		</div>
 	)
 }

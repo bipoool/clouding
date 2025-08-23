@@ -93,7 +93,7 @@ export default function VMsPage() {
 						<div className='flex items-center gap-4'>
 							<div>
 								<h1 className='text-3xl md:text-4xl font-bold text-primary mb-2 font-jetbrains'>
-									Virtual Machines
+									VMs
 								</h1>
 								<p className='text-lg text-gray-200'>
 									Manage and monitor your connected virtual machines and their

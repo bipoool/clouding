@@ -10,6 +10,7 @@ import { type CustomNodeData } from '@/lib/node-types'
 
 interface CustomNodeProps extends NodeProps {
 	data: CustomNodeData
+	onConfigurationSave: (nodeId: string, parameters: Record<string, any>) => void
 }
 
 // Constants
@@ -59,10 +60,12 @@ NodeContent.displayName = 'NodeContent'
 
 const ConfigurationButton: React.FC<{
 	nodeData: CustomNodeData
-}> = memo(({ nodeData }) => (
+	onConfigurationSave: (nodeId: string, parameters: Record<string, any>) => void
+}> = memo(({ nodeData, onConfigurationSave }) => (
 	<NodeConfigurationDialog 
 		nodeData={nodeData}
 		components={nodeData.components || []}
+		onConfigurationSave={onConfigurationSave}
 	>
 		<Button
 			variant='ghost'
@@ -92,7 +95,7 @@ const NodeHandle: React.FC<{
 NodeHandle.displayName = 'NodeHandle'
 
 // Main Component
-export const CustomNode = memo(({ data, selected }: CustomNodeProps) => {
+export const CustomNode = memo(({ data, selected, onConfigurationSave }: CustomNodeProps) => {
 	const IconComponent = data.icon
 
 	const nodeClassName = useMemo(() => {
@@ -129,7 +132,7 @@ export const CustomNode = memo(({ data, selected }: CustomNodeProps) => {
 			<div className='flex items-center gap-3'>
 				<NodeIcon IconComponent={IconComponent} color={data.color} />
 				<NodeContent label={data.label} nodeType={data.nodeType} />
-				<ConfigurationButton nodeData={data} />
+				<ConfigurationButton nodeData={data} onConfigurationSave={onConfigurationSave} />
 			</div>
 
 			{/* Output Handle */}

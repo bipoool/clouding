@@ -1,19 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withAuth, AuthenticatedRequest } from '@/app/api/auth/middleware'
-import { 
-  CreateBlueprintRequest, 
-  UpdateBlueprintRequest,
-  Blueprint, 
-  ApiResponse, 
-  ApiError 
-} from '../types'
 import { logger } from '@/lib/utils/logger'
-import { backendClient, BackendClientError } from '@/lib/backend-client'
+import { backendClient } from '@/lib/backend-client'
 import { handleApiError } from '@/app/api/utils/error-handler'
 
-// Type for PUT request body that includes id field
-interface UpdateBlueprintWithIdRequest extends UpdateBlueprintRequest {
-  id: string
+interface CreateBlueprintRequest {
+  name: string
+  description: string
+  status?: string
 }
 
 // Type guard function to validate CreateBlueprintRequest
@@ -25,32 +19,11 @@ function isValidCreateBlueprintRequest(body: unknown): body is CreateBlueprintRe
   const obj = body as Record<string, unknown>
   
   return (
-    Array.isArray(obj.plan) &&
-    obj.plan.length > 0 &&
-    obj.plan.every(item => typeof item === 'string') &&
+    typeof obj.name === 'string' &&
+    obj.name.trim().length > 0 &&
     typeof obj.description === 'string' &&
     obj.description.trim().length > 0 &&
-    typeof obj.userId === 'string' &&
-    obj.userId.trim().length > 0
-  )
-}
-
-// Type guard function to validate UpdateBlueprintWithIdRequest
-function isValidUpdateBlueprintRequest(body: unknown): body is UpdateBlueprintWithIdRequest {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return false
-  }
-
-  const obj = body as Record<string, unknown>
-  
-  return (
-    typeof obj.id === 'string' &&
-    obj.id.trim().length > 0 &&
-    Array.isArray(obj.plan) &&
-    obj.plan.length > 0 &&
-    obj.plan.every(item => typeof item === 'string') &&
-    typeof obj.description === 'string' &&
-    obj.description.trim().length > 0
+    (obj.status === undefined || (typeof obj.status === 'string' && ['draft', 'deployed', 'archived'].includes(obj.status as string)))
   )
 }
 
@@ -59,7 +32,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {
     logger.info(`Getting blueprints for user: ${request.user.id}`)
     
-    const blueprints = await backendClient.get(`/blueprint`, request)
+    const blueprints = await backendClient.get(`/blueprints`, request)
     
     return NextResponse.json(blueprints)
   } catch (error) {
@@ -75,40 +48,17 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     // Type-safe validation using type guard
     if (!isValidCreateBlueprintRequest(body)) {
       return NextResponse.json(
-        { error: 'Invalid request body', message: 'plan (non-empty array), description, and userId are required' },
+        { error: 'Invalid request body', message: 'Parameters are missing or invalid' },
         { status: 400 }
       )
     }
     
     logger.info(`Creating blueprint for user: ${request.user.id}`)
     
-    const newBlueprint = await backendClient.post(`/blueprint`, body, request)
+    const newBlueprint = await backendClient.post(`/blueprints`, body, request)
     
     return NextResponse.json(newBlueprint, { status: 201 })
   } catch (error) {
     return handleApiError(error, 'creating blueprint')
-  }
-})
-
-// PUT /api/blueprint - Update a blueprint
-export const PUT = withAuth(async (request: AuthenticatedRequest) => {
-  try {
-    const body: unknown = await request.json()
-    
-    // Type-safe validation using type guard
-    if (!isValidUpdateBlueprintRequest(body)) {
-      return NextResponse.json(
-        { error: 'Invalid request body', message: 'id, plan (non-empty array), and description are required' },
-        { status: 400 }
-      )
-    }
-
-    logger.info(`Updating blueprint: ${body.id} via Go backend`)
-    
-    const response = await backendClient.put(`/blueprint/${body.id}`, body, request)
-    
-    return NextResponse.json(response)
-  } catch (error) {
-    return handleApiError(error, 'updating blueprint')
   }
 })    

@@ -73,7 +73,7 @@ const getStatsConfig = (metrics: OverviewMetric[]): StatConfig[] => {
 			changeColor: vmGroupsMetric ? getChangeColor(vmGroupsMetric.currentMonth, vmGroupsMetric.lastMonth) : 'text-gray-400',
 		},
 		{
-			name: 'Configurations',
+			name: 'Blueprints',
 			value: blueprintsMetric?.total?.toString() || '0',
 			change: blueprintsMetric ? calculateChange(blueprintsMetric.currentMonth, blueprintsMetric.lastMonth) : '0',
 			icon: Layers,
@@ -208,7 +208,7 @@ export default function DashboardPage() {
 										</div>
 										<div>
 											<h4 className='text-xl font-bold text-primary mb-1'>
-												Virtual Machines
+												VMs
 											</h4>
 											<p className='text-sm text-secondary'>
 												{metrics.find(m => m.entity === 'vms')?.total?.toString() || '0'} VMs
@@ -269,20 +269,20 @@ export default function DashboardPage() {
 										</div>
 										<div>
 											<h4 className='text-xl font-bold text-primary mb-1'>
-												Infrastructure Configs
+												Blueprints
 											</h4>
 											<p className='text-sm text-secondary'>
-												{metrics.find(m => m.entity === 'blueprints')?.total?.toString() || '0'} Configurations
+												{metrics.find(m => m.entity === 'blueprints')?.total?.toString() || '0'} Blueprints
 											</p>
 										</div>
 									</div>
 									<p className='text-gray-200 mb-4'>
-										Create, manage, and deploy infrastructure configurations
+										Create, manage, and deploy infrastructure blueprints
 										using visual canvas editor and automation tools.
 									</p>
 									<div className='flex items-center text-sm text-green-400'>
 										<Layers className='h-4 w-4 mr-2' />
-										View Configurations →
+										View Blueprints →
 									</div>
 								</div>
 							</div>
