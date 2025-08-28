@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useState, useEffect } from 'react'
 import {
 	Dialog,
 	DialogContent,
@@ -37,15 +37,18 @@ interface NodeConfigurationDialogProps {
 // Components
 const FormField: React.FC<{
 	config: ExtendedComponentParameter
+	value?: any
 	onChange?: (fieldId: string, value: any) => void
 	isRequired?: boolean
-}> = memo(({ config, onChange, isRequired = false }) => {
+	error?: string
+}> = memo(({ config, value, onChange, isRequired = false, error }) => {
 	const renderField = () => {
 		switch (config.uiType) {
 			case 'textarea':
 				return (
 					<textarea
 						id={config.name}
+						value={value || ''}
 						rows={config.rows || 3}
 						placeholder={config.placeholder || config.default || ''}
 						className='w-full p-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-gray-500 text-sm resize-none focus:outline-none focus:bg-white/15 focus:border-cyan-400/50 focus:ring-cyan-400/20'
@@ -56,7 +59,7 @@ const FormField: React.FC<{
 			case 'select':
 				return (
 					<Select 
-						defaultValue={config.default}
+						value={value || config.default || ''}
 						onValueChange={(value) => onChange?.(config.name, value)}
 					>
 						<SelectTrigger className='glass-input'>
@@ -77,6 +80,7 @@ const FormField: React.FC<{
 					<div className='flex items-center space-x-2'>
 						<Checkbox 
 							id={config.name} 
+							checked={value || false}
 							onCheckedChange={(checked) => onChange?.(config.name, checked)}
 						/>
 						<label htmlFor={config.name} className='text-sm text-secondary'>
@@ -90,6 +94,7 @@ const FormField: React.FC<{
 					<Input
 						id={config.name}
 						type='password'
+						value={value || ''}
 						placeholder={config.placeholder || config.default || ''}
 						className='glass-input'
 						onChange={(e) => onChange?.(config.name, e.target.value)}
@@ -101,6 +106,7 @@ const FormField: React.FC<{
 					<Input
 						id={config.name}
 						type={config.uiType === 'text' ? 'text' : 'text'}
+						value={value || ''}
 						placeholder={config.placeholder || config.default || ''}
 						className='glass-input'
 						onChange={(e) => onChange?.(config.name, e.target.value)}
@@ -118,7 +124,10 @@ const FormField: React.FC<{
 				</label>
 			)}
 			{renderField()}
-			{config.description && config.uiType !== 'checkbox' && (
+			{error && (
+				<p className='text-xs text-red-400'>{error}</p>
+			)}
+			{config.description && config.uiType !== 'checkbox' && !error && (
 				<p className='text-xs text-gray-500'>{config.description}</p>
 			)}
 		</div>
@@ -134,11 +143,47 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 		const IconComponent = nodeData.icon
 		const [isSubmitting, setIsSubmitting] = useState(false)
 		const [formValues, setFormValues] = useState<Record<string, any>>(nodeData.parameters || {})
+		const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+		
+		// Reset form values when nodeData changes (when dialog opens with different node)
+		useEffect(() => {
+			setFormValues(nodeData.parameters || {})
+			setValidationErrors({})
+		}, [nodeData.id, nodeData.parameters])
 
 		const formFields = useMemo(() => {
 			const { nodeType } = nodeData
 			return getFormFieldsByNodeType(nodeType, components)
 		}, [nodeData.nodeType, components])
+		
+		// Update form values when formFields change (when components are loaded)
+		useEffect(() => {
+			if (formFields.length > 0) {
+				setFormValues(currentValues => {
+					const updatedValues = { ...currentValues }
+					let hasChanges = false
+					
+					// Add default values for fields that don't have values yet
+					// But only if they don't already have a value (saved or user-set)
+					formFields.forEach((field) => {
+						if (updatedValues[field.name] === undefined && field.default !== undefined) {
+							updatedValues[field.name] = field.default
+							hasChanges = true
+						}
+					})
+					
+					// Also persist the updated values immediately if there are changes
+					if (hasChanges && onConfigurationSave) {
+						// Use setTimeout to avoid calling onConfigurationSave during render
+						setTimeout(() => {
+							onConfigurationSave(nodeData.id, updatedValues)
+						}, 0)
+					}
+					
+					return updatedValues
+				})
+			}
+		}, [formFields, nodeData.id, onConfigurationSave])
 
 		// Check if a field should be shown based on required_if rules
 		const shouldShowField = (field: ExtendedComponentParameter): boolean => {
@@ -171,23 +216,105 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 			return false
 		}
 
-		// Handle field value changes
+		// Handle field value changes with persistence and validation
 		const handleFieldChange = (fieldId: string, value: any) => {
-			setFormValues(prev => ({
-				...prev,
+			const newFormValues = {
+				...formValues,
 				[fieldId]: value
-			}))
+			}
+			
+			setFormValues(newFormValues)
+			
+			// Persist changes immediately by calling the save callback
+			if (onConfigurationSave) {
+				onConfigurationSave(nodeData.id, newFormValues)
+			}
+			
+			// Clear validation error for this field when user starts typing
+			if (validationErrors[fieldId]) {
+				setValidationErrors(prev => {
+					const newErrors = { ...prev }
+					delete newErrors[fieldId]
+					return newErrors
+				})
+			}
+		}
+
+		// Validate form values against component parameters
+		const validateForm = (): { isValid: boolean; errors: Record<string, string> } => {
+			const errors: Record<string, string> = {}
+			
+			formFields.forEach((field) => {
+				const fieldValue = formValues[field.name]
+				
+				// Check if field is directly required
+				if (field.rules?.required && (!fieldValue || fieldValue === '')) {
+					errors[field.name] = `${field.name} is required`
+					return
+				}
+				
+				// Check conditional requirements (required_if)
+				if (field.rules?.required_if && shouldShowField(field)) {
+					const requiredIf = field.rules.required_if
+					let isConditionMet = false
+					let dependentFieldLabel = ''
+					// Check if any of the required_if conditions are met
+					for (const [dependentField, requiredValue] of Object.entries(requiredIf)) {
+						const dependentValue = formValues[dependentField]
+						if (dependentValue === requiredValue) {
+							isConditionMet = true
+							dependentFieldLabel = dependentField
+							break
+						}
+					}
+					
+					// If condition is met, the field must have a value
+					if (isConditionMet && (!fieldValue || fieldValue === '')) {
+						errors[field.name] = `${field.name} is required based on ${dependentFieldLabel}`
+					}
+				}
+			})
+			
+			return {
+				isValid: Object.keys(errors).length === 0,
+				errors
+			}
 		}
 
 		const handleSaveConfiguration = async () => {
+			// Validate form before saving
+			const validation = validateForm()
+			
+			if (!validation.isValid) {
+				// Update validation errors state for visual feedback
+				setValidationErrors(validation.errors)
+				
+				// Show validation errors
+				const errorMessages = Object.values(validation.errors).join('\n')
+				return
+			}
+			
+			// Clear any existing validation errors
+			setValidationErrors({})
+			
 			setIsSubmitting(true)
 			try {
+				// Ensure all form fields (including defaults) are included in the saved parameters
+				const completeFormValues = { ...formValues }
+				
+				// Add any missing default values
+				formFields.forEach((field) => {
+					if (completeFormValues[field.name] === undefined && field.default !== undefined) {
+						completeFormValues[field.name] = field.default
+					}
+				})
+				
 				// Save configuration parameters
-				logger.log('Saving configuration for node:', nodeData.label, 'with parameters:', formValues)
+				logger.log('Saving configuration for node:', nodeData.label, 'with parameters:', completeFormValues)
 				
 				// Call the callback to update the node with parameters
 				if (onConfigurationSave) {
-					onConfigurationSave(nodeData.id, formValues)
+					onConfigurationSave(nodeData.id, completeFormValues)
 				}
 				
 				// Simulate API call
@@ -225,8 +352,10 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 										<FormField
 											key={field.name}
 											config={field}
+											value={formValues[field.name]}
 											onChange={handleFieldChange}
 											isRequired={isFieldRequired(field)}
+											error={validationErrors[field.name]}
 										/>
 									))}
 						</form>
