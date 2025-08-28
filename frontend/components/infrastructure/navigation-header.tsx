@@ -37,6 +37,8 @@ export function NavigationHeader({
 						size='sm'
 						className='lg:hidden text-gray-400 hover:text-cyan-400'
 						onClick={onMobileMenuToggle}
+						aria-label="Toggle mobile menu"
+						title="Toggle mobile menu"
 					>
 						<Menu className='h-4 w-4' />
 					</Button>
@@ -49,6 +51,8 @@ export function NavigationHeader({
 							variant='ghost'
 							size='sm'
 							className='text-gray-400 hover:text-cyan-400'
+							aria-label="Back to infrastructure dashboard"
+							title="Back to infrastructure dashboard"
 						>
 							<ArrowLeft className='h-4 w-4 mr-2' />
 							<span className='hidden sm:inline'>Back</span>
@@ -60,15 +64,7 @@ export function NavigationHeader({
 							<span className='text-white/80 text-sm hidden md:block'>
 								{configName || 'Untitled Configuration'}
 							</span>
-							{configModalTrigger || (
-								<Button
-									variant='ghost'
-									size='sm'
-									className='p-1 h-auto text-gray-400 hover:text-cyan-400'
-								>
-									<Edit className='h-3 w-3' />
-								</Button>
-							)}
+							{configModalTrigger}
 						</div>
 					</div>
 				</div>
@@ -78,6 +74,8 @@ export function NavigationHeader({
 						onClick={onClear}
 						variant='ghost'
 						className='text-red-400 hover:text-red-300 hover:bg-red-500/10 interactive-element'
+						aria-label="Clear canvas"
+						title="Clear canvas"
 					>
 						<Trash2 className='h-4 w-4 sm:mr-2' />
 						<span className='hidden sm:inline'>Clear</span>
@@ -87,6 +85,8 @@ export function NavigationHeader({
 						onClick={onViewPlan}
 						variant='ghost'
 						className='glow-border bg-transparent text-cyan-400 hover:bg-cyan-400/10 interactive-element'
+						aria-label="View deployment plan"
+						title="View deployment plan"
 					>
 						<Eye className='h-4 w-4 sm:mr-2' />
 						<span className='hidden sm:inline'>View Plan</span>
@@ -96,6 +96,8 @@ export function NavigationHeader({
 						onClick={onSave}
 						variant='ghost'
 						className='glow-border bg-transparent text-cyan-400 hover:bg-cyan-400/10 interactive-element'
+						aria-label="Save configuration"
+						title="Save configuration"
 					>
 						<Save className='h-4 w-4 sm:mr-2' />
 						<span className='hidden sm:inline'>Save</span>

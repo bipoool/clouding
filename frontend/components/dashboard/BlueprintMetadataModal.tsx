@@ -1,4 +1,9 @@
 'use client'
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+// TODO: Update this to use the EditBlueprintModal component ////
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
 
 import { useState, useEffect } from 'react'
 import { logger } from '@/lib/utils/logger'
@@ -29,7 +34,7 @@ import { FileText, Edit } from 'lucide-react'
 
 const blueprintMetadataSchema = z.object({
 	name: z.string().min(1, 'Blueprint name is required').max(100, 'Name too long'),
-	description: z.string().max(500, 'Description too long').optional(),
+	description: z.string().min(1, 'Description is required').max(500, 'Description too long'),
 })
 
 type BlueprintMetadataFormData = z.infer<typeof blueprintMetadataSchema>
@@ -85,7 +90,13 @@ export function BlueprintMetadataModal({ onSave, initialData, trigger }: Bluepri
 		setIsSubmitting(true)
 
 		try {
-			await onSave(data)
+			// Sanitize form data by trimming whitespace from string fields
+			const sanitizedData = {
+				name: data.name.trim(),
+				description: data.description.trim(),
+			}
+
+			await onSave(sanitizedData)
 			setOpen(false)
 			if (!isEditing) {
 				form.reset()
@@ -112,7 +123,13 @@ export function BlueprintMetadataModal({ onSave, initialData, trigger }: Bluepri
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>
 				{trigger || (
-					<Button variant="ghost" size="sm" className="p-2 h-auto">
+					<Button 
+						variant="ghost" 
+						size="sm" 
+						className="p-2 h-auto"
+						aria-label="Edit blueprint"
+						title="Edit blueprint"
+					>
 						<Edit className="h-4 w-4" />
 					</Button>
 				)}
@@ -138,7 +155,7 @@ export function BlueprintMetadataModal({ onSave, initialData, trigger }: Bluepri
 							name='name'
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel className='text-secondary'>Blueprint Name</FormLabel>
+									<FormLabel className='text-secondary'>Blueprint Name *</FormLabel>
 									<FormControl>
 										<Input
 											placeholder='Production Web Stack'
@@ -147,7 +164,7 @@ export function BlueprintMetadataModal({ onSave, initialData, trigger }: Bluepri
 										/>
 									</FormControl>
 									<FormDescription className='text-xs text-gray-500'>
-										A descriptive name for this blueprint
+										A descriptive name for this blueprint (required)
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -159,7 +176,7 @@ export function BlueprintMetadataModal({ onSave, initialData, trigger }: Bluepri
 							name='description'
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel className='text-secondary'>Description</FormLabel>
+									<FormLabel className='text-secondary'>Description *</FormLabel>
 									<FormControl>
 										<Textarea
 											placeholder='Web server configuration with load balancer and database...'
@@ -168,7 +185,7 @@ export function BlueprintMetadataModal({ onSave, initialData, trigger }: Bluepri
 										/>
 									</FormControl>
 									<FormDescription className='text-xs text-gray-500'>
-										Optional description to help you remember what this blueprint does
+										Description to help you remember what this blueprint does (required)
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -181,6 +198,8 @@ export function BlueprintMetadataModal({ onSave, initialData, trigger }: Bluepri
 								variant='ghost'
 								onClick={() => setOpen(false)}
 								className='flex-1 glass-btn'
+								aria-label="Cancel blueprint editing"
+								title="Cancel blueprint editing"
 							>
 								Cancel
 							</Button>
@@ -188,6 +207,14 @@ export function BlueprintMetadataModal({ onSave, initialData, trigger }: Bluepri
 								type='submit'
 								disabled={isSubmitting}
 								className='flex-1 gradient-border-btn'
+								aria-label={isSubmitting 
+									? (isEditing ? 'Updating blueprint...' : 'Creating blueprint...') 
+									: (isEditing ? 'Update blueprint' : 'Create blueprint')
+								}
+								title={isSubmitting 
+									? (isEditing ? 'Updating blueprint...' : 'Creating blueprint...') 
+									: (isEditing ? 'Update blueprint' : 'Create blueprint')
+								}
 							>
 								{isSubmitting 
 									? (isEditing ? 'Updating...' : 'Creating...') 

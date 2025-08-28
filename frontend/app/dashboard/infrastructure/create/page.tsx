@@ -31,7 +31,6 @@ import { buildComponentCategories, getNodeTypes } from '@/lib/infrastructure-com
 import { useBlueprints } from '@/hooks/useBlueprint'
 import { useComponents } from '@/hooks/useComponents'
 import { DashboardFooter } from '@/components/dashboard-footer'
-import { httpClient } from '@/lib/http-client'
 
 const initialNodes: Node[] = []
 const initialEdges: Edge[] = []
@@ -65,6 +64,9 @@ function InfrastructureBuilder() {
 	
 	// Fetch components from API
 	const { components, isLoading, error } = useComponents()
+	
+	// Use blueprints hook for create/update operations
+	const { createBlueprint, updateBlueprint } = useBlueprints()
 	
 	// Build component categories from API data
 	const componentCategories = useMemo(() => {
@@ -110,7 +112,7 @@ function InfrastructureBuilder() {
 
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition } = useReactFlow()
-	const { createBlueprint, generatePlan } = useBlueprints()
+	const { generatePlan } = useBlueprints()
 
 	// Handle node configuration save
 	const handleNodeConfigurationSave = useCallback((nodeId: string, parameters: Record<string, any>) => {
@@ -368,9 +370,8 @@ function InfrastructureBuilder() {
 		})
 		
 		console.log('Full configuration:', nodes)
-		createBlueprint(configName, 'draft')
 		alert(`Configuration "${configName}" saved successfully!`)
-	}, [nodes, edges, state.configName, createBlueprint])
+	}, [nodes, edges, state.configName])
 
 	const handleClearCanvas = useCallback(() => {
 		if (nodes.length === 0 && edges.length === 0) return
@@ -423,40 +424,43 @@ function InfrastructureBuilder() {
 			
 			if (isEditing && state.blueprintId) {
 				// Update existing blueprint
-				const response = await httpClient.put(`/blueprint/${state.blueprintId}`, {
+				const response = await updateBlueprint(parseInt(state.blueprintId), {
 					name: data.name,
 					description: data.description || ''
-				}) as any
-				
-				// Update state with the response data
+				})
+				console.log('response', response)
+				// Update state with the response data (server-side mutations preserved)
 				setState(prev => ({ 
 					...prev, 
-					configName: data.name,
-					configDescription: data.description || '',
-					blueprintId: response.id || state.blueprintId
+					configName: response.name,
+					configDescription: response.description,
+					blueprintId: response.id.toString()
 				}))
+				console.log('state', state)
 			} else {
 				// Create new blueprint
-				const response = await httpClient.post('/blueprint', {
-					name: data.name,
-					description: data.description || '',
-					status: 'draft'
-				}) as any
+				const response = await createBlueprint(
+					data.name,
+					data.description || '',
+					'draft'
+				)
 				
 				// Update state with the new blueprint ID
 				setState(prev => ({ 
 					...prev, 
-					configName: data.name,
-					configDescription: data.description || '',
-					blueprintId: response.data?.id
+					configName: response.name,
+					configDescription: response.description,
+					blueprintId: response.id.toString()
 				}))
+				console.log('response', response)
+				console.log('state', state)
 			}
 		} catch (error) {
 			console.error('Failed to save blueprint:', error)
 			// You might want to show a toast notification here
 			throw error
 		}
-	}, [state.blueprintId])
+	}, [state.blueprintId, createBlueprint, updateBlueprint])
 
 	// Show loading state
 	if (isLoading) {
@@ -498,11 +502,8 @@ function InfrastructureBuilder() {
 					<BlueprintMetadataModal
 						onSave={handleConfigUpdate}
 						initialData={
-							state.configName || state.configDescription || state.blueprintId
-								? {
-										name: state.configName,
-										description: state.configDescription
-								  }
+							state.blueprintId
+								? { name: state.configName, description: state.configDescription }
 								: undefined
 						}
 						trigger={
@@ -510,6 +511,8 @@ function InfrastructureBuilder() {
 								variant='ghost'
 								size='sm'
 								className='p-1 h-auto text-gray-400 hover:text-cyan-400'
+								aria-label='Edit configuration metadata'
+								title='Edit configuration metadata'
 							>
 								<Edit className='h-3 w-3' />
 							</Button>
