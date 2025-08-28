@@ -24,10 +24,14 @@ import { NavigationHeader } from '@/components/infrastructure/navigation-header'
 import { ComponentsSidebar } from '@/components/infrastructure/components-sidebar'
 import { EmptyState } from '@/components/infrastructure/empty-state'
 import { ViewPlanModal } from '@/components/dashboard/ViewPlanModal'
+import { BlueprintMetadataModal } from '@/components/dashboard/BlueprintMetadataModal'
+import { Button } from '@/components/ui/button'
+import { Edit } from 'lucide-react'
 import { buildComponentCategories, getNodeTypes } from '@/lib/infrastructure-components'
 import { useBlueprints } from '@/hooks/useBlueprint'
 import { useComponents } from '@/hooks/useComponents'
 import { DashboardFooter } from '@/components/dashboard-footer'
+import { httpClient } from '@/lib/http-client'
 
 const initialNodes: Node[] = []
 const initialEdges: Edge[] = []
@@ -51,6 +55,8 @@ interface InfrastructureBuilderState {
 	isViewPlanOpen: boolean
 	generatedPlan: string
 	configName: string
+	configDescription: string
+	blueprintId?: string
 }
 
 function InfrastructureBuilder() {
@@ -87,6 +93,8 @@ function InfrastructureBuilder() {
 		isViewPlanOpen: false,
 		generatedPlan: '',
 		configName: '',
+		configDescription: '',
+		blueprintId: undefined,
 	})
 	
 	// Update expanded categories when componentCategories change
@@ -409,9 +417,46 @@ function InfrastructureBuilder() {
 		setState(prev => ({ ...prev, isViewPlanOpen: false }))
 	}, [])
 
-	const handleConfigNameChange = useCallback((name: string) => {
-		setState(prev => ({ ...prev, configName: name }))
-	}, [])
+	const handleConfigUpdate = useCallback(async (data: { name: string; description?: string }) => {
+		try {
+			const isEditing = !!state.blueprintId
+			
+			if (isEditing && state.blueprintId) {
+				// Update existing blueprint
+				const response = await httpClient.put(`/blueprint/${state.blueprintId}`, {
+					name: data.name,
+					description: data.description || ''
+				}) as any
+				
+				// Update state with the response data
+				setState(prev => ({ 
+					...prev, 
+					configName: data.name,
+					configDescription: data.description || '',
+					blueprintId: response.id || state.blueprintId
+				}))
+			} else {
+				// Create new blueprint
+				const response = await httpClient.post('/blueprint', {
+					name: data.name,
+					description: data.description || '',
+					status: 'draft'
+				}) as any
+				
+				// Update state with the new blueprint ID
+				setState(prev => ({ 
+					...prev, 
+					configName: data.name,
+					configDescription: data.description || '',
+					blueprintId: response.data?.id
+				}))
+			}
+		} catch (error) {
+			console.error('Failed to save blueprint:', error)
+			// You might want to show a toast notification here
+			throw error
+		}
+	}, [state.blueprintId])
 
 	// Show loading state
 	if (isLoading) {
@@ -444,11 +489,33 @@ function InfrastructureBuilder() {
 				agentConnected={state.agentConnected}
 				mobileMenuOpen={state.mobileMenuOpen}
 				configName={state.configName}
+				configDescription={state.configDescription}
 				onMobileMenuToggle={handleMobileMenuToggle}
 				onSave={handleSaveConfiguration}
 				onClear={handleClearCanvas}
 				onViewPlan={handleViewPlan}
-				onConfigNameChange={handleConfigNameChange}
+				configModalTrigger={
+					<BlueprintMetadataModal
+						onSave={handleConfigUpdate}
+						initialData={
+							state.configName || state.configDescription || state.blueprintId
+								? {
+										name: state.configName,
+										description: state.configDescription
+								  }
+								: undefined
+						}
+						trigger={
+							<Button
+								variant='ghost'
+								size='sm'
+								className='p-1 h-auto text-gray-400 hover:text-cyan-400'
+							>
+								<Edit className='h-3 w-3' />
+							</Button>
+						}
+					/>
+				}
 			/>
 
 			{/* Main Content Area */}

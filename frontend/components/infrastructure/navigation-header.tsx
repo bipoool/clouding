@@ -2,29 +2,30 @@ import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { ArrowLeft, Menu, Eye, Save, Trash2 } from 'lucide-react'
+import { ArrowLeft, Menu, Eye, Save, Trash2, Edit } from 'lucide-react'
 
 interface NavigationHeaderProps {
 	agentConnected: boolean
 	mobileMenuOpen: boolean
 	configName: string
+	configDescription?: string
 	onMobileMenuToggle: () => void
 	onSave: () => void
 	onClear: () => void
 	onViewPlan: () => void
-	onConfigNameChange: (name: string) => void
+	configModalTrigger?: React.ReactNode
 }
 
 export function NavigationHeader({
 	agentConnected,
 	mobileMenuOpen,
 	configName,
+	configDescription,
 	onMobileMenuToggle,
 	onSave,
 	onClear,
 	onViewPlan,
-	onConfigNameChange,
+	configModalTrigger,
 }: NavigationHeaderProps) {
 	return (
 		<header className='glass border-b border-white/10 px-4 py-3 rounded-none z-30 relative flex-shrink-0'>
@@ -55,28 +56,21 @@ export function NavigationHeader({
 					</Link>
 					<div className='h-4 w-px bg-white/20 hidden sm:block' />
 					<div className='flex items-center gap-3'>
-						<h1 className='text-lg font-bold text-white'>
-							Blueprint Builder
-						</h1>
-						<Input
-							type='text'
-							placeholder='Configuration name...'
-							value={configName}
-							onChange={e => onConfigNameChange(e.target.value)}
-							className='w-48 bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-cyan-400/50 hidden md:block'
-						/>
+						<div className='flex items-center gap-2'>
+							<span className='text-white/80 text-sm hidden md:block'>
+								{configName || 'Untitled Configuration'}
+							</span>
+							{configModalTrigger || (
+								<Button
+									variant='ghost'
+									size='sm'
+									className='p-1 h-auto text-gray-400 hover:text-cyan-400'
+								>
+									<Edit className='h-3 w-3' />
+								</Button>
+							)}
+						</div>
 					</div>
-					<Badge
-						variant={agentConnected ? 'default' : 'destructive'}
-						className={
-							agentConnected
-								? 'bg-green-500/20 text-green-400 border-green-500/30 text-xs hover:bg-green-500/30'
-								: 'bg-red-500/20 text-red-400 border-red-500/30 text-xs hover:bg-red-500/30'
-						}
-					>
-						<span className='hidden sm:inline'>Agent&nbsp;</span>
-						{agentConnected ? ' Connected' : ' Disconnected'}
-					</Badge>
 				</div>
 				<div className='flex items-center gap-2 sm:gap-3'>
 					<Button
