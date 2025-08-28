@@ -4,7 +4,7 @@ A developer-first infrastructure management platform that enables you to visuali
 
 ## 🚀 Features
 
-- **Visual Infrastructure Builder**: Drag-and-drop interface for building infrastructure configurations
+- **Visual Blueprint Builder**: Drag-and-drop interface for building infrastructure configurations
 - **Developer-First Design**: Built with developers in mind - clean interfaces, monospace fonts, and dark themes
 - **Component Library**: Extensive collection of infrastructure components including:
   - Web servers (Nginx, Apache)
@@ -47,7 +47,7 @@ frontend/
 │   ├── about/             # About page
 │   ├── auth/              # Authentication page
 │   ├── dashboard/         # Main dashboard
-│   │   ├── create/        # Infrastructure builder
+│   │   ├── create/        # Blueprint builder
 │   │   └── settings/      # User settings
 │   ├── privacy/           # Privacy policy page
 │   ├── globals.css        # Global styles

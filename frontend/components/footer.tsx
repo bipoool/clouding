@@ -61,7 +61,7 @@ export function Footer() {
 									href='/dashboard/infrastructure/create'
 									className='block text-secondary hover:text-accent-cyan transition-colors text-sm interactive-element'
 								>
-									Infrastructure Builder
+									Blueprint Builder
 								</Link>
 								<Link
 									href='#'

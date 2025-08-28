@@ -56,7 +56,7 @@ export function NavigationHeader({
 					<div className='h-4 w-px bg-white/20 hidden sm:block' />
 					<div className='flex items-center gap-3'>
 						<h1 className='text-lg font-bold text-white'>
-							Infrastructure Builder
+							Blueprint Builder
 						</h1>
 						<Input
 							type='text'
