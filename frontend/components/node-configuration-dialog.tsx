@@ -185,6 +185,11 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 			}
 		}, [formFields, nodeData.id, onConfigurationSave])
 
+		// Helper function to check if a value is empty (but allow 0 and false as valid values)
+		const isEmptyValue = (value: any): boolean => {
+			return value === undefined || value === null || value === ''
+		}
+
 		// Check if a field should be shown based on required_if rules
 		const shouldShowField = (field: ExtendedComponentParameter): boolean => {
 			if (!field.rules?.required_if) {
@@ -192,6 +197,7 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 			}
 
 			const requiredIf = field.rules.required_if
+			// ALL conditions must be met (AND logic)
 			for (const [dependentField, requiredValue] of Object.entries(requiredIf)) {
 				const currentValue = formValues[dependentField]
 				if (currentValue !== requiredValue) {
@@ -218,26 +224,24 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 
 		// Handle field value changes with persistence and validation
 		const handleFieldChange = (fieldId: string, value: any) => {
-			const newFormValues = {
-				...formValues,
-				[fieldId]: value
-			}
-			
-			setFormValues(newFormValues)
-			
-			// Persist changes immediately by calling the save callback
-			if (onConfigurationSave) {
-				onConfigurationSave(nodeData.id, newFormValues)
-			}
+			// Use functional state updates to ensure we work with the latest state
+			setFormValues(prev => {
+				const nextValues = { ...prev, [fieldId]: value }
+				
+				// Persist changes immediately by calling the save callback with the computed nextValues
+				if (onConfigurationSave) {
+					onConfigurationSave(nodeData.id, nextValues)
+				}
+				
+				return nextValues
+			})
 			
 			// Clear validation error for this field when user starts typing
-			if (validationErrors[fieldId]) {
-				setValidationErrors(prev => {
-					const newErrors = { ...prev }
-					delete newErrors[fieldId]
-					return newErrors
-				})
-			}
+			setValidationErrors(prev => {
+				const next = { ...prev }
+				delete next[fieldId]
+				return next
+			})
 		}
 
 		// Validate form values against component parameters
@@ -248,29 +252,19 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 				const fieldValue = formValues[field.name]
 				
 				// Check if field is directly required
-				if (field.rules?.required && (!fieldValue || fieldValue === '')) {
+				if (field.rules?.required && isEmptyValue(fieldValue)) {
 					errors[field.name] = `${field.name} is required`
 					return
 				}
 				
 				// Check conditional requirements (required_if)
 				if (field.rules?.required_if && shouldShowField(field)) {
-					const requiredIf = field.rules.required_if
-					let isConditionMet = false
-					let dependentFieldLabel = ''
-					// Check if any of the required_if conditions are met
-					for (const [dependentField, requiredValue] of Object.entries(requiredIf)) {
-						const dependentValue = formValues[dependentField]
-						if (dependentValue === requiredValue) {
-							isConditionMet = true
-							dependentFieldLabel = dependentField
-							break
-						}
-					}
-					
-					// If condition is met, the field must have a value
-					if (isConditionMet && (!fieldValue || fieldValue === '')) {
-						errors[field.name] = `${field.name} is required based on ${dependentFieldLabel}`
+					// Since shouldShowField already checks that ALL conditions are met (AND logic),
+					// we know the field is conditionally required
+					if (isEmptyValue(fieldValue)) {
+						const requiredIf = field.rules.required_if
+						const dependentFields = Object.keys(requiredIf).join(' and ')
+						errors[field.name] = `${field.name} is required based on ${dependentFields}`
 					}
 				}
 			})
