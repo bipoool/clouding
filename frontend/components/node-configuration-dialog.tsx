@@ -48,7 +48,7 @@ const FormField: React.FC<{
 				return (
 					<textarea
 						id={config.name}
-						value={value || ''}
+						value={value ?? ''}
 						rows={config.rows || 3}
 						placeholder={config.placeholder || config.default || ''}
 						className='w-full p-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-gray-500 text-sm resize-none focus:outline-none focus:bg-white/15 focus:border-cyan-400/50 focus:ring-cyan-400/20'
@@ -59,7 +59,7 @@ const FormField: React.FC<{
 			case 'select':
 				return (
 					<Select 
-						value={value || config.default || ''}
+						value={value ?? config.default ?? ''}
 						onValueChange={(value) => onChange?.(config.name, value)}
 					>
 						<SelectTrigger className='glass-input'>
@@ -80,7 +80,7 @@ const FormField: React.FC<{
 					<div className='flex items-center space-x-2'>
 						<Checkbox 
 							id={config.name} 
-							checked={value || false}
+							checked={Boolean(value)}
 							onCheckedChange={(checked) => onChange?.(config.name, checked)}
 						/>
 						<label htmlFor={config.name} className='text-sm text-secondary'>
@@ -94,7 +94,7 @@ const FormField: React.FC<{
 					<Input
 						id={config.name}
 						type='password'
-						value={value || ''}
+						value={value ?? ''}
 						placeholder={config.placeholder || config.default || ''}
 						className='glass-input'
 						onChange={(e) => onChange?.(config.name, e.target.value)}
@@ -106,7 +106,7 @@ const FormField: React.FC<{
 					<Input
 						id={config.name}
 						type={config.uiType === 'text' ? 'text' : 'text'}
-						value={value || ''}
+						value={value ?? ''}
 						placeholder={config.placeholder || config.default || ''}
 						className='glass-input'
 						onChange={(e) => onChange?.(config.name, e.target.value)}
