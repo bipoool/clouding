@@ -19,4 +19,5 @@ func RegisterHostRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
 	rg.POST("/hosts", hostController.CreateHost)
 	rg.PUT("/hosts/:id", hostController.UpdateHost)
 	rg.DELETE("/hosts/:id", hostController.DeleteHost)
+	rg.GET("/hosts/:id/health",hostController.GetHostsHealth)
 }
