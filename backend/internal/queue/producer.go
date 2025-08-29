@@ -15,6 +15,7 @@ type Publisher struct {
 func NewPublisher(url, port, username, password, queueName string) *Publisher {
 
 	endpoint := "amqp://" + username + ":" + password + "@" + url + ":" + port
+
 	conn, err := amqp091.Dial(endpoint)
 	if err != nil {
 		panic(err)
