@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/dashboard-layout'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EditBlueprintModal } from '@/components/dashboard/EditBlueprintModal'
+import { InfrastructurePageSkeleton } from '@/components/dashboard'
 import { useBlueprints, getEmojiForBlueprint, formatDate } from '@/hooks/useBlueprint'
 import { logger } from '@/lib/utils/logger'
 import {
@@ -89,25 +90,7 @@ export default function InfrastructurePage() {
 	if (loading) {
 		return (
 			<DashboardLayout>
-				<div className='space-y-8'>
-					<Link href='/dashboard' className='interactive-element'>
-						<Button variant='ghost' size='sm' className='glass-btn'>
-							<ArrowLeft className='h-4 w-4 mr-2' />
-							Back to Dashboard
-						</Button>
-					</Link>
-					<div className='glass-card'>
-						<div className='text-center py-12'>
-							<div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4'></div>
-							<h3 className='text-xl font-semibold text-primary mb-2'>
-								Loading Blueprints...
-							</h3>
-							<p className='text-secondary'>
-								Fetching your infrastructure blueprints
-							</p>
-						</div>
-					</div>
-				</div>
+				<InfrastructurePageSkeleton />
 			</DashboardLayout>
 		)
 	}
