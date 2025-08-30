@@ -62,9 +62,12 @@ export function useBlueprints() {
       
       // Handle the API response structure
       let fetchedBlueprints: Blueprint[]
-      if (response.data) {
-        // API response is wrapped in an object with 'data' key
+      if (response && Array.isArray(response.data)) {
+        // API response is wrapped in an object with 'data' key containing array
         fetchedBlueprints = response.data
+      } else if (response && response.data && Array.isArray(response.data.data)) {
+        // API response has nested data structure (data.data)
+        fetchedBlueprints = response.data.data
       } else if (Array.isArray(response)) {
         // Fallback for direct array response
         fetchedBlueprints = response
@@ -140,8 +143,8 @@ export function useBlueprints() {
         return blueprint
       }))
       
-      // Return the merged blueprint
-      const updatedBlueprint = { ...updates, ...updatedPartial } as Blueprint
+      // Return the merged blueprint with guaranteed id
+      const updatedBlueprint = { id, ...updates, ...updatedPartial } as Blueprint
       
       logger.info(`Successfully updated blueprint: ${id}`)
       return updatedBlueprint

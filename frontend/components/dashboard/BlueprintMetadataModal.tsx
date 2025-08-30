@@ -33,8 +33,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { FileText, Edit } from 'lucide-react'
 
 const blueprintMetadataSchema = z.object({
-	name: z.string().min(1, 'Blueprint name is required').max(100, 'Name too long'),
-	description: z.string().min(1, 'Description is required').max(500, 'Description too long'),
+	name: z.string().trim().min(1, 'Blueprint name is required').max(100, 'Name too long'),
+	description: z.string().trim().min(1, 'Description is required').max(500, 'Description too long'),
 })
 
 type BlueprintMetadataFormData = z.infer<typeof blueprintMetadataSchema>
@@ -90,13 +90,7 @@ export function BlueprintMetadataModal({ onSave, initialData, trigger }: Bluepri
 		setIsSubmitting(true)
 
 		try {
-			// Sanitize form data by trimming whitespace from string fields
-			const sanitizedData = {
-				name: data.name.trim(),
-				description: data.description.trim(),
-			}
-
-			await onSave(sanitizedData)
+			await onSave(data)
 			setOpen(false)
 			if (!isEditing) {
 				form.reset()

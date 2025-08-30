@@ -65,8 +65,8 @@ function InfrastructureBuilder() {
 	// Fetch components from API
 	const { components, isLoading, error } = useComponents()
 	
-	// Use blueprints hook for create/update operations
-	const { createBlueprint, updateBlueprint } = useBlueprints()
+	// Use blueprints hook for all blueprint operations
+	const { createBlueprint, updateBlueprint, generatePlan } = useBlueprints()
 	
 	// Build component categories from API data
 	const componentCategories = useMemo(() => {
@@ -112,7 +112,6 @@ function InfrastructureBuilder() {
 
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition } = useReactFlow()
-	const { generatePlan } = useBlueprints()
 
 	// Handle node configuration save
 	const handleNodeConfigurationSave = useCallback((nodeId: string, parameters: Record<string, any>) => {
@@ -428,15 +427,13 @@ function InfrastructureBuilder() {
 					name: data.name,
 					description: data.description || ''
 				})
-				console.log('response', response)
 				// Update state with the response data (server-side mutations preserved)
 				setState(prev => ({ 
 					...prev, 
 					configName: response.name,
 					configDescription: response.description,
-					blueprintId: response.id.toString()
+					blueprintId: response.id?.toString() ?? prev.blueprintId
 				}))
-				console.log('state', state)
 			} else {
 				// Create new blueprint
 				const response = await createBlueprint(
@@ -450,13 +447,10 @@ function InfrastructureBuilder() {
 					...prev, 
 					configName: response.name,
 					configDescription: response.description,
-					blueprintId: response.id.toString()
+					blueprintId: response.id?.toString() ?? prev.blueprintId
 				}))
-				console.log('response', response)
-				console.log('state', state)
 			}
 		} catch (error) {
-			console.error('Failed to save blueprint:', error)
 			// You might want to show a toast notification here
 			throw error
 		}
