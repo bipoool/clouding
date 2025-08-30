@@ -24,6 +24,9 @@ import { NavigationHeader } from '@/components/infrastructure/navigation-header'
 import { ComponentsSidebar } from '@/components/infrastructure/components-sidebar'
 import { EmptyState } from '@/components/infrastructure/empty-state'
 import { ViewPlanModal } from '@/components/dashboard/ViewPlanModal'
+import { BlueprintMetadataModal } from '@/components/dashboard/BlueprintMetadataModal'
+import { Button } from '@/components/ui/button'
+import { Edit } from 'lucide-react'
 import { buildComponentCategories, getNodeTypes } from '@/lib/infrastructure-components'
 import { useBlueprints } from '@/hooks/useBlueprint'
 import { useComponents } from '@/hooks/useComponents'
@@ -51,6 +54,8 @@ interface InfrastructureBuilderState {
 	isViewPlanOpen: boolean
 	generatedPlan: string
 	configName: string
+	configDescription: string
+	blueprintId?: string
 }
 
 function InfrastructureBuilder() {
@@ -59,6 +64,9 @@ function InfrastructureBuilder() {
 	
 	// Fetch components from API
 	const { components, isLoading, error } = useComponents()
+	
+	// Use blueprints hook for all blueprint operations
+	const { createBlueprint, updateBlueprint, generatePlan } = useBlueprints()
 	
 	// Build component categories from API data
 	const componentCategories = useMemo(() => {
@@ -87,6 +95,8 @@ function InfrastructureBuilder() {
 		isViewPlanOpen: false,
 		generatedPlan: '',
 		configName: '',
+		configDescription: '',
+		blueprintId: undefined,
 	})
 	
 	// Update expanded categories when componentCategories change
@@ -102,7 +112,6 @@ function InfrastructureBuilder() {
 
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition } = useReactFlow()
-	const { createBlueprint, generatePlan } = useBlueprints()
 
 	// Handle node configuration save
 	const handleNodeConfigurationSave = useCallback((nodeId: string, parameters: Record<string, any>) => {
@@ -360,9 +369,8 @@ function InfrastructureBuilder() {
 		})
 		
 		console.log('Full configuration:', nodes)
-		createBlueprint(configName, 'draft')
 		alert(`Configuration "${configName}" saved successfully!`)
-	}, [nodes, edges, state.configName, createBlueprint])
+	}, [nodes, edges, state.configName])
 
 	const handleClearCanvas = useCallback(() => {
 		if (nodes.length === 0 && edges.length === 0) return
@@ -409,9 +417,44 @@ function InfrastructureBuilder() {
 		setState(prev => ({ ...prev, isViewPlanOpen: false }))
 	}, [])
 
-	const handleConfigNameChange = useCallback((name: string) => {
-		setState(prev => ({ ...prev, configName: name }))
-	}, [])
+	const handleConfigUpdate = useCallback(async (data: { name: string; description?: string }) => {
+		try {
+			const isEditing = !!state.blueprintId
+			
+			if (isEditing && state.blueprintId) {
+				// Update existing blueprint
+				const response = await updateBlueprint(parseInt(state.blueprintId), {
+					name: data.name,
+					description: data.description || ''
+				})
+				// Update state with the response data (server-side mutations preserved)
+				setState(prev => ({ 
+					...prev, 
+					configName: response.name,
+					configDescription: response.description,
+					blueprintId: response.id?.toString() ?? prev.blueprintId
+				}))
+			} else {
+				// Create new blueprint
+				const response = await createBlueprint(
+					data.name,
+					data.description || '',
+					'draft'
+				)
+				
+				// Update state with the new blueprint ID
+				setState(prev => ({ 
+					...prev, 
+					configName: response.name,
+					configDescription: response.description,
+					blueprintId: response.id?.toString() ?? prev.blueprintId
+				}))
+			}
+		} catch (error) {
+			// You might want to show a toast notification here
+			throw error
+		}
+	}, [state.blueprintId, createBlueprint, updateBlueprint])
 
 	// Show loading state
 	if (isLoading) {
@@ -444,11 +487,32 @@ function InfrastructureBuilder() {
 				agentConnected={state.agentConnected}
 				mobileMenuOpen={state.mobileMenuOpen}
 				configName={state.configName}
+				configDescription={state.configDescription}
 				onMobileMenuToggle={handleMobileMenuToggle}
 				onSave={handleSaveConfiguration}
 				onClear={handleClearCanvas}
 				onViewPlan={handleViewPlan}
-				onConfigNameChange={handleConfigNameChange}
+				configModalTrigger={
+					<BlueprintMetadataModal
+						onSave={handleConfigUpdate}
+						initialData={
+							state.blueprintId
+								? { name: state.configName, description: state.configDescription }
+								: undefined
+						}
+						trigger={
+							<Button
+								variant='ghost'
+								size='sm'
+								className='p-1 h-auto text-gray-400 hover:text-cyan-400'
+								aria-label='Edit configuration metadata'
+								title='Edit configuration metadata'
+							>
+								<Edit className='h-3 w-3' />
+							</Button>
+						}
+					/>
+				}
 			/>
 
 			{/* Main Content Area */}

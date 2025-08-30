@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { logger } from '@/lib/utils/logger'
+import { httpClient } from '@/lib/http-client'
 
 // Simplified Blueprint interface matching the API
 export interface Blueprint {
@@ -57,20 +58,19 @@ export function useBlueprints() {
       setLoading(true)
       setError(null)
       
-      const response = await fetch('/api/blueprint')
-      if (!response.ok) {
-        throw new Error(`Failed to fetch blueprints: ${response.statusText}`)
-      }
-      
-      const data = await response.json()
+      const response = await httpClient.get('/blueprint') as any
       
       // Handle the API response structure
       let fetchedBlueprints: Blueprint[]
-      if (data.success && data.data) {
-        fetchedBlueprints = data.data
-      } else if (Array.isArray(data)) {
+      if (response && Array.isArray(response.data)) {
+        // API response is wrapped in an object with 'data' key containing array
+        fetchedBlueprints = response.data
+      } else if (response && response.data && Array.isArray(response.data.data)) {
+        // API response has nested data structure (data.data)
+        fetchedBlueprints = response.data.data
+      } else if (Array.isArray(response)) {
         // Fallback for direct array response
-        fetchedBlueprints = data
+        fetchedBlueprints = response
       } else {
         throw new Error('Invalid response format')
       }
@@ -91,95 +91,89 @@ export function useBlueprints() {
     fetchBlueprints()
   }, [fetchBlueprints])
 
-  // Create new blueprint
-  const createBlueprint = useCallback(async (name: string, description: string, status: 'draft' | 'deployed' | 'archived' = 'draft') => {
+  // Create new blueprint using httpClient
+  const createBlueprint = useCallback(async (name: string, description: string, status: 'draft' | 'deployed' | 'archived' = 'draft'): Promise<Blueprint> => {
     try {
-      const response = await fetch('/api/blueprint', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          description,
-          status
-        })
+      setError(null)
+      const response = await httpClient.post('/blueprint', {
+        name,
+        description,
+        status
       })
-
-      if (!response.ok) {
-        throw new Error(`Failed to create blueprint: ${response.statusText}`)
-      }
-
-      const data = await response.json()
       
-      // Refresh the blueprints list
-      await fetchBlueprints()
+      // API response is wrapped in an object with 'data' key
+      const { data: createdPartial } = response as { data: Partial<Blueprint> }
       
-      return data
+      // Merge user-provided data with server response
+      const fullBlueprint: Blueprint = { 
+        name, 
+        description, 
+        status, 
+        ...createdPartial 
+      } as Blueprint
+      
+      // Update local state directly instead of refetching
+      setBlueprints(prev => [...prev, fullBlueprint])
+      
+      logger.info(`Successfully created blueprint: ${fullBlueprint.id}`)
+      return fullBlueprint
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create blueprint'
+      setError(errorMessage)
       logger.error('Error creating blueprint:', err)
       throw new Error(errorMessage)
     }
-  }, [fetchBlueprints])
+  }, [])
 
-  // Update blueprint with optimistic update
-  const updateBlueprint = useCallback(async (id: number, updates: Partial<Pick<Blueprint, 'name' | 'description' | 'status'>>) => {
+  // Update blueprint using httpClient
+  const updateBlueprint = useCallback(async (id: number, updates: Partial<Pick<Blueprint, 'name' | 'description' | 'status'>>): Promise<Blueprint> => {
     try {
-      // Optimistically update local state
-      setBlueprints(prev => prev.map(blueprint => 
-        blueprint.id === id 
-          ? { ...blueprint, ...updates, updatedAt: new Date().toISOString() }
-          : blueprint
-      ))
+      setError(null)
       
-      const response = await fetch(`/api/blueprint/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates)
-      })
-
-      if (!response.ok) {
-        // If the API call fails, revert the optimistic update
-        await fetchBlueprints()
-        throw new Error(`Failed to update blueprint: ${response.statusText}`)
-      }
-
-      const data = await response.json()
+      const response = await httpClient.put(`/blueprint/${id}`, updates)
+      
+      // API response is wrapped in an object with 'data' key
+      const { data: updatedPartial } = response as { data: Partial<Blueprint> }
+      
+      // Update local state with merged data (user updates + server response)
+      setBlueprints(prev => prev.map(blueprint => {
+        if (blueprint.id === id) {
+          return { ...blueprint, ...updates, ...updatedPartial } as Blueprint
+        }
+        return blueprint
+      }))
+      
+      // Return the merged blueprint with guaranteed id
+      const updatedBlueprint = { id, ...updates, ...updatedPartial } as Blueprint
+      
       logger.info(`Successfully updated blueprint: ${id}`)
-      return data
+      return updatedBlueprint
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update blueprint'
+      setError(errorMessage)
       logger.error('Error updating blueprint:', err)
       throw new Error(errorMessage)
     }
-  }, [fetchBlueprints])
+  }, [])
 
-  // Delete blueprint with optimistic update
+  // Delete blueprint
   const deleteBlueprint = useCallback(async (id: number) => {
     try {
-      // Optimistically remove from local state
-      setBlueprints(prev => prev.filter(blueprint => blueprint.id !== id))
+      setError(null)
       
-      const response = await fetch(`/api/blueprint/${id}`, {
-        method: 'DELETE',
-      })
+      await httpClient.delete(`/blueprint/${id}`)
 
-      if (!response.ok) {
-        // If the API call fails, revert the optimistic update
-        await fetchBlueprints()
-        throw new Error(`Failed to delete blueprint: ${response.statusText}`)
-      }
+      // Remove from local state after successful deletion
+      setBlueprints(prev => prev.filter(blueprint => blueprint.id !== id))
 
       logger.info(`Successfully deleted blueprint: ${id}`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete blueprint'
+      setError(errorMessage)
       logger.error('Error deleting blueprint:', err)
       throw new Error(errorMessage)
     }
-  }, [fetchBlueprints])
+  }, [])
 
   // Generate plan for blueprint (placeholder for now)
   const generatePlan = useCallback((blueprint: Blueprint) => {

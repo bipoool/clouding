@@ -163,7 +163,7 @@ export function EditBlueprintModal({
               name='name'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-secondary'>Blueprint Name</FormLabel>
+                  <FormLabel className='text-secondary'>Blueprint Name *</FormLabel>
                   <FormControl>
                     <Input
                       placeholder='Web Application Stack'
@@ -172,7 +172,7 @@ export function EditBlueprintModal({
                     />
                   </FormControl>
                   <FormDescription className='text-xs text-gray-500'>
-                    A descriptive name for this blueprint
+                    A descriptive name for this blueprint (required)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -184,7 +184,7 @@ export function EditBlueprintModal({
               name='description'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-secondary'>Description</FormLabel>
+                  <FormLabel className='text-secondary'>Description *</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder='Describe what this blueprint does...'
@@ -194,7 +194,7 @@ export function EditBlueprintModal({
                     />
                   </FormControl>
                   <FormDescription className='text-xs text-gray-500'>
-                    Provide a detailed description of this blueprint's purpose
+                    Provide a detailed description of this blueprint's purpose (required)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
