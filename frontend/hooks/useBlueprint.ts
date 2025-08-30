@@ -175,6 +175,30 @@ export function useBlueprints() {
     }
   }, [])
 
+  // Update blueprint components
+  const updateBlueprintComponents = useCallback(async (blueprintId: number, components: Array<{
+    componentId: number
+    position: number
+    parameters: Array<{
+      id: string
+      value: string
+      name: string
+    }>
+  }>) => {
+    try {
+      setError(null)
+      
+      const response = await httpClient.put(`/blueprint/${blueprintId}/components`, components)
+      logger.info(`Successfully updated blueprint components for blueprint: ${blueprintId}`)
+      return response
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update blueprint components'
+      setError(errorMessage)
+      logger.error('Error updating blueprint components:', err)
+      throw new Error(errorMessage)
+    }
+  }, [])
+
   // Generate plan for blueprint (placeholder for now)
   const generatePlan = useCallback((blueprint: Blueprint) => {
     logger.info(`Generating plan for blueprint: ${blueprint.name}`)
@@ -187,6 +211,7 @@ export function useBlueprints() {
     error,
     createBlueprint,
     updateBlueprint,
+    updateBlueprintComponents,
     deleteBlueprint,
     generatePlan,
     getEmojiForBlueprint,

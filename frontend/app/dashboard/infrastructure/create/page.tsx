@@ -56,6 +56,7 @@ interface InfrastructureBuilderState {
 	configName: string
 	configDescription: string
 	blueprintId?: string
+	isSaving: boolean
 }
 
 function InfrastructureBuilder() {
@@ -66,7 +67,7 @@ function InfrastructureBuilder() {
 	const { components, isLoading, error } = useComponents()
 	
 	// Use blueprints hook for all blueprint operations
-	const { createBlueprint, updateBlueprint, generatePlan } = useBlueprints()
+	const { createBlueprint, updateBlueprint, updateBlueprintComponents, generatePlan } = useBlueprints()
 	
 	// Build component categories from API data
 	const componentCategories = useMemo(() => {
@@ -97,6 +98,7 @@ function InfrastructureBuilder() {
 		configName: '',
 		configDescription: '',
 		blueprintId: undefined,
+		isSaving: false,
 	})
 	
 	// Update expanded categories when componentCategories change
@@ -117,7 +119,7 @@ function InfrastructureBuilder() {
 	const handleNodeConfigurationSave = useCallback((nodeId: string, parameters: Record<string, any>) => {
 		setNodes(nds =>
 			nds.map(node =>
-				node.id === nodeId
+				node.data.id === nodeId
 					? {
 							...node,
 							data: {
@@ -250,7 +252,7 @@ function InfrastructureBuilder() {
 				type: 'customNode',
 				position,
 				data: {
-					id: `${state.draggedNodeType}-${Date.now()}`,
+					id: nodeTypeData.id,
 					label: nodeTypeData.displayName,
 					nodeType: state.draggedNodeType,
 					icon: nodeTypeData.icon,
@@ -339,38 +341,98 @@ function InfrastructureBuilder() {
 	)
 
 	// Configuration management handlers
-	const handleSaveConfiguration = useCallback(() => {
+	const handleSaveConfiguration = useCallback(async () => {
 		if (nodes.length === 0) {
 			alert('Please add some components to your configuration before saving.')
 			return
 		}
 
-		const configName = state.configName || `Config-${Date.now()}`
-		const newConfig = {
-			name: configName,
-			type: 'custom' as const,
-			nodes,
-			edges,
-			deploymentStatus: 'draft' as const,
-			assignedVMs: [],
-			assignedGroups: [],
+		// Prevent multiple simultaneous saves
+		if (state.isSaving) {
+			return
 		}
-		
-		// Log nodes with their configured parameters
-		console.log('Configuration saved with nodes and parameters:')
-		nodes.forEach(node => {
-			console.log(`Node: ${node.data.label} (${node.data.nodeType})`)
-			if (node.data.parameters) {
-				console.log('Parameters:', node.data.parameters)
+
+		setState(prev => ({ ...prev, isSaving: true }))
+
+		try {
+			const configName = state.configName || `Config-${Date.now()}`
+			const configDescription = state.configDescription || state.configName || `Config-${Date.now()}`
+
+			// Step 1: Create or update the blueprint
+			let blueprintId: number
+			if (state.blueprintId) {
+				// Update existing blueprint
+				await updateBlueprint(parseInt(state.blueprintId), {
+					name: configName,
+					description: configDescription
+				})
+				blueprintId = parseInt(state.blueprintId)
 			} else {
-				console.log('No parameters configured')
+				// Create new blueprint
+				const newBlueprint = await createBlueprint(configName, configDescription, 'draft')
+				blueprintId = newBlueprint.id
 			}
-			console.log('---')
-		})
-		
-		console.log('Full configuration:', nodes)
-		alert(`Configuration "${configName}" saved successfully!`)
-	}, [nodes, edges, state.configName])
+
+			// Step 2: Build the components payload for the Update Blueprint Component API
+			const componentsPayload = nodes.map((node, index) => {
+				// Extract componentId from node data
+				const componentId = parseInt(String(node.data.id))
+				
+				// Find the component to get its parameter definitions
+				const component = components.find(comp => comp.id === componentId)
+				if (!component) {
+					console.warn(`Component with ID ${componentId} not found`)
+					return {
+						componentId: componentId,
+						position: index + 1,
+						parameters: []
+					}
+				}
+				
+				// Build parameters array from node parameters using actual parameter IDs
+				const parameters: Array<{ id: string; value: string; name: string }> = []
+				if (node.data.parameters) {
+					Object.entries(node.data.parameters).forEach(([name, value]: [string, any]) => {
+						// Find the parameter definition to get its actual ID
+						const paramDefinition = component.parameters.find(param => param.name === name)
+						if (paramDefinition) {
+							parameters.push({
+								id: paramDefinition.id, // Use the actual parameter ID from the component definition
+								value: String(value || ''),
+								name: name
+							})
+						} else {
+							console.warn(`Parameter '${name}' not found in component ${component.name}`)
+						}
+					})
+				}
+
+				return {
+					componentId: componentId,
+					position: index + 1, // Position is 1-based index
+					parameters: parameters
+				}
+			})
+
+			// Step 3: Update blueprint components
+			await updateBlueprintComponents(blueprintId, componentsPayload)
+
+			// Update local state with the blueprint ID
+			setState(prev => ({
+				...prev,
+				configName: configName,
+				configDescription: configDescription,
+				blueprintId: blueprintId.toString()
+			}))
+
+			alert(`Configuration "${configName}" saved successfully!`)
+		} catch (error) {
+			console.error('Failed to save configuration:', error)
+			alert('Failed to save configuration. Please try again.')
+		} finally {
+			setState(prev => ({ ...prev, isSaving: false }))
+		}
+	}, [nodes, edges, state.configName, state.configDescription, state.blueprintId, createBlueprint, updateBlueprint, updateBlueprintComponents, components])
 
 	const handleClearCanvas = useCallback(() => {
 		if (nodes.length === 0 && edges.length === 0) return
@@ -492,6 +554,7 @@ function InfrastructureBuilder() {
 				onSave={handleSaveConfiguration}
 				onClear={handleClearCanvas}
 				onViewPlan={handleViewPlan}
+				isSaving={state.isSaving}
 				configModalTrigger={
 					<BlueprintMetadataModal
 						onSave={handleConfigUpdate}
