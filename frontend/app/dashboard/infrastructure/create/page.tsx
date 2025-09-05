@@ -398,7 +398,7 @@ function InfrastructureBuilder() {
 						if (paramDefinition) {
 							parameters.push({
 								id: paramDefinition.id, // Use the actual parameter ID from the component definition
-								value: String(value || ''),
+								value: String(value ?? ''),
 								name: name
 							})
 						} else {
