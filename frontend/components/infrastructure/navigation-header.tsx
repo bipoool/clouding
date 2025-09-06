@@ -14,6 +14,7 @@ interface NavigationHeaderProps {
 	onClear: () => void
 	onViewPlan: () => void
 	configModalTrigger?: React.ReactNode
+	isSaving?: boolean
 }
 
 export function NavigationHeader({
@@ -26,6 +27,7 @@ export function NavigationHeader({
 	onClear,
 	onViewPlan,
 	configModalTrigger,
+	isSaving = false,
 }: NavigationHeaderProps) {
 	return (
 		<header className='glass border-b border-white/10 px-4 py-3 rounded-none z-30 relative flex-shrink-0'>
@@ -95,12 +97,22 @@ export function NavigationHeader({
 						size='sm'
 						onClick={onSave}
 						variant='ghost'
-						className='glow-border bg-transparent text-cyan-400 hover:bg-cyan-400/10 interactive-element'
+						disabled={isSaving}
+						className='glow-border bg-transparent text-cyan-400 hover:bg-cyan-400/10 interactive-element disabled:opacity-50 disabled:cursor-not-allowed'
 						aria-label="Save configuration"
 						title="Save configuration"
 					>
-						<Save className='h-4 w-4 sm:mr-2' />
-						<span className='hidden sm:inline'>Save</span>
+						{isSaving ? (
+							<>
+								<div className='animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400 sm:mr-2' />
+								<span className='hidden sm:inline'>Saving...</span>
+							</>
+						) : (
+							<>
+								<Save className='h-4 w-4 sm:mr-2' />
+								<span className='hidden sm:inline'>Save</span>
+							</>
+						)}
 					</Button>
 				</div>
 			</div>
