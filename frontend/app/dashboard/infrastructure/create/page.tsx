@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import React, { useState, useCallback, useMemo, useRef, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
 	ReactFlow,
 	MiniMap,
@@ -26,9 +27,9 @@ import { EmptyState } from '@/components/infrastructure/empty-state'
 import { ViewPlanModal } from '@/components/dashboard/ViewPlanModal'
 import { BlueprintMetadataModal } from '@/components/dashboard/BlueprintMetadataModal'
 import { Button } from '@/components/ui/button'
-import { Edit } from 'lucide-react'
+import { Edit, FileCode } from 'lucide-react'
 import { buildComponentCategories, getNodeTypes } from '@/lib/infrastructure-components'
-import { useBlueprints } from '@/hooks/useBlueprint'
+import { useBlueprints, type BlueprintWithComponents, type BlueprintComponent } from '@/hooks/useBlueprint'
 import { useComponents } from '@/hooks/useComponents'
 import { DashboardFooter } from '@/components/dashboard-footer'
 
@@ -59,7 +60,26 @@ interface InfrastructureBuilderState {
 	isSaving: boolean
 }
 
-function InfrastructureBuilder() {
+
+// Component that uses useSearchParams - needs to be wrapped in Suspense
+function InfrastructureBuilderWithParams() {
+	const searchParams = useSearchParams()
+	return <InfrastructureBuilder searchParams={searchParams} />
+}
+
+// Loading component for Suspense fallback
+function InfrastructureBuilderLoading() {
+	return (
+		<div className='h-screen gradient-bg noise-overlay flex items-center justify-center'>
+			<div className='text-center'>
+				<div className='animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4'></div>
+				<p className='text-white'>Loading...</p>
+			</div>
+		</div>
+	)
+}
+
+function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams }) {
 	const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
 	const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 	
@@ -85,20 +105,47 @@ function InfrastructureBuilder() {
 		return getNodeTypes(components)
 	}, [components, isLoading, error])
 	
+	// Decode blueprint data from URL parameters
+	const getBlueprintDataFromUrl = useCallback((): BlueprintWithComponents | null => {
+		const encodedData = searchParams.get('data')
+		if (encodedData) {
+			try {
+				const decodedData = JSON.parse(atob(encodedData)) as BlueprintWithComponents
+				console.log('Decoded Blueprint Data:', decodedData)
+				return decodedData
+			} catch (error) {
+				console.error('Failed to decode blueprint data:', error)
+				return null
+			}
+		}
+		return null
+	}, [searchParams])
+
+	// Store decoded blueprint data
+	const [blueprintData, setBlueprintData] = useState<BlueprintWithComponents | null>(() => {
+		return getBlueprintDataFromUrl()
+	})
+
+	// Store component loading errors
+	const [componentErrors, setComponentErrors] = useState<string[]>([])
+
 	// Initialize expanded categories when components are loaded
-	const [state, setState] = useState<InfrastructureBuilderState>({
-		agentConnected: true,
-		sidebarCollapsed: false,
-		mobileMenuOpen: false,
-		searchTerm: '',
-		expandedCategories: {},
-		draggedNodeType: null,
-		isViewPlanOpen: false,
-		generatedPlan: '',
-		configName: '',
-		configDescription: '',
-		blueprintId: undefined,
-		isSaving: false,
+	const [state, setState] = useState<InfrastructureBuilderState>(() => {
+		const decodedBlueprintData = getBlueprintDataFromUrl()
+		return {
+			agentConnected: true,
+			sidebarCollapsed: false,
+			mobileMenuOpen: false,
+			searchTerm: '',
+			expandedCategories: {},
+			draggedNodeType: null,
+			isViewPlanOpen: false,
+			generatedPlan: '',
+			configName: decodedBlueprintData?.name || searchParams.get('name') || '',
+			configDescription: decodedBlueprintData?.description || searchParams.get('description') || '',
+			blueprintId: decodedBlueprintData?.id?.toString() || searchParams.get('blueprintId') || undefined,
+			isSaving: false,
+		}
 	})
 	
 	// Update expanded categories when componentCategories change
@@ -111,6 +158,93 @@ function InfrastructureBuilder() {
 			}))
 		}
 	}, [componentCategories])
+
+	// Convert BlueprintComponent to React Flow Node
+	const convertBlueprintComponentToNode = useCallback((blueprintComponent: BlueprintComponent, index: number): Node | null => {
+		// Get the extended component with visual properties
+		const extendedComponents = getNodeTypes(components)
+		const componentDef = extendedComponents.find(comp => comp.id === blueprintComponent.componentId)
+		
+		if (!componentDef) {
+			const errorMessage = `Component with ID ${blueprintComponent.componentId} not found`
+			console.warn(errorMessage)
+			setComponentErrors(prev => [...prev, errorMessage])
+			return null
+		}
+
+		// Convert parameters array to object
+		const parameters = blueprintComponent.parameters.reduce((acc, param) => {
+			acc[param.name] = param.value
+			return acc
+		}, {} as Record<string, any>)
+
+		return {
+			id: `component-${blueprintComponent.id}`,
+			type: 'customNode',
+			position: { x: 100 + (index * 400), y: 100 }, // Increased distance between nodes
+			data: {
+				id: componentDef.id,
+				label: componentDef.displayName,
+				nodeType: componentDef.name,
+				icon: componentDef.icon,
+				color: componentDef.color,
+				bgColor: componentDef.bgColor,
+				borderColor: componentDef.borderColor,
+				components: components,
+				parameters: parameters
+			},
+		}
+	}, [components])
+
+	// Log blueprint components when available
+	useEffect(() => {
+		if (blueprintData?.components) {
+			console.log('Blueprint Components from URL:', blueprintData.components)
+		}
+	}, [blueprintData])
+
+	// Load blueprint components as nodes when both blueprint data and components are available
+	useEffect(() => {
+		if (blueprintData?.components && components.length > 0 && !isLoading) {
+			console.log('Loading blueprint components as nodes...')
+			
+			// Clear previous errors
+			setComponentErrors([])
+			
+			// Convert blueprint components to React Flow nodes
+			const nodesFromBlueprint = blueprintData.components
+				.map((blueprintComponent, index) => 
+					convertBlueprintComponentToNode(blueprintComponent, index)
+				)
+				.filter((node): node is Node => node !== null) // Filter out null nodes
+			
+			// Create edges based on position (connect nodes in sequence)
+			const edgesFromBlueprint: Edge[] = []
+			for (let i = 0; i < nodesFromBlueprint.length - 1; i++) {
+				edgesFromBlueprint.push({
+					id: `edge-${nodesFromBlueprint[i].id}-${nodesFromBlueprint[i + 1].id}`,
+					source: nodesFromBlueprint[i].id,
+					target: nodesFromBlueprint[i + 1].id,
+					type: 'smoothstep',
+					style: {
+						stroke: '#06b6d4',
+						strokeWidth: 2,
+					},
+					markerEnd: {
+						type: MarkerType.ArrowClosed,
+						color: '#06b6d4',
+					},
+				})
+			}
+			
+			// Set the nodes and edges
+			setNodes(nodesFromBlueprint)
+			setEdges(edgesFromBlueprint)
+			
+			console.log('Loaded nodes:', nodesFromBlueprint)
+			console.log('Loaded edges:', edgesFromBlueprint)
+		}
+	}, [blueprintData, components, isLoading, convertBlueprintComponentToNode, setNodes, setEdges])
 
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition } = useReactFlow()
@@ -568,8 +702,16 @@ function InfrastructureBuilder() {
 								variant='ghost'
 								size='sm'
 								className='p-1 h-auto text-gray-400 hover:text-cyan-400'
-								aria-label='Edit configuration metadata'
-								title='Edit configuration metadata'
+								aria-label={
+									state.blueprintId
+										? 'Edit configuration metadata'
+										: 'Create configuration metadata'
+								}
+								title={
+									state.blueprintId
+										? 'Edit configuration metadata'
+										: 'Create configuration metadata'
+								}
 							>
 								<Edit className='h-3 w-3' />
 							</Button>
@@ -577,6 +719,37 @@ function InfrastructureBuilder() {
 					/>
 				}
 			/>
+
+			{/* Component Errors */}
+			{componentErrors.length > 0 && (
+				<div className='glass-card border-red-500/20 bg-red-500/5 mx-4 mb-4'>
+					<div className='flex items-start gap-3'>
+						<div className='p-2 rounded-full bg-red-500/20'>
+							<FileCode className='h-5 w-5 text-red-400' />
+						</div>
+						<div className='flex-1'>
+							<h3 className='text-lg font-semibold text-red-400 mb-2'>
+								Component Loading Errors
+							</h3>
+							<div className='space-y-1'>
+								{componentErrors.map((error, index) => (
+									<p key={index} className='text-red-300 text-sm'>
+										• {error}
+									</p>
+								))}
+							</div>
+						</div>
+						<Button
+							variant='ghost'
+							size='sm'
+							onClick={() => setComponentErrors([])}
+							className='text-red-400 hover:text-red-300 hover:bg-red-500/10'
+						>
+							×
+						</Button>
+					</div>
+				</div>
+			)}
 
 			{/* Main Content Area */}
 			<div className='flex flex-1 overflow-hidden relative h-full'>
@@ -700,7 +873,9 @@ function InfrastructureBuilder() {
 export default function CreateInfraPage() {
 	return (
 		<ReactFlowProvider>
-			<InfrastructureBuilder />
+			<Suspense fallback={<InfrastructureBuilderLoading />}>
+				<InfrastructureBuilderWithParams />
+			</Suspense>
 		</ReactFlowProvider>
 	)
 }
