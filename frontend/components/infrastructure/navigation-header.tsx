@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Menu, Eye, Save, Trash2, Edit } from 'lucide-react'
+import { ArrowLeft, Menu, Save, Play, Trash2, Edit } from 'lucide-react'
 
 interface NavigationHeaderProps {
 	agentConnected: boolean
@@ -71,7 +71,8 @@ export function NavigationHeader({
 					</div>
 				</div>
 				<div className='flex items-center gap-2 sm:gap-3'>
-					<Button
+					{/* @TODO - add clear button functionality */}
+					{/* <Button
 						size='sm'
 						onClick={onClear}
 						variant='ghost'
@@ -81,18 +82,7 @@ export function NavigationHeader({
 					>
 						<Trash2 className='h-4 w-4 sm:mr-2' />
 						<span className='hidden sm:inline'>Clear</span>
-					</Button>
-					<Button
-						size='sm'
-						onClick={onViewPlan}
-						variant='ghost'
-						className='glow-border bg-transparent text-cyan-400 hover:bg-cyan-400/10 interactive-element'
-						aria-label="View deployment plan"
-						title="View deployment plan"
-					>
-						<Eye className='h-4 w-4 sm:mr-2' />
-						<span className='hidden sm:inline'>View Plan</span>
-					</Button>
+					</Button> */}
 					<Button
 						size='sm'
 						onClick={onSave}
@@ -113,6 +103,17 @@ export function NavigationHeader({
 								<span className='hidden sm:inline'>Save</span>
 							</>
 						)}
+					</Button>
+					<Button
+						size='sm'
+						onClick={onViewPlan}
+						variant='ghost'
+						className='glow-border bg-transparent text-cyan-400 hover:bg-cyan-400/10 interactive-element'
+						aria-label="View deployment plan"
+						title="View deployment plan"
+					>
+						<Play className='h-4 w-4 sm:mr-2' />
+						<span className='hidden sm:inline'>Plan</span>
 					</Button>
 				</div>
 			</div>
