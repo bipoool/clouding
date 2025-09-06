@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -21,9 +22,10 @@ import {
 	Clock,
 	Trash2,
 } from 'lucide-react'
-import type { Blueprint } from '@/hooks/useBlueprint'
+import type { Blueprint, BlueprintWithComponents } from '@/hooks/useBlueprint'
 
 export default function InfrastructurePage() {
+	const router = useRouter()
 	const {
 		blueprints,
 		loading,
@@ -32,6 +34,7 @@ export default function InfrastructurePage() {
 		updateBlueprint,
 		deleteBlueprint,
 		generatePlan,
+		getBlueprintComponents,
 		refreshBlueprints,
 	} = useBlueprints()
 	const [viewPlanConfig, setViewPlanConfig] = useState<Blueprint | null>(null)
@@ -39,6 +42,7 @@ export default function InfrastructurePage() {
 	const [isViewPlanOpen, setIsViewPlanOpen] = useState(false)
 	const [editBlueprint, setEditBlueprint] = useState<Blueprint | null>(null)
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+	const [componentFetchError, setComponentFetchError] = useState<string | null>(null)
 
 	const deployedConfigs = blueprints.filter(
 		config => config.status === 'deployed'
@@ -75,6 +79,36 @@ export default function InfrastructurePage() {
 		}
 	}
 
+	const handleOpenCreatePage = async (blueprint: Blueprint) => {
+		try {
+			// Clear any previous errors
+			setComponentFetchError(null)
+			
+			// Fetch blueprint components
+			const components = await getBlueprintComponents(blueprint.id)
+			console.log('Blueprint Components:', components)
+			
+			// Create blueprint data object with components
+			const blueprintData: BlueprintWithComponents = {
+				...blueprint,
+				description: blueprint.description || '',
+				components: components
+			}
+			
+			// Encode as base64 JSON
+			const encodedData = btoa(JSON.stringify(blueprintData))
+			
+			const params = new URLSearchParams({
+				data: encodedData
+			})
+			router.push(`/dashboard/infrastructure/create?${params.toString()}`)
+		} catch (error) {
+			console.error('Failed to fetch blueprint components:', error)
+			// Show error message instead of redirecting
+			setComponentFetchError('Failed to load blueprint components. Please try again.')
+		}
+	}
+
 	const handleSaveEdit = async (id: number, updates: { name: string; description: string }) => {
 		try {
 			await updateBlueprint(id, updates)
@@ -84,6 +118,10 @@ export default function InfrastructurePage() {
 			logger.error('Failed to update blueprint:', error)
 			throw error
 		}
+	}
+
+	const handleDismissError = () => {
+		setComponentFetchError(null)
 	}
 
 	// Loading state
@@ -159,6 +197,35 @@ export default function InfrastructurePage() {
 						</Link>
 					</div>
 				</div>
+
+				{/* Error Message */}
+				{componentFetchError && (
+					<div className='glass-card border-red-500/20 bg-red-500/5'>
+						<div className='flex items-center justify-between'>
+							<div className='flex items-center gap-3'>
+								<div className='p-2 rounded-full bg-red-500/20'>
+									<FileCode className='h-5 w-5 text-red-400' />
+								</div>
+								<div>
+									<h3 className='text-lg font-semibold text-red-400 mb-1'>
+										Error Loading Blueprint
+									</h3>
+									<p className='text-red-300 text-sm'>
+										{componentFetchError}
+									</p>
+								</div>
+							</div>
+							<Button
+								variant='ghost'
+								size='sm'
+								onClick={handleDismissError}
+								className='text-red-400 hover:text-red-300 hover:bg-red-500/10'
+							>
+								×
+							</Button>
+						</div>
+					</div>
+				)}
 
 				{/* Stats Overview */}
 				<div className='glass-card'>
@@ -278,6 +345,7 @@ export default function InfrastructurePage() {
 											onViewPlan={handleViewPlan}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
+											onOpenCreatePage={handleOpenCreatePage}
 										/>
 									))}
 								</div>
@@ -310,6 +378,7 @@ export default function InfrastructurePage() {
 											onViewPlan={handleViewPlan}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
+											onOpenCreatePage={handleOpenCreatePage}
 										/>
 									))}
 								</div>
@@ -336,6 +405,7 @@ export default function InfrastructurePage() {
 											onViewPlan={handleViewPlan}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
+											onOpenCreatePage={handleOpenCreatePage}
 										/>
 									))}
 								</div>
@@ -362,6 +432,7 @@ export default function InfrastructurePage() {
 											onViewPlan={handleViewPlan}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
+											onOpenCreatePage={handleOpenCreatePage}
 										/>
 									))}
 								</div>
@@ -404,9 +475,10 @@ interface BlueprintCardProps {
 	onViewPlan: (blueprint: Blueprint) => void
 	onDelete: (id: number) => void
 	onEdit: (id: number) => void
+	onOpenCreatePage: (blueprint: Blueprint) => void
 }
 
-function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit }: BlueprintCardProps) {
+function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit, onOpenCreatePage }: BlueprintCardProps) {
 	const emoji = getEmojiForBlueprint(blueprint.name)
 	
 	const getStatusColor = (status: string) => {
@@ -423,7 +495,10 @@ function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit }: BlueprintCar
 	}
 
 	return (
-		<div className='bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 group'>
+		<div 
+			className='bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 group cursor-pointer'
+			onClick={() => onOpenCreatePage(blueprint)}
+		>
 			<div className='flex items-start justify-between mb-4'>
 				<div className='flex items-center gap-3'>
 					<div className='text-3xl'>{emoji}</div>
@@ -460,7 +535,10 @@ function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit }: BlueprintCar
 					<Button
 						size='sm'
 						variant='ghost'
-						onClick={() => onViewPlan(blueprint)}
+						onClick={(e) => {
+							e.stopPropagation()
+							onViewPlan(blueprint)
+						}}
 						className='flex-1 bg-white/5 hover:bg-white/10 text-primary'
 					>
 						<Play className='h-3 w-3 mr-1' />
@@ -469,7 +547,10 @@ function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit }: BlueprintCar
 					<Button
 						size='sm'
 						variant='ghost'
-						onClick={() => onEdit(blueprint.id)}
+						onClick={(e) => {
+							e.stopPropagation()
+							onEdit(blueprint.id)
+						}}
 						className='bg-white/5 hover:bg-white/10 text-primary'
 					>
 						<Settings className='h-3 w-3' />
@@ -477,7 +558,10 @@ function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit }: BlueprintCar
 					<Button
 						size='sm'
 						variant='ghost'
-						onClick={() => onDelete(blueprint.id)}
+						onClick={(e) => {
+							e.stopPropagation()
+							onDelete(blueprint.id)
+						}}
 						className='bg-red-500/10 hover:bg-red-500/20 text-red-400'
 					>
 						<Trash2 className='h-3 w-3' />

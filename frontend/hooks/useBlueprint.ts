@@ -12,6 +12,37 @@ export interface Blueprint {
   updatedAt: string
 }
 
+// Blueprint Component interface based on API structure
+export interface BlueprintComponent {
+  id: number
+  blueprintId: number
+  componentId: number
+  position: number
+  parameters: Array<{
+    id: string
+    value: string
+    name: string
+  }>
+  createdAt: string
+  updatedAt: string
+}
+
+// Blueprint data with components for passing through URL
+export interface BlueprintWithComponents extends Blueprint {
+  components: BlueprintComponent[]
+}
+
+// Interface for updating blueprint components (simplified structure for API calls)
+export interface BlueprintComponentUpdate {
+  componentId: number
+  position: number
+  parameters: Array<{
+    id: string
+    value: string
+    name: string
+  }>
+}
+
 // Function to get a random emoji for blueprints
 const getRandomEmoji = (): string => {
   const emojis = [
@@ -176,15 +207,7 @@ export function useBlueprints() {
   }, [])
 
   // Update blueprint components
-  const updateBlueprintComponents = useCallback(async (blueprintId: number, components: Array<{
-    componentId: number
-    position: number
-    parameters: Array<{
-      id: string
-      value: string
-      name: string
-    }>
-  }>) => {
+  const updateBlueprintComponents = useCallback(async (blueprintId: number, components: BlueprintComponentUpdate[]) => {
     try {
       setError(null)
       
@@ -205,6 +228,20 @@ export function useBlueprints() {
     return "Plan generated"
   }, [])
 
+  // Get blueprint components
+  const getBlueprintComponents = useCallback(async (blueprintId: number): Promise<BlueprintComponent[]> => {
+    try {
+      logger.info(`Fetching components for blueprint: ${blueprintId}`)
+      const response = await httpClient.get(`/blueprint/${blueprintId}/components`)
+      logger.info(`Successfully fetched blueprint components for blueprint: ${blueprintId}`)
+      return response.data as BlueprintComponent[]
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch blueprint components'
+      logger.error('Error fetching blueprint components:', err)
+      throw new Error(errorMessage)
+    }
+  }, [])
+
   return {
     blueprints,
     loading,
@@ -214,6 +251,7 @@ export function useBlueprints() {
     updateBlueprintComponents,
     deleteBlueprint,
     generatePlan,
+    getBlueprintComponents,
     getEmojiForBlueprint,
     refreshBlueprints: fetchBlueprints
   }
