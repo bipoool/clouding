@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import React, { useState, useCallback, useMemo, useRef, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import {
 	ReactFlow,
@@ -61,12 +61,27 @@ interface InfrastructureBuilderState {
 }
 
 
-function InfrastructureBuilder() {
+// Component that uses useSearchParams - needs to be wrapped in Suspense
+function InfrastructureBuilderWithParams() {
+	const searchParams = useSearchParams()
+	return <InfrastructureBuilder searchParams={searchParams} />
+}
+
+// Loading component for Suspense fallback
+function InfrastructureBuilderLoading() {
+	return (
+		<div className='h-screen gradient-bg noise-overlay flex items-center justify-center'>
+			<div className='text-center'>
+				<div className='animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4'></div>
+				<p className='text-white'>Loading...</p>
+			</div>
+		</div>
+	)
+}
+
+function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams }) {
 	const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
 	const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-	
-	// Get URL search parameters
-	const searchParams = useSearchParams()
 	
 	// Fetch components from API
 	const { components, isLoading, error } = useComponents()
@@ -858,7 +873,9 @@ function InfrastructureBuilder() {
 export default function CreateInfraPage() {
 	return (
 		<ReactFlowProvider>
-			<InfrastructureBuilder />
+			<Suspense fallback={<InfrastructureBuilderLoading />}>
+				<InfrastructureBuilderWithParams />
+			</Suspense>
 		</ReactFlowProvider>
 	)
 }

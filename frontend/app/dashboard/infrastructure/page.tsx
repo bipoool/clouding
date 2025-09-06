@@ -101,6 +101,7 @@ export default function InfrastructurePage() {
 			const params = new URLSearchParams({
 				data: encodedData
 			})
+			// @TODO - using query param for now - this can lead to url length limit issues
 			router.push(`/dashboard/infrastructure/create?${params.toString()}`)
 		} catch (error) {
 			console.error('Failed to fetch blueprint components:', error)
