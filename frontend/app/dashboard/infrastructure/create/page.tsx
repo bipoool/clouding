@@ -147,6 +147,12 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			isSaving: false,
 		}
 	})
+
+	// Track which components have been used on the canvas - derived from current nodes
+	const usedComponentIds = useMemo(() => 
+		new Set(nodes.map(n => n.data?.id).filter(Boolean) as number[]), 
+		[nodes]
+	)
 	
 	// Update expanded categories when componentCategories change
 	useEffect(() => {
@@ -309,6 +315,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 						// If no nodes selected, just delete selected edges
 						setEdges(eds => eds.filter(edge => !edge.selected))
 					}
+					
 					return nds.filter(node => !node.selected)
 				})
 			}
@@ -342,13 +349,18 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 	// Handle individual node deletion
 	const handleDeleteNode = useCallback(
 		(nodeId: string) => {
+			// Find the node to get its component ID
+			const nodeToDelete = nodes.find(node => node.id === nodeId)
+			const componentId = nodeToDelete?.data.id as number
+			
 			setNodes(nds => nds.filter(node => node.id !== nodeId))
+			
 			// Also remove all edges connected to this node
 			setEdges(eds =>
 				eds.filter(edge => edge.source !== nodeId && edge.target !== nodeId)
 			)
 		},
-		[setNodes, setEdges]
+		[setNodes, setEdges, nodes]
 	)
 
 	// Handle individual edge deletion
@@ -587,27 +599,12 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			alert('Please add some components to generate a deployment plan.')
 			return
 		}
-
-		const mockConfig = {
-			id: 'temp-config',
-			name: state.configName || 'Untitled Configuration',
-			type: 'custom' as const,
-			nodes,
-			edges,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-			deploymentStatus: 'draft' as const,
-			assignedVMs: [],
-			assignedGroups: [],
-		}
-
-		// const plan = generatePlan(mockConfig)
-		// setState(prev => ({
-		// 	...prev,
-		// 	generatedPlan: plan,
-		// 	isViewPlanOpen: true,
-		// }))
-	}, [nodes, edges, state.configName, generatePlan])
+		setState(prev => ({
+			...prev,
+			generatedPlan: "Plan generated",
+			isViewPlanOpen: true,
+		}))
+	}, [nodes, edges, state.configName])
 
 	const handleClosePlanModal = useCallback(() => {
 		setState(prev => ({ ...prev, isViewPlanOpen: false }))
@@ -763,6 +760,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 					onSearchChange={handleSearchChange}
 					onCategoryToggle={handleCategoryToggle}
 					onDragStart={handleDragStart}
+					usedComponentIds={usedComponentIds}
 				/>
 
 				{/* Mobile Sidebar Overlay */}
@@ -784,6 +782,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 							onCategoryToggle={handleCategoryToggle}
 							onDragStart={handleDragStart}
 							onMobileDrag={handleMobileDrag}
+							usedComponentIds={usedComponentIds}
 						/>
 					</>
 				)}
@@ -857,12 +856,12 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 				config={{
 					id: 0,
 					name: state.configName || 'Untitled Configuration',
-					description: 'Draft',
+					description: state.configDescription || 'Draft',
 					status: 'draft',
 					createdAt: new Date().toISOString(),
 					updatedAt: new Date().toISOString()
 				}}
-				plan={state.generatedPlan}
+				plan={ state.generatedPlan || 'No plan available' }
 				isOpen={state.isViewPlanOpen}
 				onClose={handleClosePlanModal}
 			/>

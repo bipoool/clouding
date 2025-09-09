@@ -16,6 +16,7 @@ interface ComponentCategoryProps {
 	onToggle: () => void
 	onDragStart: (event: React.DragEvent, nodeType: string) => void
 	onMobileDrag?: () => void
+	usedComponentIds?: Set<number>
 }
 
 export function ComponentCategoryComponent({
@@ -26,6 +27,7 @@ export function ComponentCategoryComponent({
 	onToggle,
 	onDragStart,
 	onMobileDrag,
+	usedComponentIds = new Set(),
 }: ComponentCategoryProps) {
 	return (
 		<Collapsible open={searchTerm ? true : isExpanded} onOpenChange={onToggle}>
@@ -65,6 +67,7 @@ export function ComponentCategoryComponent({
 						isCollapsed={isCollapsed}
 						onDragStart={onDragStart}
 						onMobileDrag={onMobileDrag}
+						isUsed={usedComponentIds.has(component.id)}
 					/>
 				))}
 			</CollapsibleContent>

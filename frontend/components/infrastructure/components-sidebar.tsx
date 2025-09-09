@@ -16,6 +16,7 @@ interface ComponentsSidebarProps {
 	onCategoryToggle: (categoryName: string) => void
 	onDragStart: (event: React.DragEvent, nodeType: string) => void
 	onMobileDrag?: () => void
+	usedComponentIds?: Set<number>
 }
 
 export function ComponentsSidebar({
@@ -29,6 +30,7 @@ export function ComponentsSidebar({
 	onCategoryToggle,
 	onDragStart,
 	onMobileDrag,
+	usedComponentIds = new Set(),
 }: ComponentsSidebarProps) {
 	// Filter components based on search term
 	const filteredCategories = useMemo(
@@ -97,6 +99,7 @@ export function ComponentsSidebar({
 							onToggle={() => onCategoryToggle(category.name)}
 							onDragStart={onDragStart}
 							onMobileDrag={onMobileDrag}
+							usedComponentIds={usedComponentIds}
 						/>
 					))}
 				</div>
