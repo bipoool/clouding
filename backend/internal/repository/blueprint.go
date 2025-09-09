@@ -161,7 +161,7 @@ func (r *blueprintRepository) UpdateBlueprintComponents(ctx context.Context, blu
 
 	for id := range existingComponentMap {
 		if _, exists := newComponentMap[id]; !exists {
-			_, err = tx.ExecContext(ctx, deleteBlueprintComponentByComponentIdAndBlueprintIdQuery, id, bluePrintId)
+			_, err = tx.ExecContext(ctx, deleteBlueprintComponentByComponentIdAndBlueprintIdQuery, bluePrintId, id)
 			if err != nil {
 				return err
 			}
