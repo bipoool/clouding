@@ -148,8 +148,11 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 		}
 	})
 
-	// Track which components have been used on the canvas
-	const [usedComponentIds, setUsedComponentIds] = useState<Set<number>>(new Set())
+	// Track which components have been used on the canvas - derived from current nodes
+	const usedComponentIds = useMemo(() => 
+		new Set(nodes.map(n => n.data?.id).filter(Boolean) as number[]), 
+		[nodes]
+	)
 	
 	// Update expanded categories when componentCategories change
 	useEffect(() => {
@@ -244,17 +247,6 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			setNodes(nodesFromBlueprint)
 			setEdges(edgesFromBlueprint)
 			
-			// Update used component IDs based on loaded nodes
-			setUsedComponentIds(prev => {
-				const newSet = new Set<number>()
-				nodesFromBlueprint.forEach(node => {
-					if (node.data.id) {
-						newSet.add(node.data.id as number)
-					}
-				})
-				return newSet
-			})
-			
 			console.log('Loaded nodes:', nodesFromBlueprint)
 			console.log('Loaded edges:', edgesFromBlueprint)
 		}
@@ -324,20 +316,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 						setEdges(eds => eds.filter(edge => !edge.selected))
 					}
 					
-					const newNodes = nds.filter(node => !node.selected)
-					
-					// Update used component IDs based on remaining nodes
-					setUsedComponentIds(prev => {
-						const newSet = new Set<number>()
-						newNodes.forEach(node => {
-							if (node.data.id) {
-								newSet.add(node.data.id as number)
-							}
-						})
-						return newSet
-					})
-					
-					return newNodes
+					return nds.filter(node => !node.selected)
 				})
 			}
 		}
@@ -374,22 +353,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			const nodeToDelete = nodes.find(node => node.id === nodeId)
 			const componentId = nodeToDelete?.data.id as number
 			
-			setNodes(nds => {
-				const newNodes = nds.filter(node => node.id !== nodeId)
-				
-				// Update used component IDs based on remaining nodes
-				setUsedComponentIds(prev => {
-					const newSet = new Set<number>()
-					newNodes.forEach(node => {
-						if (node.data.id) {
-							newSet.add(node.data.id as number)
-						}
-					})
-					return newSet
-				})
-				
-				return newNodes
-			})
+			setNodes(nds => nds.filter(node => node.id !== nodeId))
 			
 			// Also remove all edges connected to this node
 			setEdges(eds =>
@@ -446,7 +410,6 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			}
 
 			setNodes(nds => nds.concat(newNode))
-			setUsedComponentIds(prev => new Set(prev).add(nodeTypeData.id))
 			setState(prev => ({ ...prev, draggedNodeType: null }))
 		},
 		[state.draggedNodeType, setNodes, screenToFlowPosition]
