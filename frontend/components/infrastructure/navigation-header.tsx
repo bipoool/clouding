@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Menu, Save, Play, Trash2, Edit } from 'lucide-react'
+import { PlanDeploymentModal } from '@/components/dashboard/PlanDeploymentModal'
 
 interface NavigationHeaderProps {
 	agentConnected: boolean
@@ -15,6 +16,7 @@ interface NavigationHeaderProps {
 	onViewPlan: () => void
 	configModalTrigger?: React.ReactNode
 	isSaving?: boolean
+  	blueprintId: number
 }
 
 export function NavigationHeader({
@@ -28,7 +30,9 @@ export function NavigationHeader({
 	onViewPlan,
 	configModalTrigger,
 	isSaving = false,
+	blueprintId,
 }: NavigationHeaderProps) {
+  const [planOpen, setPlanOpen] = useState(false)
 	return (
 		<header className='glass border-b border-white/10 px-4 py-3 rounded-none z-30 relative flex-shrink-0'>
 			<div className='flex items-center justify-between'>
@@ -106,7 +110,7 @@ export function NavigationHeader({
 					</Button>
 					<Button
 						size='sm'
-						onClick={onViewPlan}
+						onClick={() => setPlanOpen(true)}
 						variant='ghost'
 						className='glow-border bg-transparent text-cyan-400 hover:bg-cyan-400/10 interactive-element'
 						aria-label="View deployment plan"
@@ -117,6 +121,7 @@ export function NavigationHeader({
 					</Button>
 				</div>
 			</div>
+			<PlanDeploymentModal open={planOpen} onOpenChange={setPlanOpen} blueprintId={blueprintId} />
 		</header>
 	)
 }
