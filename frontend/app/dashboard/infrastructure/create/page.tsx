@@ -56,7 +56,7 @@ interface InfrastructureBuilderState {
 	generatedPlan: string
 	configName: string
 	configDescription: string
-	blueprintId?: string
+	blueprintId: string
 	isSaving: boolean
 }
 
@@ -143,7 +143,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			generatedPlan: '',
 			configName: decodedBlueprintData?.name || searchParams.get('name') || '',
 			configDescription: decodedBlueprintData?.description || searchParams.get('description') || '',
-			blueprintId: decodedBlueprintData?.id?.toString() || searchParams.get('blueprintId') || undefined,
+			blueprintId: decodedBlueprintData?.id?.toString() || searchParams.get('blueprintId') || '0',
 			isSaving: false,
 		}
 	})
@@ -686,6 +686,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 				onClear={handleClearCanvas}
 				onViewPlan={handleViewPlan}
 				isSaving={state.isSaving}
+				blueprintId={parseInt(state.blueprintId)}
 				configModalTrigger={
 					<BlueprintMetadataModal
 						onSave={handleConfigUpdate}
