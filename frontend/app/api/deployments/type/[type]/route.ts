@@ -25,10 +25,8 @@ function validateCreateDeploymentBody(body: any): { valid: boolean; message?: st
     if (!Array.isArray(body.hostIds) || !body.hostIds.every((v: any) => Number.isInteger(v))) {
       return { valid: false, message: '"hostIds" must be an array of integers' }
     }
-  }
-
-  if (body.hostGroupId !== undefined && !Number.isInteger(body.hostGroupId)) {
-    return { valid: false, message: '"hostGroupId" must be an integer when provided' }
+  } else {
+    return { valid: false, message: '"hostIds" is required' }
   }
 
   return { valid: true }

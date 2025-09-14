@@ -13,10 +13,10 @@ import { logger } from '@/lib/utils/logger'
 interface PlanDeploymentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  blueprintId?: number
+  blueprintId: number
 }
 
-export function PlanDeploymentModal({ open, onOpenChange, blueprintId = 45 }: PlanDeploymentModalProps) {
+export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDeploymentModalProps) {
   const { vms, isLoading } = useVMs()
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,7 +24,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId = 45 }: Pl
   const [pollDeploymentId, setPollDeploymentId] = useState<string | null>(null)
   const { deployment, refresh } = useDeploymentById(pollDeploymentId || undefined)
   const [isWaiting, setIsWaiting] = useState(false)
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const allOptions = useMemo(() => vms ?? [], [vms])
   const selectedIds = useMemo(() => Object.keys(selected).filter(id => selected[id]), [selected])
@@ -36,6 +36,15 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId = 45 }: Pl
   const close = () => onOpenChange(false)
 
   const handleCreatePlan = async () => {
+    // Validate blueprintId before any async work or state toggles
+    if (!Number.isFinite(blueprintId) || blueprintId <= 0) {
+      logger.warn('Cannot create plan: invalid or missing blueprintId', { blueprintId })
+      // Light user feedback via existing flow
+      if (typeof window !== 'undefined') {
+        alert('Please save your configuration to create a blueprint before planning.')
+      }
+      return
+    }
     try {
       setIsSubmitting(true)
       const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`
