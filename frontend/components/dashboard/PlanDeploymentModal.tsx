@@ -108,7 +108,8 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
   useEffect(() => {
     const status = deployment?.status
     if (!status) return
-    if (status === 'started' || status === 'failed' || status === 'completed') {
+    // Keep button disabled until completed or failed
+    if (status === 'failed' || status === 'completed') {
       setIsWaiting(false)
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current)
@@ -119,7 +120,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='bg-black/90 backdrop-blur-md border border-white/10 max-w-lg'>
+      <DialogContent className='bg-black/90 backdrop-blur-md border border-white/10 max-w-4xl w-[90vw]'>
         <DialogHeader>
           <DialogTitle className='text-primary flex items-center gap-2'>
             <Play className='h-5 w-5 text-cyan-400' />
@@ -131,6 +132,8 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
         </DialogHeader>
 
         <div className='space-y-4'>
+          {/* Hide host list once logs are visible */}
+          {!(deployment?.status === 'started' || deployment?.status === 'failed' || deployment?.status === 'completed') && (
           <div className='rounded-md border border-white/10'>
             <div className='px-3 py-2 border-b border-white/10 text-sm text-secondary flex items-center gap-2'>
               <Server className='h-4 w-4 text-cyan-400' />
@@ -159,6 +162,28 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
               </div>
             </ScrollArea>
           </div>
+          )}
+
+          {/* Deployment Logs Placeholder (shown once status transitions) */}
+          {(deployment?.status === 'started' || deployment?.status === 'failed' || deployment?.status === 'completed') && (
+            <div className='rounded-md border border-white/10'>
+              <div className='px-3 py-2 border-b border-white/10 text-sm text-secondary flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <span className='text-cyan-400'>Deployment Logs</span>
+                </div>
+                <div className='text-xs text-gray-400'>
+                  ID: {pollDeploymentId}
+                  <span className='mx-2'>•</span>
+                  Status: <span className='capitalize'>{deployment?.status}</span>
+                </div>
+              </div>
+              <ScrollArea className='h-72'>
+                <div className='p-3 font-mono text-sm text-gray-200 whitespace-pre-wrap'>
+                  Printing logs...
+                </div>
+              </ScrollArea>
+            </div>
+          )}
 
           <div className='flex gap-3 pt-2'>
             <Button
