@@ -68,16 +68,30 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
     }
   }
 
-  // Start/cleanup polling when pollDeploymentId changes
+  // Start/cleanup polling when deployment id OR modal visibility changes
   useEffect(() => {
+    // If modal is closed, ensure polling is stopped
+    if (!open) {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+        setIsWaiting(false)
+        setPollDeploymentId(null)
+      }
+      return
+    }
+
     if (!pollDeploymentId) return
+
     // Immediate fetch
     refresh()
-    // Clear any previous
+    // Clear any previous interval
     if (pollIntervalRef.current) {
       clearInterval(pollIntervalRef.current)
       pollIntervalRef.current = null
     }
+
+    // Start polling every 3s
     pollIntervalRef.current = setInterval(() => {
       refresh()
     }, 3000)
@@ -88,7 +102,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
         pollIntervalRef.current = null
       }
     }
-  }, [pollDeploymentId, refresh])
+  }, [open, pollDeploymentId, refresh])
 
   // Stop polling when status becomes started or failed
   useEffect(() => {

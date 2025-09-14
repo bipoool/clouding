@@ -101,7 +101,7 @@ export function useBlueprints() {
         fetchedBlueprints = response.data.data
       } else if (response && response.error == undefined) {
         // Fallback for direct array response
-        fetchedBlueprints = response
+        fetchedBlueprints = []
       } else {
         throw new Error('Invalid response format')
       }
