@@ -539,21 +539,9 @@ function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit, onOpenCreatePa
 						variant='ghost'
 						onClick={(e) => {
 							e.stopPropagation()
-							onViewPlan(blueprint)
-						}}
-						className='flex-1 bg-white/5 hover:bg-white/10 text-primary'
-					>
-						<Play className='h-3 w-3 mr-1' />
-						Plan
-					</Button>
-					<Button
-						size='sm'
-						variant='ghost'
-						onClick={(e) => {
-							e.stopPropagation()
 							onEdit(blueprint.id)
 						}}
-						className='bg-white/5 hover:bg-white/10 text-primary'
+						className='flex-1 bg-white/5 hover:bg-white/10 text-primary'
 					>
 						<Settings className='h-3 w-3' />
 					</Button>
@@ -564,7 +552,7 @@ function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit, onOpenCreatePa
 							e.stopPropagation()
 							onDelete(blueprint.id)
 						}}
-						className='bg-red-500/10 hover:bg-red-500/20 text-red-400'
+						className='flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400'
 					>
 						<Trash2 className='h-3 w-3' />
 					</Button>
