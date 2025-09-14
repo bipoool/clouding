@@ -78,7 +78,7 @@ func (l *LokiLogStreamer) GetLogs(ctx context.Context, jobId string, start, end 
 	u, _ := url.Parse(l.URL)
 	u.Path = "/loki/api/v1/query_range"
 	q := u.Query()
-	q.Set("query", fmt.Sprintf(`{jobId="%s"}`, strconv.Quote(jobId)))
+	q.Set("query", fmt.Sprintf(`{jobId=%s}`, strconv.Quote(jobId)))
 
 	// Loki accepts RFC3339Nano or unix ns; we’ll send RFC3339Nano
 	q.Set("start", start.UTC().Format(time.RFC3339Nano))
@@ -129,9 +129,7 @@ func (l *LokiLogStreamer) GetLogs(ctx context.Context, jobId string, start, end 
 				if err := json.Unmarshal([]byte(val[1].(string)), &log); err == nil {
 					if log.Res.Changed {
 						logsResult = append(logsResult, &log)
-					} else if log.Event == "runner_on_failed" {
-						logsResult = append(logsResult, &log)
-					} else if log.Event == "playbook_on_stats" {
+					} else if log.Event == "runner_on_failed" || log.Event == "playbook_on_stats" || log.Event == "runner_on_unreachable" {
 						logsResult = append(logsResult, &log)
 					}
 				}

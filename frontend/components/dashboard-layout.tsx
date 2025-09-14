@@ -49,7 +49,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 						{/* Logo/Brand - Links to Dashboard */}
 						<Link href='/dashboard' className='interactive-element'>
 							<div className='flex items-center gap-3 hover:opacity-80 transition-opacity'>
-								<Home className='h-6 w-6 text-cyan-400' />
 								<span className='text-xl font-bold text-cyan-400'>
 									{'<Clouding />'}
 								</span>
