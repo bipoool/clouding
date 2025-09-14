@@ -25,6 +25,8 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
   const { deployment, refresh } = useDeploymentById(pollDeploymentId || undefined)
   const [isWaiting, setIsWaiting] = useState(false)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const sseRef = useRef<EventSource | null>(null)
+  const [logs, setLogs] = useState<string[]>([])
 
   const allOptions = useMemo(() => vms ?? [], [vms])
   const selectedIds = useMemo(() => Object.keys(selected).filter(id => selected[id]), [selected])
@@ -108,18 +110,62 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
   useEffect(() => {
     const status = deployment?.status
     if (!status) return
-    // Keep button disabled until completed or failed
-    if (status === 'failed' || status === 'completed') {
-      setIsWaiting(false)
+    // Always stop polling once status leaves pending
+    if (status !== 'pending') {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current)
         pollIntervalRef.current = null
       }
+      // Start SSE stream once we move out of pending and no stream is active yet
+      if (pollDeploymentId) {
+        try {
+          const sse = new EventSource(`/api/deployments/progress/${encodeURIComponent(pollDeploymentId)}`)
+          console.log("ENDPOINT", `/api/deployments/progress/${encodeURIComponent(pollDeploymentId)}`)
+          sseRef.current = sse
+          setLogs([])
+          sse.addEventListener('logs', (ev: MessageEvent) => {
+            const data = (ev && typeof ev.data === 'string') ? ev.data : ''
+            setLogs(prev => [...prev, data + "\n"])
+          })
+          sse.addEventListener('error', (ev: MessageEvent) => {
+            const data = (ev && typeof ev.data === 'string') ? ev.data : ''
+            setLogs(prev => [...prev, data + "\n"])
+          })
+          const closeAndRefresh = async () => {
+            try { await refresh() } catch {}
+            if (sseRef.current) {
+              sseRef.current.close()
+              sseRef.current = null
+            }
+            // Reset deployment UUID to be ready for next deployment
+            setPollDeploymentId(null)
+          }
+          sse.addEventListener('end', closeAndRefresh)
+          sse.addEventListener('error', closeAndRefresh)
+        } catch (e) {
+          logger.error('Failed to open SSE for deployment logs', e)
+        }
+      }
+    }
+    // Keep the button disabled until completed or failed
+    if ((status === 'failed' || status === 'completed')) {
+      setIsWaiting(false)
     }
   }, [deployment?.status])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => {
+      // Close SSE when modal is closed
+      if (!v && sseRef.current) {
+        sseRef.current.close()
+        sseRef.current = null
+      }
+      if (!v) {
+        // Reset deployment UUID when closing modal to prepare for next run
+        setPollDeploymentId(null)
+      }
+      onOpenChange(v)
+    }}>
       <DialogContent className='bg-black/90 backdrop-blur-md border border-white/10 max-w-4xl w-[90vw]'>
         <DialogHeader>
           <DialogTitle className='text-primary flex items-center gap-2'>
@@ -178,8 +224,8 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
                 </div>
               </div>
               <ScrollArea className='h-72'>
-                <div className='p-3 font-mono text-sm text-gray-200 whitespace-pre-wrap'>
-                  Printing logs...
+                <div className='p-3 font-mono text-sm text-gray-200 whitespace-pre-wrap break-all overflow-x-hidden'>
+                  {logs.length > 0 ? logs.join('\n') : '....'}
                 </div>
               </ScrollArea>
             </div>

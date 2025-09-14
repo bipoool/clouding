@@ -612,9 +612,9 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 
 	const handleConfigUpdate = useCallback(async (data: { name: string; description?: string }) => {
 		try {
-			const isEditing = !!state.blueprintId
+			const isEditing = state.blueprintId !== '0'
 			
-			if (isEditing && state.blueprintId) {
+			if (isEditing) {
 				// Update existing blueprint
 				const response = await updateBlueprint(parseInt(state.blueprintId), {
 					name: data.name,
@@ -691,7 +691,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 					<BlueprintMetadataModal
 						onSave={handleConfigUpdate}
 						initialData={
-							state.blueprintId
+							state.blueprintId !== '0'
 								? { name: state.configName, description: state.configDescription }
 								: undefined
 						}
