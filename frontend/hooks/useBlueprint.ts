@@ -99,7 +99,7 @@ export function useBlueprints() {
       } else if (response && response.data && Array.isArray(response.data.data)) {
         // API response has nested data structure (data.data)
         fetchedBlueprints = response.data.data
-      } else if (Array.isArray(response)) {
+      } else if (response && response.error == undefined) {
         // Fallback for direct array response
         fetchedBlueprints = response
       } else {

@@ -27,7 +27,7 @@ import type { Blueprint, BlueprintWithComponents } from '@/hooks/useBlueprint'
 export default function InfrastructurePage() {
 	const router = useRouter()
 	const {
-		blueprints,
+    blueprints,
 		loading,
 		error,
 		createBlueprint,
@@ -44,15 +44,16 @@ export default function InfrastructurePage() {
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 	const [componentFetchError, setComponentFetchError] = useState<string | null>(null)
 
-	const deployedConfigs = blueprints.filter(
-		config => config.status === 'deployed'
-	)
-	const draftConfigs = blueprints.filter(
-		config => config.status === 'draft'
-	)
-	const archivedConfigs = blueprints.filter(
-		config => config.status === 'archived'
-	)
+    const safeBlueprints = Array.isArray(blueprints) ? blueprints : []
+    const deployedConfigs = safeBlueprints.filter(
+        config => config.status === 'deployed'
+    )
+    const draftConfigs = safeBlueprints.filter(
+        config => config.status === 'draft'
+    )
+    const archivedConfigs = safeBlueprints.filter(
+        config => config.status === 'archived'
+    )
 
 	const handleViewPlan = (config: Blueprint) => {
 		const plan = generatePlan(config)
@@ -71,13 +72,13 @@ export default function InfrastructurePage() {
 		}
 	}
 
-	const handleEdit = (configId: number) => {
-		const blueprint = blueprints.find(b => b.id === configId)
-		if (blueprint) {
-			setEditBlueprint(blueprint)
-			setIsEditModalOpen(true)
-		}
-	}
+    const handleEdit = (configId: number) => {
+        const blueprint = safeBlueprints.find(b => b.id === configId)
+        if (blueprint) {
+            setEditBlueprint(blueprint)
+            setIsEditModalOpen(true)
+        }
+    }
 
 	const handleOpenCreatePage = async (blueprint: Blueprint) => {
 		try {
@@ -241,8 +242,8 @@ export default function InfrastructurePage() {
 									<p className='text-sm font-medium text-secondary mb-1'>
 										Total Blueprints
 									</p>
-									<p className='text-3xl font-bold text-primary mb-2'>
-										{blueprints.length}
+                        <p className='text-3xl font-bold text-primary mb-2'>
+                            {safeBlueprints.length}
 									</p>
 								</div>
 								<div className='p-3 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/10 backdrop-blur-sm'>
@@ -313,7 +314,7 @@ export default function InfrastructurePage() {
 									value='all'
 									className='data-[state=active]:bg-white/10'
 								>
-									All Blueprints ({blueprints.length})
+                            All Blueprints ({safeBlueprints.length})
 								</TabsTrigger>
 								<TabsTrigger
 									value='deployed'
@@ -337,19 +338,19 @@ export default function InfrastructurePage() {
 						</div>
 
 						<TabsContent value='all' className='space-y-6'>
-							{blueprints.length > 0 ? (
-								<div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
-									{blueprints.map(blueprint => (
-										<BlueprintCard
-											key={blueprint.id}
-											blueprint={blueprint}
-											onViewPlan={handleViewPlan}
-											onDelete={handleDelete}
-											onEdit={handleEdit}
-											onOpenCreatePage={handleOpenCreatePage}
-										/>
-									))}
-								</div>
+                            {safeBlueprints.length > 0 ? (
+                                <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
+                                    {safeBlueprints.map(blueprint => (
+                                        <BlueprintCard
+                                            key={blueprint.id}
+                                            blueprint={blueprint}
+                                            onViewPlan={handleViewPlan}
+                                            onDelete={handleDelete}
+                                            onEdit={handleEdit}
+                                            onOpenCreatePage={handleOpenCreatePage}
+                                        />
+                                    ))}
+                                </div>
 							) : (
 								<div className='text-center py-12'>
 									<Layers className='h-16 w-16 text-gray-400 mx-auto mb-4' />
