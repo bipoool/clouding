@@ -1,0 +1,54 @@
+meta {
+  name: Stream Job Progress (SSE)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/deployments/progress/{{jobId}}
+  auth: none
+}
+
+headers {
+  Accept: text/event-stream
+  Cache-Control: no-cache
+  Connection: keep-alive
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Stream real-time deployment job progress via Server-Sent Events (SSE).
+
+  Endpoint
+  - `GET /deployments/progress/:jobId`
+
+  Path Params
+  - `jobId`: The deployment/job ID to stream logs for
+
+  Headers
+  - `Accept: text/event-stream` to indicate SSE
+  - `Authorization: Bearer <token>` required
+
+  Behavior
+  - Emits `logs` events with log payloads while the job runs
+  - Emits periodic `heartbeat` events to keep the connection alive
+  - Emits `end` when the stream finishes
+  - Emits `error` if the job cannot be streamed
+
+  Example Events
+  ```text
+  event: logs
+  data: {"success":true,"error":null,"data":{"message":"Starting...","timestamp":"2024-01-01T00:00:00Z"}}
+
+  event: heartbeat
+  data: {"success":true,"error":null,"data":"heartbeat"}
+
+  event: end
+  data: {"success":true,"error":null,"data":"complete"}
+  ```
+
+  Notes
+  - Keep the request open to continue receiving events.
+  - Close the connection to stop streaming.
+}
+
