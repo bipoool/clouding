@@ -43,7 +43,8 @@ export async function GET(request: NextRequest, { params }: { params: { jobId: s
         Authorization: `Bearer ${session.access_token}`,
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive'
-      }
+      },
+      signal: request.signal
     })
 
     if (!res.ok || !res.body) {
@@ -56,13 +57,17 @@ export async function GET(request: NextRequest, { params }: { params: { jobId: s
     return new Response(res.body, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive'
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no'
       }
     })
   } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      logger.debug('SSE proxy request aborted by client disconnect')
+      return new Response(null, { status: 499 })
+    }
     logger.error('SSE proxy route error', err)
     return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 })
   }
 }
-
