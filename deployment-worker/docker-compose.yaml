@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  deployment-worker:
+    image: vipuldockerhub/deployment-worker:${DEPLOYMENT_WORKER_VERSION}
+    volumes:
+      - type: bind
+        source: ./.env
+        target: /app/.env
+        read_only: true
+      - worker-runs:/app/runs
+      - worker-overrides:/app/overrides
+    command: ["python", "main.py"]
+
+volumes:
+  worker-runs:
+  worker-overrides:
