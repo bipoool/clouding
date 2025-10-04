@@ -56,8 +56,7 @@ func (s *hostService) GetHostsHealth(ctx context.Context, ids []int) ([]*host.Ho
 	defer cancel()
 
 	var wg sync.WaitGroup
-	mu := &sync.Mutex{}
-	var results []*host.HostHealth
+    resultCh := make(chan *host.HostHealth, len(hosts)) 
 
 	for _, h := range hosts {
 		if h.IP == nil {
@@ -70,34 +69,37 @@ func (s *hostService) GetHostsHealth(ctx context.Context, ids []int) ([]*host.Ho
 			defer wg.Done()
 
 			status, details := "unhealthy", "timeout or error"
-			done := make(chan struct{})
 
-			go func() {
-				status, details = utils.PerformHealthCheck(*h.IP, "22") 
-				close(done)
-			}()
+		    st, det := utils.PerformHealthCheck(*h.IP, "22") 
 
 			select {
-			case <-ctx.Done():
-				status, details = "unhealthy", "health check timed out"
-			case <-done:
-			}
+            case <-ctx.Done():
+                status, details = "unhealthy", "health check timed out"
+            default:
+                status, details = st, det
+            }
 
-			health := &host.HostHealth{
+
+		resultCh <- &host.HostHealth{
 				HostID:    h.ID,
 				IP:        h.IP,
 				Status:    &status,
 				Details:   &details,
-				CheckedAt: utils.PtrTime(time.Now()),
+				CheckedAt: time.Now(),
 			}
-
-			mu.Lock()
-			results = append(results, health)
-			mu.Unlock()
 		}(h)
 	}
 
-	wg.Wait()
+		go func() {
+		wg.Wait()
+		close(resultCh)
+	}()
+
+	var results []*host.HostHealth
+	for r := range resultCh {
+		results = append(results, r)
+	}
+
 	return results, nil
 }
 
