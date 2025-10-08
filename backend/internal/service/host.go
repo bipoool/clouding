@@ -1,7 +1,7 @@
 package service
 
 import (
-	 "clouding/backend/internal/model/host"
+	"clouding/backend/internal/model/host"
 	"clouding/backend/internal/repository"
 	"clouding/backend/internal/utils"
 	"context"
@@ -44,53 +44,41 @@ func (s *hostService) DeleteHost(ctx context.Context, id int) error {
 	return s.repo.DeleteHost(ctx, id)
 }
 
-
-
 func (s *hostService) GetHostsHealth(ctx context.Context, ids []int) ([]*host.HostHealth, error) {
 	hosts, err := s.repo.GetHosts(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	var wg sync.WaitGroup
-    resultCh := make(chan *host.HostHealth, len(hosts)) 
-
+	var checkHosts []*host.Host
 	for _, h := range hosts {
-		if h.IP == nil {
-			continue
+		if h != nil && h.IP != nil {
+			checkHosts = append(checkHosts, h)
 		}
+	}
+	if len(checkHosts) == 0 {
+		return nil, nil
+	}
 
-		wg.Add(1)
+	resultCh := make(chan *host.HostHealth, len(checkHosts))
+	var wg sync.WaitGroup
+	wg.Add(len(checkHosts))
 
+	for _, h := range checkHosts {
 		go func(h *host.Host) {
 			defer wg.Done()
-
-			status, details := "unhealthy", "timeout or error"
-
-		    st, det := utils.PerformHealthCheck(*h.IP, "22") 
-
-			select {
-            case <-ctx.Done():
-                status, details = "unhealthy", "health check timed out"
-            default:
-                status, details = st, det
-            }
-
-
-		resultCh <- &host.HostHealth{
+			st, det := utils.PerformHealthCheck(*h.IP, "22", ctx)
+			resultCh <- &host.HostHealth{
 				HostID:    h.ID,
-				IP:        h.IP,
-				Status:    &status,
-				Details:   &details,
+				Status:    &st,
+				Details:   &det,
 				CheckedAt: time.Now(),
 			}
 		}(h)
 	}
 
-		go func() {
+	// Close resultCh when all goroutines are done
+	go func() {
 		wg.Wait()
 		close(resultCh)
 	}()
@@ -102,4 +90,3 @@ func (s *hostService) GetHostsHealth(ctx context.Context, ids []int) ([]*host.Ho
 
 	return results, nil
 }
-

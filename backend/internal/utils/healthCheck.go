@@ -1,27 +1,26 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"time"
 )
 
-
-func PerformHealthCheck(ip string, port string) (string, string){
+func PerformHealthCheck(ip string, port string, ctx context.Context) (bool, string) {
 	if port == "" {
-		port = "80" 
+		port = "22"
 	}
 
-	address := fmt.Sprintf("%s:%s", ip, port)
-	timeout := 2 * time.Second
+	address := net.JoinHostPort(ip, port)
 
-	conn, err := net.DialTimeout("tcp", address, timeout)
+	d := net.Dialer{Timeout: 2 * time.Second}
+	conn, err := d.DialContext(ctx, "tcp", address)
+
 	if err != nil {
-		return "unhealthy", fmt.Sprintf("Connection failed: %v", err)
+		return false, fmt.Sprintf("Connection failed: %v", err)
 	}
 	defer conn.Close()
 
-	return "healthy", fmt.Sprintf("Successfully connected to %s", address)
+	return true, fmt.Sprintf("Successfully connected to %s", address)
 }
-
-

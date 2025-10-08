@@ -19,8 +19,7 @@ type Host struct {
 
 type HostHealth struct {
 	HostID    *int      `json:"hostId,omitempty"`
-	IP        *string   `json:"ip,omitempty"`
-	Status    *string   `json:"status,omitempty"`
+	Status    *bool     `json:"status,omitempty"`
 	Details   *string   `json:"details,omitempty"`
 	CheckedAt time.Time `json:"checkedAt,omitempty"`
 }
