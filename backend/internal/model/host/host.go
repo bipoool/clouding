@@ -17,6 +17,13 @@ type Host struct {
 	UpdatedAt    *time.Time       `db:"updated_at" json:"updatedAt"`
 }
 
+type HostHealth struct {
+	HostID    *int      `json:"hostId,omitempty"`
+	Status    *bool     `json:"status,omitempty"`
+	Details   *string   `json:"details,omitempty"`
+	CheckedAt time.Time `json:"checkedAt,omitempty"`
+}
+
 // Response structs
 type CreateHostResponse struct {
 	ID *int `json:"id"`

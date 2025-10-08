@@ -40,7 +40,7 @@ func (c *HostController) GetHost(ctx *gin.Context) {
 
 	if err != nil {
 		slog.Error(err.Error())
-		ctx.JSON(http.StatusBadRequest, utils.NewInternalErrorResponse(err.Error()))
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
 	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(host))
@@ -53,7 +53,7 @@ func (c *HostController) GetAllHosts(ctx *gin.Context) {
 
 	if err != nil {
 		slog.Error(err.Error())
-		ctx.JSON(http.StatusBadRequest, utils.NewInternalErrorResponse(err.Error()))
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
 
@@ -122,7 +122,7 @@ func (c *HostController) DeleteHost(ctx *gin.Context) {
 	}
 
 	if err := c.Service.DeleteHost(ctx.Request.Context(), id); err != nil {
-		ctx.JSON(http.StatusNotFound, utils.NewInternalErrorResponse(err.Error()))
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
 		return
 	}
 
@@ -131,4 +131,33 @@ func (c *HostController) DeleteHost(ctx *gin.Context) {
 		IsDeleted: true,
 	}
 	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(resp))
+}
+
+func (c *HostController) GetHostsHealth(ctx *gin.Context) {
+	idsStr := ctx.Param("id")
+	idsStrArr := strings.Split(idsStr, ",")
+	var ids []int
+	uniqueIDs := make(map[int]struct{})
+
+	for _, idStr := range idsStrArr {
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			slog.Debug("Host ID not correct", "ERR", err)
+			ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
+			return
+		}
+		if _, exists := uniqueIDs[id]; !exists {
+			uniqueIDs[id] = struct{}{}
+			ids = append(ids, id)
+		}
+	}
+
+	healthData, err := c.Service.GetHostsHealth(ctx.Request.Context(), ids)
+	if err != nil {
+		slog.Error(err.Error())
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(healthData))
 }
