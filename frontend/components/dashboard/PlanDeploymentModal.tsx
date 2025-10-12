@@ -22,11 +22,13 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { createDeployment } = useDeploymentsByType('plan')
   const [pollDeploymentId, setPollDeploymentId] = useState<string | null>(null)
+  const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null)
   const { deployment, refresh } = useDeploymentById(pollDeploymentId || undefined)
   const [isWaiting, setIsWaiting] = useState(false)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const sseRef = useRef<EventSource | null>(null)
   const [logs, setLogs] = useState<string[]>([])
+  const [view, setView] = useState<'selection' | 'logs'>('selection')
 
   const allOptions = useMemo(() => vms ?? [], [vms])
   const selectedIds = useMemo(() => Object.keys(selected).filter(id => selected[id]), [selected])
@@ -35,7 +37,27 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
     setSelected(prev => ({ ...prev, [id]: value }))
   }
 
-  const close = () => onOpenChange(false)
+  const handleOpenChange = (v: boolean) => {
+    if (!v) {
+      if (sseRef.current) {
+        sseRef.current.close()
+        sseRef.current = null
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+      setPollDeploymentId(null)
+      setActiveDeploymentId(null)
+      setLogs([])
+      setSelected({})
+      setIsWaiting(false)
+      setView('selection')
+    }
+    onOpenChange(v)
+  }
+
+  const close = () => handleOpenChange(false)
 
   const handleCreatePlan = async () => {
     // Validate blueprintId before any async work or state toggles
@@ -55,6 +77,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
         .filter(v => typeof v === 'number') as number[]
 
       const payload = { id, hostIds, blueprintId }
+      setActiveDeploymentId(id)
       // Call Create Deployment API via hook and print result
       const result = await createDeployment(payload)
       // eslint-disable-next-line no-console
@@ -65,6 +88,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
       setIsWaiting(true)
     } catch (e) {
       logger.error('Failed to create deployment plan', e)
+      setActiveDeploymentId(null)
     } finally {
       setIsSubmitting(false)
     }
@@ -77,9 +101,17 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current)
         pollIntervalRef.current = null
-        setIsWaiting(false)
-        setPollDeploymentId(null)
       }
+      if (sseRef.current) {
+        sseRef.current.close()
+        sseRef.current = null
+      }
+      setIsWaiting(false)
+      setPollDeploymentId(null)
+      setActiveDeploymentId(null)
+      setLogs([])
+      setSelected({})
+      setView('selection')
       return
     }
 
@@ -146,26 +178,37 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
           logger.error('Failed to open SSE for deployment logs', e)
         }
       }
+      if (activeDeploymentId) {
+        setView('logs')
+      }
     }
     // Keep the button disabled until completed or failed
     if ((status === 'failed' || status === 'completed')) {
       setIsWaiting(false)
     }
-  }, [deployment?.status])
+  }, [activeDeploymentId, deployment?.status])
+
+  const handleBackToSelection = () => {
+    if (sseRef.current) {
+      sseRef.current.close()
+      sseRef.current = null
+    }
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current)
+      pollIntervalRef.current = null
+    }
+    setPollDeploymentId(null)
+    setActiveDeploymentId(null)
+    setLogs([])
+    setSelected({})
+    setIsWaiting(false)
+    setView('selection')
+  }
+
+  const canGoBack = view === 'logs' && (deployment?.status === 'completed' || deployment?.status === 'failed')
 
   return (
-    <Dialog open={open} onOpenChange={(v) => {
-      // Close SSE when modal is closed
-      if (!v && sseRef.current) {
-        sseRef.current.close()
-        sseRef.current = null
-      }
-      if (!v) {
-        // Reset deployment UUID when closing modal to prepare for next run
-        setPollDeploymentId(null)
-      }
-      onOpenChange(v)
-    }}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className='bg-black/90 backdrop-blur-md border border-white/10 max-w-4xl w-[90vw]'>
         <DialogHeader>
           <DialogTitle className='text-primary flex items-center gap-2'>
@@ -179,7 +222,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
 
         <div className='space-y-4'>
           {/* Hide host list once logs are visible */}
-          {!(deployment?.status === 'started' || deployment?.status === 'failed' || deployment?.status === 'completed') && (
+          {view === 'selection' && (
           <div className='rounded-md border border-white/10'>
             <div className='px-3 py-2 border-b border-white/10 text-sm text-secondary flex items-center gap-2'>
               <Server className='h-4 w-4 text-cyan-400' />
@@ -211,14 +254,14 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
           )}
 
           {/* Deployment Logs Placeholder (shown once status transitions) */}
-          {(deployment?.status === 'started' || deployment?.status === 'failed' || deployment?.status === 'completed') && (
+          {view === 'logs' && (
             <div className='rounded-md border border-white/10'>
               <div className='px-3 py-2 border-b border-white/10 text-sm text-secondary flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
                   <span className='text-cyan-400'>Deployment Logs</span>
                 </div>
                 <div className='text-xs text-gray-400'>
-                  ID: {pollDeploymentId}
+                  ID: {activeDeploymentId ?? 'N/A'}
                   <span className='mx-2'>•</span>
                   Status: <span className='capitalize'>{deployment?.status}</span>
                 </div>
@@ -240,14 +283,24 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
             >
               Cancel
             </Button>
-            <Button
-              type='button'
-              onClick={handleCreatePlan}
-              disabled={selectedIds.length === 0 || isSubmitting || isWaiting}
-              className='flex-1 gradient-border-btn'
-            >
-              {isSubmitting ? 'Creating...' : isWaiting ? 'Waiting...' : 'Create Plan'}
-            </Button>
+            {view === 'selection' ? (
+              <Button
+                type='button'
+                onClick={handleCreatePlan}
+                disabled={selectedIds.length === 0 || isSubmitting || isWaiting}
+                className='flex-1 gradient-border-btn'
+              >
+                {isSubmitting ? 'Creating...' : isWaiting ? 'Waiting...' : 'Create Plan'}
+              </Button>
+            ) : canGoBack ? (
+              <Button
+                type='button'
+                onClick={handleBackToSelection}
+                className='flex-1 gradient-border-btn'
+              >
+                Back to Hosts
+              </Button>
+            ) : null}
           </div>
         </div>
       </DialogContent>
