@@ -20,11 +20,13 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
   const { vms, isLoading } = useVMs()
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { createDeployment } = useDeploymentsByType('plan')
+  const { createDeployment: createPlanDeployment } = useDeploymentsByType('plan')
+  const { createDeployment: createDeployDeployment } = useDeploymentsByType('deploy')
   const [pollDeploymentId, setPollDeploymentId] = useState<string | null>(null)
   const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null)
   const { deployment, refresh } = useDeploymentById(pollDeploymentId || undefined)
   const [isWaiting, setIsWaiting] = useState(false)
+  const [isDeploying, setIsDeploying] = useState(false)
   const { fetchBlueprintDeployments, loading: isCheckingExisting } = useBlueprintDeployments()
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const sseRef = useRef<EventSource | null>(null)
@@ -53,6 +55,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
       setLogs([])
       setSelected({})
       setIsWaiting(false)
+      setIsDeploying(false)
       setView('selection')
     }
     onOpenChange(v)
@@ -80,7 +83,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
       const payload = { id, hostIds, blueprintId }
       setActiveDeploymentId(id)
       // Call Create Deployment API via hook and print result
-      const result = await createDeployment(payload)
+      const result = await createPlanDeployment(payload)
       // eslint-disable-next-line no-console
       console.log('Create Plan result:', result)
       logger.info('Create Plan result', result)
@@ -238,22 +241,59 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
     setLogs([])
     setSelected({})
     setIsWaiting(false)
+    setIsDeploying(false)
     setView('selection')
   }
 
   const canGoBack = view === 'logs' && (deployment?.status === 'completed' || deployment?.status === 'failed')
   const isPlanSuccessful = deployment?.status === 'completed'
 
-  const handleDeploy = () => {
+  const handleDeploy = async () => {
     logger.info('Deploy button clicked after successful plan', {
       deploymentId: activeDeploymentId,
       status: deployment?.status,
     })
-    // eslint-disable-next-line no-console
-    console.log('Deploy status log:', {
-      deploymentId: activeDeploymentId,
-      status: deployment?.status,
-    })
+    if (!Number.isFinite(blueprintId) || blueprintId <= 0) {
+      logger.warn('Cannot deploy: invalid or missing blueprintId', { blueprintId })
+      if (typeof window !== 'undefined') {
+        alert('Please save your configuration to create a blueprint before deploying.')
+      }
+      return
+    }
+
+    const selectedHostIds = selectedIds
+      .map(id => (Number.isFinite(Number(id)) ? Number(id) : id))
+      .filter(v => typeof v === 'number') as number[]
+    const deploymentHostIds = Array.isArray(deployment?.hostIds) ? deployment.hostIds.filter(id => typeof id === 'number') : []
+    const hostIds = selectedHostIds.length > 0 ? selectedHostIds : deploymentHostIds
+
+    if (hostIds.length === 0) {
+      logger.warn('Cannot deploy: no hostIds available from selection or plan deployment')
+      if (typeof window !== 'undefined') {
+        alert('Cannot deploy: no hosts selected.')
+      }
+      return
+    }
+
+    try {
+      setIsDeploying(true)
+      const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+      const payload = { id, hostIds, blueprintId }
+      setActiveDeploymentId(id)
+      const result = await createDeployDeployment(payload)
+      // eslint-disable-next-line no-console
+      console.log('Deploy result:', result)
+      logger.info('Deploy result', result)
+      setPollDeploymentId(id)
+      setIsWaiting(true)
+      setLogs([])
+      setView('logs')
+    } catch (e) {
+      logger.error('Failed to create deployment', e)
+      setActiveDeploymentId(null)
+    } finally {
+      setIsDeploying(false)
+    }
   }
 
   return (
@@ -361,9 +401,9 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
                     type='button'
                     onClick={handleDeploy}
                     className='flex-1 gradient-border-btn'
-                    disabled={isPlanSuccessful}
+                    disabled={!isPlanSuccessful || isDeploying || isWaiting}
                   >
-                    Deploy
+                    {isDeploying ? 'Deploying...' : 'Deploy'}
                   </Button>
                 )}
               </>
