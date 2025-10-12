@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Play, Server } from 'lucide-react'
 import { useVMs } from '@/hooks/useVMs'
-import { useDeploymentById, useDeploymentsByType } from '@/hooks/useDeployments'
+import { useDeploymentById, useDeploymentsByType, useBlueprintDeployments } from '@/hooks/useDeployments'
 import { logger } from '@/lib/utils/logger'
 
 interface PlanDeploymentModalProps {
@@ -25,6 +25,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
   const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null)
   const { deployment, refresh } = useDeploymentById(pollDeploymentId || undefined)
   const [isWaiting, setIsWaiting] = useState(false)
+  const { fetchBlueprintDeployments, loading: isCheckingExisting } = useBlueprintDeployments()
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const sseRef = useRef<EventSource | null>(null)
   const [logs, setLogs] = useState<string[]>([])
@@ -93,6 +94,41 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
       setIsSubmitting(false)
     }
   }
+
+  useEffect(() => {
+    if (!open) return
+    if (!Number.isFinite(blueprintId) || blueprintId <= 0) return
+
+    let cancelled = false
+
+    const fetchExistingDeployment = async () => {
+      try {
+        const list = await fetchBlueprintDeployments(blueprintId)
+        if (cancelled) return
+
+        const existing = list.find(
+          item => (item.status === 'pending' || item.status === 'started')
+        )
+
+        if (!existing) return
+
+        logger.info('Found active plan deployment for blueprint', { blueprintId, deploymentId: existing.id })
+        setSelected({})
+        setActiveDeploymentId(existing.id)
+        setPollDeploymentId(existing.id)
+        setIsWaiting(true)
+      } catch (err) {
+        if (cancelled) return
+        logger.error('Failed to fetch blueprint deployments', err)
+      }
+    }
+
+    fetchExistingDeployment()
+
+    return () => {
+      cancelled = true
+    }
+  }, [blueprintId, open, fetchBlueprintDeployments])
 
   // Start/cleanup polling when deployment id OR modal visibility changes
   useEffect(() => {
@@ -164,7 +200,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
             setLogs(prev => [...prev, data + "\n"])
           })
           const closeAndRefresh = async () => {
-            try { await refresh() } catch {}
+            try { await refresh() } catch { }
             if (sseRef.current) {
               sseRef.current.close()
               sseRef.current = null
@@ -206,6 +242,19 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
   }
 
   const canGoBack = view === 'logs' && (deployment?.status === 'completed' || deployment?.status === 'failed')
+  const isPlanSuccessful = deployment?.status === 'completed'
+
+  const handleDeploy = () => {
+    logger.info('Deploy button clicked after successful plan', {
+      deploymentId: activeDeploymentId,
+      status: deployment?.status,
+    })
+    // eslint-disable-next-line no-console
+    console.log('Deploy status log:', {
+      deploymentId: activeDeploymentId,
+      status: deployment?.status,
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -223,34 +272,34 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
         <div className='space-y-4'>
           {/* Hide host list once logs are visible */}
           {view === 'selection' && (
-          <div className='rounded-md border border-white/10'>
-            <div className='px-3 py-2 border-b border-white/10 text-sm text-secondary flex items-center gap-2'>
-              <Server className='h-4 w-4 text-cyan-400' />
-              Available Hosts
-            </div>
-            <ScrollArea className='max-h-64'>
-              <div className='p-3 space-y-2'>
-                {isLoading && (
-                  <div className='text-sm text-secondary'>Loading hosts...</div>
-                )}
-                {!isLoading && allOptions.length === 0 && (
-                  <div className='text-sm text-secondary'>No hosts found.</div>
-                )}
-                {!isLoading && allOptions.map(vm => (
-                  <label key={vm.id} className='flex items-center gap-3 p-2 rounded hover:bg-white/5 cursor-pointer'>
-                    <Checkbox
-                      checked={!!selected[vm.id]}
-                      onCheckedChange={v => toggle(vm.id, Boolean(v))}
-                    />
-                    <div className='flex-1'>
-                      <div className='text-sm text-white'>{vm.name}</div>
-                      <div className='text-xs text-secondary'>{vm.ip} • {vm.os}</div>
-                    </div>
-                  </label>
-                ))}
+            <div className='rounded-md border border-white/10'>
+              <div className='px-3 py-2 border-b border-white/10 text-sm text-secondary flex items-center gap-2'>
+                <Server className='h-4 w-4 text-cyan-400' />
+                Available Hosts
               </div>
-            </ScrollArea>
-          </div>
+              <ScrollArea className='max-h-64'>
+                <div className='p-3 space-y-2'>
+                  {isLoading && (
+                    <div className='text-sm text-secondary'>Loading hosts...</div>
+                  )}
+                  {!isLoading && allOptions.length === 0 && (
+                    <div className='text-sm text-secondary'>No hosts found.</div>
+                  )}
+                  {!isLoading && allOptions.map(vm => (
+                    <label key={vm.id} className='flex items-center gap-3 p-2 rounded hover:bg-white/5 cursor-pointer'>
+                      <Checkbox
+                        checked={!!selected[vm.id]}
+                        onCheckedChange={v => toggle(vm.id, Boolean(v))}
+                      />
+                      <div className='flex-1'>
+                        <div className='text-sm text-white'>{vm.name}</div>
+                        <div className='text-xs text-secondary'>{vm.ip} • {vm.os}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
           )}
 
           {/* Deployment Logs Placeholder (shown once status transitions) */}
@@ -287,19 +336,37 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
               <Button
                 type='button'
                 onClick={handleCreatePlan}
-                disabled={selectedIds.length === 0 || isSubmitting || isWaiting}
+                disabled={selectedIds.length === 0 || isSubmitting || isWaiting || isCheckingExisting}
                 className='flex-1 gradient-border-btn'
               >
-                {isSubmitting ? 'Creating...' : isWaiting ? 'Waiting...' : 'Create Plan'}
+                {isSubmitting
+                  ? 'Creating...'
+                  : isCheckingExisting
+                    ? 'Checking...'
+                    : isWaiting
+                      ? 'Waiting...'
+                      : 'Create Plan'}
               </Button>
             ) : canGoBack ? (
-              <Button
-                type='button'
-                onClick={handleBackToSelection}
-                className='flex-1 gradient-border-btn'
-              >
-                Back to Hosts
-              </Button>
+              <>
+                <Button
+                  type='button'
+                  onClick={handleBackToSelection}
+                  className='flex-1 gradient-border-btn'
+                >
+                  Back to Hosts
+                </Button>
+                {(
+                  <Button
+                    type='button'
+                    onClick={handleDeploy}
+                    className='flex-1 gradient-border-btn'
+                    disabled={isPlanSuccessful}
+                  >
+                    Deploy
+                  </Button>
+                )}
+              </>
             ) : null}
           </div>
         </div>

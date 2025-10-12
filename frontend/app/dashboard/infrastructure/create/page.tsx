@@ -32,6 +32,8 @@ import { buildComponentCategories, getNodeTypes } from '@/lib/infrastructure-com
 import { useBlueprints, type BlueprintWithComponents, type BlueprintComponent } from '@/hooks/useBlueprint'
 import { useComponents } from '@/hooks/useComponents'
 import { DashboardFooter } from '@/components/dashboard-footer'
+import { useBlueprintDeployments, type DeploymentStatus } from '@/hooks/useDeployments'
+import { logger } from '@/lib/utils/logger'
 
 const initialNodes: Node[] = []
 const initialEdges: Edge[] = []
@@ -88,6 +90,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 	
 	// Use blueprints hook for all blueprint operations
 	const { createBlueprint, updateBlueprint, updateBlueprintComponents, generatePlan } = useBlueprints()
+	const { fetchBlueprintDeployments, loading: isPlanStatusLoading } = useBlueprintDeployments()
 	
 	// Build component categories from API data
 	const componentCategories = useMemo(() => {
@@ -147,12 +150,52 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			isSaving: false,
 		}
 	})
+	const [planDeploymentStatus, setPlanDeploymentStatus] = useState<DeploymentStatus | null>(null)
+	const [planDeploymentId, setPlanDeploymentId] = useState<string | null>(null)
 
 	// Track which components have been used on the canvas - derived from current nodes
 	const usedComponentIds = useMemo(() => 
 		new Set(nodes.map(n => n.data?.id).filter(Boolean) as number[]), 
 		[nodes]
 	)
+	const blueprintNumericId = useMemo(() => {
+		const value = Number(state.blueprintId)
+		return Number.isFinite(value) ? value : 0
+	}, [state.blueprintId])
+
+	const refreshPlanStatus = useCallback(async () => {
+		if (!Number.isFinite(blueprintNumericId) || blueprintNumericId <= 0) {
+			setPlanDeploymentStatus(null)
+			setPlanDeploymentId(null)
+			return
+		}
+		try {
+			const deployments = await fetchBlueprintDeployments(blueprintNumericId)
+			const planDeployments = deployments
+				.filter(deployment => deployment.type === 'plan')
+				.sort((a, b) => {
+					const aTime = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime()
+					const bTime = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime()
+					return bTime - aTime
+				})
+			const latestPlan = planDeployments[0]
+			if (latestPlan) {
+				setPlanDeploymentStatus(latestPlan.status)
+				setPlanDeploymentId(latestPlan.id)
+			} else {
+				setPlanDeploymentStatus(null)
+				setPlanDeploymentId(null)
+			}
+		} catch (err) {
+			logger.error('Failed to refresh blueprint deployments', err)
+			setPlanDeploymentStatus(null)
+			setPlanDeploymentId(null)
+		}
+	}, [blueprintNumericId, fetchBlueprintDeployments])
+
+	useEffect(() => {
+		void refreshPlanStatus()
+	}, [refreshPlanStatus])
 	
 	// Update expanded categories when componentCategories change
 	useEffect(() => {
@@ -686,7 +729,11 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 				onClear={handleClearCanvas}
 				onViewPlan={handleViewPlan}
 				isSaving={state.isSaving}
-				blueprintId={parseInt(state.blueprintId)}
+				blueprintId={blueprintNumericId}
+				planDeploymentStatus={planDeploymentStatus}
+				planDeploymentId={planDeploymentId}
+				isCheckingPlanStatus={isPlanStatusLoading && blueprintNumericId > 0}
+				onRefreshPlanStatus={refreshPlanStatus}
 				configModalTrigger={
 					<BlueprintMetadataModal
 						onSave={handleConfigUpdate}

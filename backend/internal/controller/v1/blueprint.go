@@ -159,6 +159,31 @@ func (c *BlueprintController) UpdateBlueprintComponents(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(response))
 }
 
+func (c *BlueprintController) GetDeployments(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		slog.Debug("ID not correct", "ERR", err)
+		ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse(err.Error()))
+		return
+	}
+
+	limitStr := ctx.Query("limit")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		limit = 3
+	}
+
+	deployments, err := c.Service.GetDeployments(ctx.Request.Context(), id, limit)
+	if err != nil {
+		slog.Error("failed to fetch deployments for blueprint", "blueprintId", id, "error", err)
+		ctx.JSON(http.StatusInternalServerError, utils.NewInternalErrorResponse(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse(deployments))
+}
+
 func (c *BlueprintController) Delete(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)

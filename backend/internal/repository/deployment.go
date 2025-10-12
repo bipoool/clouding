@@ -20,6 +20,7 @@ type DeploymentRepository interface {
 	UpdateStatus(ctx context.Context, id string, updateDeploymentStatusPayload *deployment.UpdateDeploymentStatusPayload) error
 	GetByID(ctx context.Context, id string) (*deployment.Deployment, error)
 	GetByUserAndType(ctx context.Context, userId string, dType string) ([]*deployment.Deployment, error)
+	GetByBlueprintID(ctx context.Context, blueprintId int, limit int) ([]*deployment.Deployment, error)
 	GetDeploymentHostMappingByIds(ctx context.Context, ids []string) ([]*deployment.DeploymentHostMapping, error)
 }
 
@@ -30,6 +31,9 @@ var getDeploymentByIdQuery string
 
 //go:embed sql/deployment/getDeploymentByUser.sql
 var getByUserAndTypeQuery string
+
+//go:embed sql/deployment/getDeploymentsByBlueprintId.sql
+var getByBlueprintIDQuery string
 
 //go:embed sql/deployment/getDeploymentHostMapping.sql
 var getDeploymentHostMapping string
@@ -159,6 +163,17 @@ func (r *deploymentRepository) GetByUserAndType(ctx context.Context, userId stri
 	if err != nil {
 		return nil, err
 	}
+	return deployments, nil
+}
+
+func (r *deploymentRepository) GetByBlueprintID(ctx context.Context, blueprintId int, limit int) ([]*deployment.Deployment, error) {
+	var deployments []*deployment.Deployment
+
+	err := r.db.SelectContext(ctx, &deployments, getByBlueprintIDQuery, blueprintId, limit)
+	if err != nil {
+		return nil, err
+	}
+
 	return deployments, nil
 }
 

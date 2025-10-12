@@ -154,3 +154,37 @@ export function useDeploymentHostMappings(ids?: string[] | string) {
 
   return { mappings, loading, error, refresh: fetchMappings }
 }
+
+export function useBlueprintDeployments() {
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchBlueprintDeployments = useCallback(
+    async (blueprintId: number): Promise<Deployment[]> => {
+      if (!Number.isFinite(blueprintId) || blueprintId <= 0) {
+        const message = 'Invalid blueprintId'
+        setError(message)
+        logger.warn('Skipping blueprint deployment fetch: invalid blueprintId', { blueprintId })
+        throw new Error(message)
+      }
+      try {
+        setLoading(true)
+        setError(null)
+        const res = await httpClient.get(`/blueprint/${blueprintId}/deployments`)
+        const list = unwrap<Deployment[]>(res)
+        logger.info(`Fetched ${list.length} deployments for blueprint ${blueprintId}`)
+        return list
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to fetch blueprint deployments'
+        setError(message)
+        logger.error('Error fetching blueprint deployments:', err)
+        throw err instanceof Error ? err : new Error(message)
+      } finally {
+        setLoading(false)
+      }
+    },
+    []
+  )
+
+  return { fetchBlueprintDeployments, loading, error }
+}

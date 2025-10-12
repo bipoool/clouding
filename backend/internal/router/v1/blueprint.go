@@ -12,7 +12,8 @@ import (
 func RegisterBlueprintRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
 	blueprintRepo := repository.NewBlueprintRepository(db)
 	componentRepo := repository.NewComponentRepository(db)
-	service := service.NewBlueprintService(blueprintRepo, componentRepo)
+	deploymentRepo := repository.NewDeploymentRepository(db)
+	service := service.NewBlueprintService(blueprintRepo, componentRepo, deploymentRepo)
 	controller := v1.NewBlueprintController(service)
 
 	rg.GET("/blueprints", controller.GetAll)
@@ -21,5 +22,6 @@ func RegisterBlueprintRoutes(rg *gin.RouterGroup, db *sqlx.DB) {
 	rg.POST("/blueprints", controller.Create)
 	rg.PUT("/blueprints/:id", controller.Update)
 	rg.DELETE("/blueprints/:id", controller.Delete)
+	rg.GET("/blueprints/:id/deployments", controller.GetDeployments)
 	rg.PUT("/blueprints/:id/components", controller.UpdateBlueprintComponents)
 }
