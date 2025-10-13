@@ -48,19 +48,23 @@ export function NavigationHeader({
 				className: 'border-cyan-300/50 text-cyan-200 bg-cyan-400/10'
 			}
 		}
+		const defaultStatus = {
+			text: 'Unknown',
+			className: 'border-white/20 text-white/70 bg-white/5'
+		}
 		if (!planDeploymentStatus) {
 			return {
 				text: 'Not Deployed',
 				className: 'border-white/20 text-white/70 bg-white/5'
 			}
 		}
-		const statusMap: Record<DeploymentStatus, { text: string; className: string }> = {
+		const statusMap: Record<string, { text: string; className: string }> = {
 			pending: { text: 'Pending', className: 'border-amber-400/60 text-amber-200 bg-amber-500/10' },
 			started: { text: 'Started', className: 'border-blue-400/60 text-blue-200 bg-blue-500/10' },
 			completed: { text: 'Success', className: 'border-emerald-400/60 text-emerald-200 bg-emerald-500/10' },
 			failed: { text: 'Failed', className: 'border-red-400/60 text-red-200 bg-red-500/10' }
 		}
-		return statusMap[planDeploymentStatus]
+		return statusMap[planDeploymentStatus] ?? defaultStatus
 	}, [isCheckingPlanStatus, planDeploymentStatus])
 
 	const handlePlanModalOpenChange = useCallback((open: boolean) => {

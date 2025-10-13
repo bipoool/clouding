@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -168,10 +169,17 @@ func (c *BlueprintController) GetDeployments(ctx *gin.Context) {
 		return
 	}
 
-	limitStr := ctx.Query("limit")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		limit = 3
+	limitStr := strings.TrimSpace(ctx.Query("limit"))
+	limit := 3
+	if limitStr != "" {
+		parsedLimit, err := strconv.Atoi(limitStr)
+		if err == nil {
+			if parsedLimit <= 0 {
+				ctx.JSON(http.StatusBadRequest, utils.NewWrongParamResponse("limit must be a positive integer"))
+				return
+			}
+			limit = parsedLimit
+		}
 	}
 
 	deployments, err := c.Service.GetDeployments(ctx.Request.Context(), id, limit)

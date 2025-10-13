@@ -10,7 +10,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest, { params }: { 
     const { id } = params
     logger.info(`Getting deployments for blueprint ${id} for user: ${request.user.id}`)
 
-    const deployments = await backendClient.get(`/blueprints/${id}/deployments?limit=1`, request)
+    const deployments = await backendClient.get(`/blueprints/${id}/deployments?limit=3`, request)
 
     return NextResponse.json(deployments)
   } catch (error) {
