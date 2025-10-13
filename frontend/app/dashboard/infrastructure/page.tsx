@@ -43,6 +43,7 @@ export default function InfrastructurePage() {
 	const [editBlueprint, setEditBlueprint] = useState<Blueprint | null>(null)
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 	const [componentFetchError, setComponentFetchError] = useState<string | null>(null)
+	const [openingBlueprintId, setOpeningBlueprintId] = useState<number | null>(null)
 
     const safeBlueprints = Array.isArray(blueprints) ? blueprints : []
     const deployedConfigs = safeBlueprints.filter(
@@ -78,12 +79,16 @@ export default function InfrastructurePage() {
             setEditBlueprint(blueprint)
             setIsEditModalOpen(true)
         }
-    }
+	}
 
 	const handleOpenCreatePage = async (blueprint: Blueprint) => {
+		if (openingBlueprintId !== null) {
+			return
+		}
 		try {
 			// Clear any previous errors
 			setComponentFetchError(null)
+			setOpeningBlueprintId(blueprint.id)
 			
 			// Fetch blueprint components
 			const components = await getBlueprintComponents(blueprint.id)
@@ -108,6 +113,7 @@ export default function InfrastructurePage() {
 			console.error('Failed to fetch blueprint components:', error)
 			// Show error message instead of redirecting
 			setComponentFetchError('Failed to load blueprint components. Please try again.')
+			setOpeningBlueprintId(null)
 		}
 	}
 
@@ -124,6 +130,7 @@ export default function InfrastructurePage() {
 
 	const handleDismissError = () => {
 		setComponentFetchError(null)
+		setOpeningBlueprintId(null)
 	}
 
 	// Loading state
@@ -340,14 +347,15 @@ export default function InfrastructurePage() {
 						<TabsContent value='all' className='space-y-6'>
                             {safeBlueprints.length > 0 ? (
                                 <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
-                                    {safeBlueprints.map(blueprint => (
-                                        <BlueprintCard
-                                            key={blueprint.id}
-                                            blueprint={blueprint}
-                                            onViewPlan={handleViewPlan}
-                                            onDelete={handleDelete}
-                                            onEdit={handleEdit}
-                                            onOpenCreatePage={handleOpenCreatePage}
+									{safeBlueprints.map(blueprint => (
+										<BlueprintCard
+											key={blueprint.id}
+											blueprint={blueprint}
+											isOpening={openingBlueprintId === blueprint.id}
+											onViewPlan={handleViewPlan}
+											onDelete={handleDelete}
+											onEdit={handleEdit}
+											onOpenCreatePage={handleOpenCreatePage}
                                         />
                                     ))}
                                 </div>
@@ -377,6 +385,7 @@ export default function InfrastructurePage() {
 										<BlueprintCard
 											key={blueprint.id}
 											blueprint={blueprint}
+											isOpening={openingBlueprintId === blueprint.id}
 											onViewPlan={handleViewPlan}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
@@ -404,6 +413,7 @@ export default function InfrastructurePage() {
 										<BlueprintCard
 											key={blueprint.id}
 											blueprint={blueprint}
+											isOpening={openingBlueprintId === blueprint.id}
 											onViewPlan={handleViewPlan}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
@@ -431,6 +441,7 @@ export default function InfrastructurePage() {
 										<BlueprintCard
 											key={blueprint.id}
 											blueprint={blueprint}
+											isOpening={openingBlueprintId === blueprint.id}
 											onViewPlan={handleViewPlan}
 											onDelete={handleDelete}
 											onEdit={handleEdit}
@@ -474,13 +485,14 @@ export default function InfrastructurePage() {
 // Blueprint Card Component
 interface BlueprintCardProps {
 	blueprint: Blueprint
+	isOpening: boolean
 	onViewPlan: (blueprint: Blueprint) => void
 	onDelete: (id: number) => void
 	onEdit: (id: number) => void
 	onOpenCreatePage: (blueprint: Blueprint) => void
 }
 
-function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit, onOpenCreatePage }: BlueprintCardProps) {
+function BlueprintCard({ blueprint, isOpening, onViewPlan, onDelete, onEdit, onOpenCreatePage }: BlueprintCardProps) {
 	const emoji = getEmojiForBlueprint(blueprint.name)
 	
 	const getStatusColor = (status: string) => {
@@ -498,7 +510,8 @@ function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit, onOpenCreatePa
 
 	return (
 		<div 
-			className='bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 group cursor-pointer'
+			aria-busy={isOpening}
+			className={`relative bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10 transition-all duration-300 group cursor-pointer overflow-hidden ${isOpening ? 'opacity-60 pointer-events-none' : 'hover:bg-white/10'}`}
 			onClick={() => onOpenCreatePage(blueprint)}
 		>
 			<div className='flex items-start justify-between mb-4'>
@@ -517,6 +530,13 @@ function BlueprintCard({ blueprint, onViewPlan, onDelete, onEdit, onOpenCreatePa
 					</div>
 				</div>
 			</div>
+
+			{isOpening && (
+				<div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 backdrop-blur-sm text-center text-sm text-cyan-200'>
+					<div className='h-8 w-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin' />
+					<span className='uppercase tracking-wide text-xs font-semibold'>Loading</span>
+				</div>
+			)}
 
 			<div className='space-y-3'>
 				{/* Status */}

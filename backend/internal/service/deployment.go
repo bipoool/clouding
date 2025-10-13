@@ -29,6 +29,10 @@ func NewDeploymentService(r repository.DeploymentRepository, publisher *queue.Pu
 func (s *deploymentService) Create(ctx context.Context, d *deployment.Deployment) error {
 
 	// Validation Could be done with query only
+	if d.BlueprintID == nil {
+		return fmt.Errorf("blueprintID is required to create a deployment")
+	}
+
 	existingDeployments, _ := s.repo.GetByBlueprintID(ctx, *d.BlueprintID, 5)
 	for _, d := range existingDeployments {
 		if d.Status == deployment.StatusPending || d.Status == deployment.StatusStarted {
