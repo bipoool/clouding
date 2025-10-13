@@ -3,6 +3,7 @@ package service
 import (
 	"clouding/backend/internal/model/blueprint"
 	"clouding/backend/internal/model/component"
+	"clouding/backend/internal/model/deployment"
 	"clouding/backend/internal/repository"
 	"context"
 	"fmt"
@@ -12,6 +13,7 @@ type BlueprintService interface {
 	GetByID(ctx context.Context, id int) (*blueprint.Blueprint, error)
 	GetAllByUserID(ctx context.Context, userId string) ([]*blueprint.Blueprint, error)
 	GetComponentsByBlueprintID(ctx context.Context, blueprintId int) ([]*blueprint.BlueprintComponent, error)
+	GetDeployments(ctx context.Context, blueprintId int, limit int) ([]*deployment.Deployment, error)
 	Create(ctx context.Context, bp *blueprint.Blueprint) error
 	Update(ctx context.Context, bp *blueprint.Blueprint) error
 	UpdateBlueprintComponents(ctx context.Context, blueprintId int, components []*blueprint.BlueprintComponent) error
@@ -19,12 +21,21 @@ type BlueprintService interface {
 }
 
 type blueprintService struct {
-	blueprintRepo repository.BlueprintRepository
-	componentRepo repository.ComponentRepository
+	blueprintRepo  repository.BlueprintRepository
+	componentRepo  repository.ComponentRepository
+	deploymentRepo repository.DeploymentRepository
 }
 
-func NewBlueprintService(blueprintRepo repository.BlueprintRepository, componentRepo repository.ComponentRepository) BlueprintService {
-	return &blueprintService{blueprintRepo: blueprintRepo, componentRepo: componentRepo}
+func NewBlueprintService(
+	blueprintRepo repository.BlueprintRepository,
+	componentRepo repository.ComponentRepository,
+	deploymentRepo repository.DeploymentRepository,
+) BlueprintService {
+	return &blueprintService{
+		blueprintRepo:  blueprintRepo,
+		componentRepo:  componentRepo,
+		deploymentRepo: deploymentRepo,
+	}
 }
 
 func (s *blueprintService) GetByID(ctx context.Context, id int) (*blueprint.Blueprint, error) {
@@ -37,6 +48,10 @@ func (s *blueprintService) GetAllByUserID(ctx context.Context, userId string) ([
 
 func (s *blueprintService) GetComponentsByBlueprintID(ctx context.Context, blueprintId int) ([]*blueprint.BlueprintComponent, error) {
 	return s.blueprintRepo.GetComponentsByBlueprintID(ctx, blueprintId)
+}
+
+func (s *blueprintService) GetDeployments(ctx context.Context, blueprintId int, limit int) ([]*deployment.Deployment, error) {
+	return s.deploymentRepo.GetByBlueprintID(ctx, blueprintId, limit)
 }
 
 func (s *blueprintService) Create(ctx context.Context, bp *blueprint.Blueprint) error {

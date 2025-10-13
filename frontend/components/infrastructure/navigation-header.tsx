@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Menu, Save, Play, Trash2, Edit } from 'lucide-react'
 import { PlanDeploymentModal } from '@/components/dashboard/PlanDeploymentModal'
+import { type DeploymentStatus } from '@/hooks/useDeployments'
 
 interface NavigationHeaderProps {
 	agentConnected: boolean
@@ -16,7 +16,11 @@ interface NavigationHeaderProps {
 	onViewPlan: () => void
 	configModalTrigger?: React.ReactNode
 	isSaving?: boolean
-  	blueprintId: number
+	blueprintId: number
+	planDeploymentStatus?: DeploymentStatus | null
+	planDeploymentId?: string | null
+	isCheckingPlanStatus?: boolean
+	onRefreshPlanStatus?: () => void
 }
 
 export function NavigationHeader({
@@ -31,8 +35,45 @@ export function NavigationHeader({
 	configModalTrigger,
 	isSaving = false,
 	blueprintId,
+	planDeploymentStatus = null,
+	planDeploymentId = null,
+	isCheckingPlanStatus = false,
+	onRefreshPlanStatus
 }: NavigationHeaderProps) {
-  const [planOpen, setPlanOpen] = useState(false)
+	const [planOpen, setPlanOpen] = useState(false)
+	const planStatusPresentation = useMemo(() => {
+		if (isCheckingPlanStatus) {
+			return {
+				text: 'Checking...',
+				className: 'border-cyan-300/50 text-cyan-200 bg-cyan-400/10'
+			}
+		}
+		const defaultStatus = {
+			text: 'Unknown',
+			className: 'border-white/20 text-white/70 bg-white/5'
+		}
+		if (!planDeploymentStatus) {
+			return {
+				text: 'Not Deployed',
+				className: 'border-white/20 text-white/70 bg-white/5'
+			}
+		}
+		const statusMap: Record<string, { text: string; className: string }> = {
+			pending: { text: 'Pending', className: 'border-amber-400/60 text-amber-200 bg-amber-500/10' },
+			started: { text: 'Started', className: 'border-blue-400/60 text-blue-200 bg-blue-500/10' },
+			completed: { text: 'Success', className: 'border-emerald-400/60 text-emerald-200 bg-emerald-500/10' },
+			failed: { text: 'Failed', className: 'border-red-400/60 text-red-200 bg-red-500/10' }
+		}
+		return statusMap[planDeploymentStatus] ?? defaultStatus
+	}, [isCheckingPlanStatus, planDeploymentStatus])
+
+	const handlePlanModalOpenChange = useCallback((open: boolean) => {
+		setPlanOpen(open)
+		if (!open && onRefreshPlanStatus) {
+			void onRefreshPlanStatus()
+		}
+	}, [onRefreshPlanStatus])
+
 	return (
 		<header className='glass border-b border-white/10 px-4 py-3 rounded-none z-30 relative flex-shrink-0'>
 			<div className='flex items-center justify-between'>
@@ -87,6 +128,16 @@ export function NavigationHeader({
 						<Trash2 className='h-4 w-4 sm:mr-2' />
 						<span className='hidden sm:inline'>Clear</span>
 					</Button> */}
+					<span
+						className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wide ${planStatusPresentation.className}`}
+						title={
+							planDeploymentStatus
+								? `Latest plan deployment status${planDeploymentId ? ` • ${planDeploymentId}` : ''}`
+								: 'No plan deployments found'
+						}
+					>
+						{planStatusPresentation.text}
+					</span>
 					<Button
 						size='sm'
 						onClick={onSave}
@@ -121,7 +172,11 @@ export function NavigationHeader({
 					</Button>
 				</div>
 			</div>
-			<PlanDeploymentModal open={planOpen} onOpenChange={setPlanOpen} blueprintId={blueprintId} />
+			<PlanDeploymentModal
+				open={planOpen}
+				onOpenChange={handlePlanModalOpenChange}
+				blueprintId={blueprintId}
+			/>
 		</header>
 	)
 }

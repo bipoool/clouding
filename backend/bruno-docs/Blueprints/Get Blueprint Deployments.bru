@@ -1,0 +1,48 @@
+meta {
+  name: Get Blueprint Deployments
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/blueprints/:id/deployments
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+docs {
+  Fetch all deployments created from the specified blueprint.
+
+  Path params:
+  - `id`: Blueprint identifier (integer).
+
+  Response example:
+  {
+    "data": [
+      {
+        "id": "8d23f396-6c20-4a21-8c26-ccf1363c4f90",
+        "userId": "e234ff41-62bc-49fa-8fbf-fbed2defbe1b",
+        "blueprintId": 33,
+        "type": "plan",
+        "status": "completed",
+        "createdAt": "2025-07-06T01:18:00.852766Z",
+        "updatedAt": "2025-07-06T01:22:43.102221Z"
+      },
+      {
+        "id": "6b0f3f58-24d3-4a51-905d-8f8ff5dd6fd1",
+        "userId": "e234ff41-62bc-49fa-8fbf-fbed2defbe1b",
+        "blueprintId": 33,
+        "type": "deploy",
+        "status": "failed",
+        "createdAt": "2025-07-07T14:08:13.112233Z",
+        "updatedAt": "2025-07-07T14:12:01.984400Z"
+      }
+    ],
+    "error": null,
+    "success": true
+  }
+}
