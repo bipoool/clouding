@@ -36,4 +36,5 @@ jobs:
           push: true
           context: ./backend
           file: ./backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
           tags: vipuldockerhub/clouding-backend:${{ steps.version.outputs.version }}
