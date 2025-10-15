@@ -168,32 +168,63 @@ export default function DashboardPage() {
 					<h3 className='text-2xl font-bold text-primary mb-6'>
 						Management Sections
 					</h3>
-					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-						
-					<Link href='/dashboard/credentials' className='interactive-element'>
+					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6'>
+
+						<Link href='/dashboard/deployments' className='interactive-element'>
 							<div className='glass-card glass-card-hover group relative overflow-hidden h-full'>
-								<div className='absolute inset-0 bg-gradient-to-br from-orange-500/20 via-yellow-500/10 to-orange-600/5 opacity-50' />
+								<div className='absolute inset-0 bg-gradient-to-br from-sky-500/20 via-indigo-500/10 to-sky-600/5 opacity-50' />
 								<div className='relative z-10 p-6'>
 									<div className='flex items-center mb-4'>
-										<div className='p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-yellow-500/10 mr-4'>
-											<Key className='h-8 w-8 text-orange-400 group-hover:scale-110 transition-transform' />
+										<div className='p-3 rounded-xl bg-gradient-to-br from-sky-500/20 to-indigo-500/10 mr-4'>
+											<TrendingUp className='h-8 w-8 text-sky-400 group-hover:scale-110 transition-transform' />
 										</div>
 										<div>
 											<h4 className='text-xl font-bold text-primary mb-1'>
-												Credentials
+												Deployments
 											</h4>
 											<p className='text-sm text-secondary'>
-												{metrics.find(m => m.entity === 'credentials')?.total?.toString() || '0'} Credentials
+												{metrics.find(m => m.entity === 'deployments')?.total?.toString() || '0'} Runs
 											</p>
 										</div>
 									</div>
 									<p className='text-gray-200 mb-4'>
-										Manage SSH keys, SSL certificates, API tokens, and other
-										authentication credentials for your infrastructure.
+										Review plans and deployment executions across all of your
+										blueprints in one place.
 									</p>
-									<div className='flex items-center text-sm text-orange-400'>
-										<Key className='h-4 w-4 mr-2' />
-										Manage Credentials →
+									<div className='flex items-center text-sm text-sky-400'>
+										<TrendingUp className='h-4 w-4 mr-2' />
+										View Deployments →
+									</div>
+								</div>
+							</div>
+						</Link>
+						<Link
+							href='/dashboard/infrastructure'
+							className='interactive-element'
+						>
+							<div className='glass-card glass-card-hover group relative overflow-hidden h-full'>
+								<div className='absolute inset-0 bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-green-600/5 opacity-50' />
+								<div className='relative z-10 p-6'>
+									<div className='flex items-center mb-4'>
+										<div className='p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/10 mr-4'>
+											<Layers className='h-8 w-8 text-green-400 group-hover:scale-110 transition-transform' />
+										</div>
+										<div>
+											<h4 className='text-xl font-bold text-primary mb-1'>
+												Blueprints
+											</h4>
+											<p className='text-sm text-secondary'>
+												{metrics.find(m => m.entity === 'blueprints')?.total?.toString() || '0'} Blueprints
+											</p>
+										</div>
+									</div>
+									<p className='text-gray-200 mb-4'>
+										Create, manage, and deploy infrastructure blueprints
+										using visual canvas editor and automation tools.
+									</p>
+									<div className='flex items-center text-sm text-green-400'>
+										<Layers className='h-4 w-4 mr-2' />
+										View Blueprints →
 									</div>
 								</div>
 							</div>
@@ -255,34 +286,30 @@ export default function DashboardPage() {
 								</div>
 							</div>
 						</Link>
-
-						<Link
-							href='/dashboard/infrastructure'
-							className='interactive-element'
-						>
+						<Link href='/dashboard/credentials' className='interactive-element'>
 							<div className='glass-card glass-card-hover group relative overflow-hidden h-full'>
-								<div className='absolute inset-0 bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-green-600/5 opacity-50' />
+								<div className='absolute inset-0 bg-gradient-to-br from-orange-500/20 via-yellow-500/10 to-orange-600/5 opacity-50' />
 								<div className='relative z-10 p-6'>
 									<div className='flex items-center mb-4'>
-										<div className='p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/10 mr-4'>
-											<Layers className='h-8 w-8 text-green-400 group-hover:scale-110 transition-transform' />
+										<div className='p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-yellow-500/10 mr-4'>
+											<Key className='h-8 w-8 text-orange-400 group-hover:scale-110 transition-transform' />
 										</div>
 										<div>
 											<h4 className='text-xl font-bold text-primary mb-1'>
-												Blueprints
+												Credentials
 											</h4>
 											<p className='text-sm text-secondary'>
-												{metrics.find(m => m.entity === 'blueprints')?.total?.toString() || '0'} Blueprints
+												{metrics.find(m => m.entity === 'credentials')?.total?.toString() || '0'} Credentials
 											</p>
 										</div>
 									</div>
 									<p className='text-gray-200 mb-4'>
-										Create, manage, and deploy infrastructure blueprints
-										using visual canvas editor and automation tools.
+										Manage SSH keys, SSL certificates, API tokens, and other
+										authentication credentials for your infrastructure.
 									</p>
-									<div className='flex items-center text-sm text-green-400'>
-										<Layers className='h-4 w-4 mr-2' />
-										View Blueprints →
+									<div className='flex items-center text-sm text-orange-400'>
+										<Key className='h-4 w-4 mr-2' />
+										Manage Credentials →
 									</div>
 								</div>
 							</div>

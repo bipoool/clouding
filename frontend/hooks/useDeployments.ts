@@ -48,7 +48,7 @@ export function useDeploymentsByType(type: DeploymentType) {
       const res = await httpClient.get(`/deployments/type/${type}`)
       const list = unwrap<Deployment[]>(res)
       setDeployments(list)
-      logger.info(`Fetched ${list.length} ${type} deployments`)
+      logger.info(`Fetched ${list && list.length} ${type} deployments`)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch deployments'
       setError(message)
