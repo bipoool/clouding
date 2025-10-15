@@ -14,7 +14,6 @@ function DeploymentsList({
 	items: Deployment[]
 	emptyMessage: string
 }) {
-	console.log(items)
 	if (!(items != null && items.length > 0)) {
 		return (
 			<p className='text-sm text-secondary border border-dashed border-white/10 rounded-lg p-4'>
