@@ -3,7 +3,7 @@ import { httpClient } from '@/lib/http-client'
 import { getErrorMessage } from '@/lib/utils'
 
 export interface OverviewMetric {
-  entity: 'vms' | 'vmGroups' | 'credentials' | 'blueprints'
+  entity: 'vms' | 'vmGroups' | 'credentials' | 'blueprints' | 'deployments'
   currentMonth: number
   lastMonth: number
   total: number
@@ -33,7 +33,7 @@ export function useOverviewMetrics(): OverviewMetricsHookReturn {
     setIsLoading(true)
     try {
       const response: OverviewMetricsResponse = await httpClient.get('/metrics/overview')
-      
+
       // Check if component is still mounted before updating state
       if (isMountedRef.current) {
         if (response.success && response.data) {
