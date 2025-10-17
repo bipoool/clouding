@@ -86,7 +86,7 @@ const getStatsConfig = (metrics: OverviewMetric[]): StatConfig[] => {
 			name: 'Deployments',
 			value: deploymentMetric?.total?.toString() || '0',
 			change: deploymentMetric ? calculateChange(deploymentMetric.currentMonth, deploymentMetric.lastMonth) : '0',
-			icon: Layers,
+			icon: TrendingUp,
 			gradient: 'from-green-500/20 to-emerald-500/10',
 			iconColor: 'text-green-400',
 			changeColor: deploymentMetric ? getChangeColor(deploymentMetric.currentMonth, deploymentMetric.lastMonth) : 'text-gray-400',
