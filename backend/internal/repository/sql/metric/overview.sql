@@ -55,6 +55,19 @@ blueprints_agg AS (
   FROM blueprints bp
   CROSS JOIN bounds b
   WHERE bp.user_id = $1
+),
+deployments_agg AS (
+  SELECT
+    COUNT(*) AS total,
+    COUNT(*) FILTER (
+      WHERE dp.created_at >= b.cur_month_start AND dp.created_at < b.next_month_start
+    ) AS added_curr,
+    COUNT(*) FILTER (
+      WHERE dp.created_at >= b.prev_month_start AND dp.created_at < b.cur_month_start
+    ) AS added_prev
+  FROM deployments dp
+  CROSS JOIN bounds b
+  WHERE dp.user_id = $1
 )
 SELECT 'vms'         AS entity, ha.added_curr AS currentMonth, ha.added_prev AS lastMonth, ha.total AS total
 FROM hosts_agg ha
@@ -66,4 +79,7 @@ SELECT 'credentials' AS entity, ca.added_curr, ca.added_prev, ca.total
 FROM creds_agg ca
 UNION ALL
 SELECT 'blueprints'  AS entity, ba.added_curr, ba.added_prev, ba.total
-FROM blueprints_agg ba;
+FROM blueprints_agg ba
+UNION ALL
+SELECT 'deployments'  AS entity, da.added_curr, da.added_prev, da.total
+FROM deployments_agg da;
