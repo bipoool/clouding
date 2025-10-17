@@ -1,6 +1,7 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard-layout'
+import { Badge } from '@/components/ui/badge'
 import {
 	useDeploymentsByType,
 	type Deployment,
@@ -14,6 +15,28 @@ function DeploymentsList({
 	items: Deployment[]
 	emptyMessage: string
 }) {
+	const statusMeta: Record<
+		Deployment['status'],
+		{ label: string; className: string }
+	> = {
+		pending: {
+			label: 'Pending',
+			className: 'bg-amber-500/10 text-amber-300 border border-amber-500/30',
+		},
+		started: {
+			label: 'In Progress',
+			className: 'bg-sky-500/10 text-sky-300 border border-sky-500/30',
+		},
+		completed: {
+			label: 'Completed',
+			className: 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30',
+		},
+		failed: {
+			label: 'Failed',
+			className: 'bg-rose-500/10 text-rose-300 border border-rose-500/30',
+		},
+	}
+
 	if (!(items != null && items.length > 0)) {
 		return (
 			<p className='text-sm text-secondary border border-dashed border-white/10 rounded-lg p-4'>
@@ -30,10 +53,15 @@ function DeploymentsList({
 					className='border border-white/10 rounded-lg p-4 bg-white/5'
 				>
 					<div className='font-semibold text-primary'>
-						{item.type === 'plan' ? 'Plan' : 'Deployment'} #{item.id}
+						{item.type === 'plan' ? 'Plan' : 'Deployment'} - {item.id}
 					</div>
-					<div className='text-xs text-secondary'>
-						Status: {item.status} • Updated{' '}
+					<div className='text-xs text-secondary py-2'>
+						<Badge
+							className={`align-middle text-[10px] px-2 py-0.5 ${statusMeta[item.status].className}`}
+						>
+							{statusMeta[item.status].label}
+						</Badge>{' '}
+						• Updated{' '}
 						{new Date(item.updatedAt).toLocaleString()}
 					</div>
 				</li>

@@ -31,6 +31,7 @@ const getStatsConfig = (metrics: OverviewMetric[]): StatConfig[] => {
 	const vmGroupsMetric = metrics.find(m => m.entity === 'vmGroups')
 	const credentialsMetric = metrics.find(m => m.entity === 'credentials')
 	const blueprintsMetric = metrics.find(m => m.entity === 'blueprints')
+	const deploymentMetric = metrics.find(m => m.entity === 'deployments')
 
 	const calculateChange = (current: number, last: number) => {
 		const diff = current - last
@@ -81,6 +82,15 @@ const getStatsConfig = (metrics: OverviewMetric[]): StatConfig[] => {
 			iconColor: 'text-green-400',
 			changeColor: blueprintsMetric ? getChangeColor(blueprintsMetric.currentMonth, blueprintsMetric.lastMonth) : 'text-gray-400',
 		},
+		{
+			name: 'Deployments',
+			value: deploymentMetric?.total?.toString() || '0',
+			change: deploymentMetric ? calculateChange(deploymentMetric.currentMonth, deploymentMetric.lastMonth) : '0',
+			icon: Layers,
+			gradient: 'from-green-500/20 to-emerald-500/10',
+			iconColor: 'text-green-400',
+			changeColor: deploymentMetric ? getChangeColor(deploymentMetric.currentMonth, deploymentMetric.lastMonth) : 'text-gray-400',
+		},
 	]
 }
 
@@ -124,7 +134,7 @@ export default function DashboardPage() {
 							</div>
 						</div>
 					) : (
-						<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+						<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6'>
 							{stats.map((stat: StatConfig) => (
 								<div
 									key={stat.name}

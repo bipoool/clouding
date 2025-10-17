@@ -41,7 +41,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 	}
 
 	return (
-		<div className='min-h-screen animated-bg'>
+		<div className='min-h-screen animated-bg flex flex-col'>
 			{/* Top Navigation */}
 			<header className='glass border-b border-white/10 px-4 lg:px-10 py-4 rounded-none z-30 relative flex-shrink-0'>
 				<div className='flex items-center justify-between mx-auto lg:h-4 lg:py-4'>
@@ -138,7 +138,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 			</header>
 
 			{/* Page content */}
-			<main className='py-6 mx-auto lg:mx-10 relative z-20'>{children}</main>
+			<main className='py-6 mx-auto lg:mx-10 relative z-20'>
+				{children}
+			</main>
 
 			{/* Footer */}
 			<DashboardFooter />
