@@ -1,0 +1,17 @@
+---
+# meta/main.yml
+
+galaxy_info:
+  author: Vipul
+  description: Simple role to install NGINX open-source edition
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+    - name: CentOS
+      versions:
+        - all
+
+dependencies: []

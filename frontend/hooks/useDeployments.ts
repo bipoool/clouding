@@ -172,7 +172,10 @@ export function useBlueprintDeployments() {
         setError(null)
         const res = await httpClient.get(`/blueprint/${blueprintId}/deployments`)
         const list = unwrap<Deployment[]>(res)
-        logger.info(`Fetched ${list.length} deployments for blueprint ${blueprintId}`)
+        logger.info(`Fetched ${list?.length} deployments for blueprint ${blueprintId}`)
+        if (list == null) {
+          return []
+        }
         return list
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to fetch blueprint deployments'
