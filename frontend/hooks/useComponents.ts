@@ -5,7 +5,7 @@ export interface ComponentParameter {
   id: string
   name: string
   valueType: 'string'
-  uiType: 'text' | 'select' | 'checkbox' | 'textarea' | 'password'
+  uiType: 'text' | 'select' | 'checkbox' | 'textarea' | 'password' | 'number'
   rules: {
     required: boolean
     required_if?: Record<string, string>

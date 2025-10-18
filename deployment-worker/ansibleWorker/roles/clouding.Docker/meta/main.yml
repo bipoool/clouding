@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: Vipul
+  description: Simple role to install Docker and start the service
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Ubuntu
+      versions: [all]
+    - name: Debian
+      versions: [all]
+    - name: CentOS
+      versions: [all]
+    - name: RedHat
+      versions: [all]
+
+dependencies: []

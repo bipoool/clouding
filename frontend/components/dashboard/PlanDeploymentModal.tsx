@@ -317,28 +317,26 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
                 <Server className='h-4 w-4 text-cyan-400' />
                 Available Hosts
               </div>
-              <ScrollArea className='max-h-64'>
-                <div className='p-3 space-y-2'>
-                  {isLoading && (
-                    <div className='text-sm text-secondary'>Loading hosts...</div>
-                  )}
-                  {!isLoading && allOptions.length === 0 && (
-                    <div className='text-sm text-secondary'>No hosts found.</div>
-                  )}
-                  {!isLoading && allOptions.map(vm => (
-                    <label key={vm.id} className='flex items-center gap-3 p-2 rounded hover:bg-white/5 cursor-pointer'>
-                      <Checkbox
-                        checked={!!selected[vm.id]}
-                        onCheckedChange={v => toggle(vm.id, Boolean(v))}
-                      />
-                      <div className='flex-1'>
-                        <div className='text-sm text-white'>{vm.name}</div>
-                        <div className='text-xs text-secondary'>{vm.ip} • {vm.os}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </ScrollArea>
+              <div className='max-h-[60vh] overflow-y-auto p-2'>
+                {isLoading && (
+                  <div className='text-sm text-secondary'>Loading hosts...</div>
+                )}
+                {!isLoading && allOptions.length === 0 && (
+                  <div className='text-sm text-secondary'>No hosts found.</div>
+                )}
+                {!isLoading && allOptions.map(vm => (
+                  <label key={vm.id} className='flex items-center gap-3 p-2 rounded hover:bg-white/5 cursor-pointer'>
+                    <Checkbox
+                      checked={!!selected[vm.id]}
+                      onCheckedChange={v => toggle(vm.id, Boolean(v))}
+                    />
+                    <div className='flex-1'>
+                      <div className='text-sm text-white'>{vm.name}</div>
+                      <div className='text-xs text-secondary'>{vm.ip} • {vm.os}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
             </div>
           )}
 

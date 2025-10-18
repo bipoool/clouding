@@ -79,28 +79,6 @@ INSERT INTO components (
   name, display_name, description, label, ansible_role, parameters
 )
 VALUES (
-  'install_docker',
-  'Install Docker',
-  'Installs Docker using community.docker role.',
-  'Container',
-  'community.docker.docker_install',
-  '[
-    {
-      "id": "145a8bc9-b9ef-4f2b-a96b-54e5ee309d17",
-      "name": "version",
-      "valueType": "string",
-      "uiType": "text",
-      "rules": { "required": false },
-      "default": "latest",
-      "description": "Docker version to install"
-    }
-  ]'::jsonb
-);
-
-INSERT INTO components (
-  name, display_name, description, label, ansible_role, parameters
-)
-VALUES (
   'run_script',
   'Run Bash Script',
   'Executes a provided bash script on the target machine.',
@@ -116,5 +94,73 @@ VALUES (
       "default": null,
       "description": "Bash script file to run"
     }
+  ]'::jsonb
+);
+
+INSERT INTO components (
+  name, display_name, description, label, ansible_role, parameters
+)
+VALUES (
+  'open_port',
+  'Open Port',
+  'Open a port',
+  'Bash',
+  'clouding.OpenPort',
+  '[
+    {
+      "id": "a71a3f89-9b09-40e3-9754-53bff2e304db",
+      "name": "port_value",
+      "valueType": "string",
+      "uiType": "number",
+      "rules": { "required": true },
+      "default": 8080,
+      "description": "Port value to open"
+    }
+  ]'::jsonb
+);
+
+INSERT INTO components (
+  name, display_name, description, label, ansible_role, parameters
+)
+VALUES (
+  'install_nginx',
+  'Install Nginx',
+  'Install Opensource Nginx',
+  'Web Server',
+  'clouding.Nginx',
+  '[
+    {
+      "id": "09e033b7-6743-4539-bc4c-2422611f3bd3",
+      "name": "nginx_type",
+      "valueType": "string",
+      "uiType": "select",
+      "rules": { "required": false },
+      "default": "opensource",
+      "description": "NGINX type (for now opensource is only supported)",
+      "options": ["opensource"]
+    },
+  ]'::jsonb
+);
+
+INSERT INTO components (
+  name, display_name, description, label, ansible_role, parameters
+)
+VALUES (
+  'install_docker',
+  'Install Docker',
+  'Install recent version of Docker',
+  'Container',
+  'clouding.Docker',
+  '[
+    {
+      "id": "7dec2cfa-a1d6-4b12-bf26-a633d696264e",
+      "name": "docker_version",
+      "valueType": "string",
+      "uiType": "select",
+      "rules": { "required": false },
+      "default": "latest",
+      "description": "Docker version (for now latest is only supported)",
+      "options": ["latest"]
+    },
   ]'::jsonb
 );

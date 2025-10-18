@@ -1,0 +1,17 @@
+---
+# meta/main.yml
+
+galaxy_info:
+  author: Vipul
+  description: Simple role to open a port using iptables
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+    - name: CentOS
+      versions:
+        - all
+
+dependencies: []

@@ -3,6 +3,7 @@ import requests
 import time
 import json
 import logging
+from pathlib import Path
 
 from models.deployment import DeploymentHostStatus
 from models.playbook import PlaybookInfo
@@ -27,7 +28,10 @@ class AnsibleRunner:
         cmdLine = ''
         if self.isPlan:
             cmdLine += '--check --diff'
-        
+
+        base_dir = Path(__file__).resolve().parent
+        roles_path = base_dir / "roles"
+
         changed = deployment.updateDeploymentStatusToStarted(self.jobId)
 
         if not changed:
@@ -39,6 +43,9 @@ class AnsibleRunner:
             playbook=self.playbookName,
             cmdline=cmdLine,
             event_handler=self.handleEvent(),
+            envvars={
+                "ANSIBLE_ROLES_PATH": str(roles_path)
+            },
             quiet=True,
         )
 

@@ -5,14 +5,16 @@ from fastapi import HTTPException
 from models.host import Host
 from models.credential import Credential
 
-from handlers import docker, nginx
+from handlers import docker, nginx, cloudingNginx, cloudingOpenPort, cloudingDocker
 from models import deployment
 from models.playbook import PlaybookInfo
 from repositories import blueprint as blueprintRepository
+from repositories import deployment as deploymentRepository
 
 ROLE_DISPATCH = {
-    "nginxinc.nginx": nginx.buildNginxRole,
-    "community.docker.docker_install": docker.buildDockerTask
+    "clouding.OpenPort": cloudingOpenPort.buildCloudingOpenPortRole,
+    "clouding.Nginx": cloudingNginx.buildCloudingNginxRole,
+    "clouding.Docker": cloudingDocker.buildCloudingDockerRole,
 }
 
 PLAYBOOK_BASE_PATH = "runs"
@@ -27,6 +29,7 @@ def generateNotebook(payload: deployment.DeploymentRabbitMqPayload) -> PlaybookI
         for component in blueprintComponents:
             err = component.validateParameters()
             if err:
+                deploymentRepository.updateDeploymentStatusToFailed(payload.jobId)
                 raise HTTPException(status_code=400, detail=err)
     else:
         raise HTTPException(status_code=400, detail="No blueprint components found")
@@ -35,8 +38,10 @@ def generateNotebook(payload: deployment.DeploymentRabbitMqPayload) -> PlaybookI
     if blueprint:
         err = blueprint.validate()
         if err:
+            deploymentRepository.updateDeploymentStatusToFailed(payload.jobId)
             raise HTTPException(status_code=400, detail=err)
     else:
+        deploymentRepository.updateDeploymentStatusToFailed(payload.jobId)
         raise HTTPException(status_code=400, detail="Blueprint not found")
 
     components = sorted(blueprintComponents, key=lambda c: c.position)
@@ -45,6 +50,7 @@ def generateNotebook(payload: deployment.DeploymentRabbitMqPayload) -> PlaybookI
     for comp in components:
         handler = ROLE_DISPATCH.get(comp.ansiblerole)
         if not handler:
+            deploymentRepository.updateDeploymentStatusToFailed(payload.jobId)
             raise HTTPException(status_code=400, detail=f"Unsupported role: {comp.ansiblerole}")
 
         paramDicts = [p for p in comp.blueprintparameters]

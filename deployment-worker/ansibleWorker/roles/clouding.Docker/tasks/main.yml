@@ -1,0 +1,43 @@
+---
+- name: Ensure required packages for repo management are present
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: yes
+  become: yes
+
+# Add Docker GPG key into a system keyring location (idempotent)
+- name: Add Docker GPG key to keyring
+  ansible.builtin.apt_key:
+    url: "{{ docker_gpg_url }}"
+    state: present
+    keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+  become: yes
+
+# Add Docker APT repository (idempotent)
+- name: Add Docker APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] {{ docker_apt_url }} {{ ansible_lsb.codename }} stable"
+    filename: docker.list
+    state: present
+  become: yes
+
+# Refresh apt cache if repository changed (apt automatically refreshes when apt_repository changed,
+# but this ensures package availability)
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+  become: yes
+
+# Install Docker packages. apt module supports check mode; if running with --check it will
+# simulate the installation (won't change system).
+- name: Install Docker packages (docker-ce, docker-cli, containerd)
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+  register: install_result
+  become: yes
