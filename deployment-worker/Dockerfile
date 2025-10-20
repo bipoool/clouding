@@ -22,7 +22,6 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 # Pre-fetch Ansible roles and collections
 COPY ansibleWorker/collections/requirements.yml ansibleWorker/collections/requirements.yml
-COPY ansibleWorker/roles/requirements.yml ansibleWorker/roles/requirements.yml
 COPY scripts/bootstrap_ansible_deps.sh scripts/bootstrap_ansible_deps.sh
 RUN chmod +x scripts/bootstrap_ansible_deps.sh && ./scripts/bootstrap_ansible_deps.sh
 

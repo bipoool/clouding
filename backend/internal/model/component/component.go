@@ -44,6 +44,7 @@ const (
 	UITypeFile     UIType = "file"
 	UITypeFileList UIType = "fileList"
 	UITypeTextarea UIType = "textarea"
+	UITypeNumber   UIType = "number"
 )
 
 type ComponentParameter struct {

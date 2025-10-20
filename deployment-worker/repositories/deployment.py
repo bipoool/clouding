@@ -63,7 +63,7 @@ def updateDeploymentStatusToFailed(deploymentId: UUID) -> bool:
             cur.execute("""
                 UPDATE deployments 
                 SET status = 'failed', updated_at = NOW()
-                WHERE id = %s AND status='started'
+                WHERE id = %s
             """, (deploymentId,))
             conn.commit()
             return cur.rowcount > 0

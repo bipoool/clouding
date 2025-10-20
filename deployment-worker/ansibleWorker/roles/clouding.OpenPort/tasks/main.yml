@@ -1,24 +1,43 @@
-- name: Ensure iptables-persistent is installed
+---
+- name: Ensure ufw package is installed
   ansible.builtin.apt:
-    name: iptables-persistent
+    name: ufw
     state: present
     update_cache: yes
   become: true
 
-- name: Open TCP port {{ couding_open_port }} using iptables
-  ansible.builtin.iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: "{{ couding_open_port }}"
-    jump: ACCEPT
-    state: present
-    ip_version: ipv4
-    comment: "Allow TCP port {{ couding_open_port }}"
+- name: Ensure UFW service is enabled and started
+  ansible.builtin.systemd:
+    name: ufw
+    enabled: yes
+    state: started
+
+- name: Allow SSH to prevent lockout
+  community.general.ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: Validate requested port
+  ansible.builtin.assert:
+    that:
+      - port_value is defined
+      - (port_value | string) is match('^[0-9]+$')
+      - (port_value | int) >= 1
+      - (port_value | int) <= 65535
+    fail_msg: "port_value must be a numeric port between 1 and 65535."
+
+- name: Allow custom port via UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ port_value | int }}"
+    proto: tcp
   become: true
 
-- name: Save iptables rules (IPv4) to persist across reboots
-  community.general.iptables_state:
-    path: /etc/iptables/rules.v4
-    ip_version: ipv4
-    state: saved
-  become: true
+- name: Enable UFW safely
+  community.general.ufw:
+    state: enabled
+
+- name: Show UFW status
+  ansible.builtin.command: ufw status verbose
+  register: ufw_status
+  changed_when: false
