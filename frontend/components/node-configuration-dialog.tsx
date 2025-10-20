@@ -81,7 +81,7 @@ const FormField: React.FC<{
 						<Checkbox
 							id={config.name}
 							checked={Boolean(value)}
-							onCheckedChange={(checked) => onChange?.(config.name, checked)}
+							onCheckedChange={(checked) => onChange?.(config.name, checked === true)}
 						/>
 						<label htmlFor={config.name} className='text-sm text-secondary'>
 							{config.description || config.name}
@@ -109,7 +109,11 @@ const FormField: React.FC<{
 						value={value ?? ''}
 						placeholder={config.placeholder || config.default || ''}
 						className='glass-input'
-						onChange={(e) => onChange?.(config.name, e.target.value)}
+						onChange={(e) => {
+							const v = e.target.value === '' ? undefined : e.target.valueAsNumber
+							const nextValue = v === undefined || Number.isNaN(v) ? undefined : v
+							onChange?.(config.name, nextValue)
+						}}
 					/>
 				)
 			default: // text, file, etc.
@@ -153,6 +157,7 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 	memo(({ nodeData, components, children, onConfigurationSave }) => {
 		const IconComponent = nodeData.icon
 		const [isSubmitting, setIsSubmitting] = useState(false)
+		const [isDialogOpen, setIsDialogOpen] = useState(false)
 		const [formValues, setFormValues] = useState<Record<string, any>>(nodeData.parameters || {})
 		const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
@@ -315,7 +320,7 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 				})
 
 				// Save configuration parameters
-				logger.log('Saving configuration for node:', nodeData.label, 'with parameters:', completeFormValues)
+				logger.log('Saving configuration for node:', nodeData.label)
 
 				// Call the callback to update the node with parameters
 				if (onConfigurationSave) {
@@ -324,6 +329,8 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 
 				// Simulate API call
 				await new Promise(resolve => setTimeout(resolve, 1000))
+
+				setIsDialogOpen(false)
 			} catch (error) {
 				logger.error('Failed to save configuration:', error)
 			} finally {
@@ -332,7 +339,7 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 		}
 
 		return (
-			<Dialog>
+			<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 				<DialogTrigger asChild>{children}</DialogTrigger>
 				<DialogContent className='bg-black/90 backdrop-blur-md border border-white/10 max-w-lg max-h-[90vh] flex flex-col'>
 					<DialogHeader className='flex-shrink-0'>
@@ -371,6 +378,7 @@ export const NodeConfigurationDialog: React.FC<NodeConfigurationDialogProps> =
 							type='button'
 							variant='ghost'
 							className='flex-1 glass-btn'
+							onClick={() => setIsDialogOpen(false)}
 						>
 							Cancel
 						</Button>

@@ -138,7 +138,7 @@ VALUES (
       "default": "opensource",
       "description": "NGINX type (for now opensource is only supported)",
       "options": ["opensource"]
-    },
+    }
   ]'::jsonb
 );
 
@@ -161,6 +161,6 @@ VALUES (
       "default": "latest",
       "description": "Docker version (for now latest is only supported)",
       "options": ["latest"]
-    },
+    }
   ]'::jsonb
 );

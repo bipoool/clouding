@@ -17,10 +17,19 @@
     rule: allow
     name: OpenSSH
 
+- name: Validate requested port
+  ansible.builtin.assert:
+    that:
+      - port_value is defined
+      - (port_value | string) is match('^[0-9]+$')
+      - (port_value | int) >= 1
+      - (port_value | int) <= 65535
+    fail_msg: "port_value must be a numeric port between 1 and 65535."
+
 - name: Allow custom port via UFW
   community.general.ufw:
     rule: allow
-    port: "{{ port_value }}"
+    port: "{{ port_value | int }}"
     proto: tcp
   become: true
 
@@ -31,3 +40,4 @@
 - name: Show UFW status
   ansible.builtin.command: ufw status verbose
   register: ufw_status
+  changed_when: false
