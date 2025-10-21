@@ -27,7 +27,7 @@ jobs:
       - name: Read version from VERSION file
         id: version
         run: |
-          VERSION=$(cat backend/VERSION)
+          VERSION=$(cat deployment-worker/VERSION)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
