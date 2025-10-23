@@ -21,6 +21,7 @@ interface NavigationHeaderProps {
 	planDeploymentId?: string | null
 	isCheckingPlanStatus?: boolean
 	onRefreshPlanStatus?: () => void
+	onShowNotification?: (message: string, type?: 'success' | 'error' | 'info') => void
 }
 
 export function NavigationHeader({
@@ -38,7 +39,8 @@ export function NavigationHeader({
 	planDeploymentStatus = null,
 	planDeploymentId = null,
 	isCheckingPlanStatus = false,
-	onRefreshPlanStatus
+	onRefreshPlanStatus,
+	onShowNotification,
 }: NavigationHeaderProps) {
 	const [planOpen, setPlanOpen] = useState(false)
 	const planStatusPresentation = useMemo(() => {
@@ -73,6 +75,18 @@ export function NavigationHeader({
 			void onRefreshPlanStatus()
 		}
 	}, [onRefreshPlanStatus])
+
+	const handlePlanButtonClick = useCallback(() => {
+		if (!Number.isFinite(blueprintId) || blueprintId <= 0) {
+			if (onShowNotification) {
+				onShowNotification('Please save your configuration before planning a deployment.', 'error')
+			} else if (typeof window !== 'undefined') {
+				window.alert('Please save your configuration before planning a deployment.')
+			}
+			return
+		}
+		setPlanOpen(true)
+	}, [blueprintId, onShowNotification])
 
 	return (
 		<header className='glass border-b border-white/10 px-4 py-3 rounded-none z-30 relative flex-shrink-0'>
@@ -161,7 +175,7 @@ export function NavigationHeader({
 					</Button>
 					<Button
 						size='sm'
-						onClick={() => setPlanOpen(true)}
+						onClick={handlePlanButtonClick}
 						variant='ghost'
 						className='glow-border bg-transparent text-cyan-400 hover:bg-cyan-400/10 interactive-element'
 						aria-label="View deployment plan"

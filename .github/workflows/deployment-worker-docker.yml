@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Deployment Worker - Build and Push Docker Image
 
 on:
   push:
