@@ -718,11 +718,11 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 
 	const handleConfigUpdate = useCallback(async (data: { name: string; description?: string }) => {
 		try {
-			const isEditing = state.blueprintId !== '0'
+			const isEditing = blueprintNumericId > 0
 			
 			if (isEditing) {
 				// Update existing blueprint
-				const response = await updateBlueprint(parseInt(state.blueprintId), {
+				const response = await updateBlueprint(blueprintNumericId, {
 					name: data.name,
 					description: data.description || ''
 				})
@@ -753,7 +753,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			// You might want to show a toast notification here
 			throw error
 		}
-	}, [state.blueprintId, createBlueprint, updateBlueprint])
+	}, [blueprintNumericId, createBlueprint, updateBlueprint])
 
 	// Show loading state
 	if (isLoading) {
@@ -802,7 +802,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 					<BlueprintMetadataModal
 						onSave={handleConfigUpdate}
 						initialData={
-							state.blueprintId !== '0'
+							blueprintNumericId > 0
 								? { name: state.configName, description: state.configDescription }
 								: undefined
 						}
