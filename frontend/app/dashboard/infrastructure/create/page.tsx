@@ -62,6 +62,20 @@ interface InfrastructureBuilderState {
 	isSaving: boolean
 }
 
+type NotificationType = 'success' | 'error' | 'info'
+
+interface BuilderNotification {
+	id: number
+	message: string
+	type: NotificationType
+}
+
+const notificationStyleMap: Record<NotificationType, string> = {
+	success: 'bg-emerald-500/90 text-white border-emerald-400/50',
+	error: 'bg-rose-500/90 text-white border-rose-400/50',
+	info: 'bg-slate-900/80 text-white border-slate-700/50',
+}
+
 
 // Component that uses useSearchParams - needs to be wrapped in Suspense
 function InfrastructureBuilderWithParams() {
@@ -132,6 +146,33 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 	// Store component loading errors
 	const [componentErrors, setComponentErrors] = useState<string[]>([])
 
+	const [notifications, setNotifications] = useState<BuilderNotification[]>([])
+	const notificationIdRef = useRef(0)
+	const notificationTimeouts = useRef(
+		new Map<number, ReturnType<typeof setTimeout>>()
+	)
+
+	const removeNotification = useCallback((id: number) => {
+		setNotifications(prev => prev.filter(notification => notification.id !== id))
+		const timeoutId = notificationTimeouts.current.get(id)
+		if (timeoutId) {
+			clearTimeout(timeoutId)
+			notificationTimeouts.current.delete(id)
+		}
+	}, [])
+
+	const showNotification = useCallback(
+		(message: string, type: NotificationType = 'info') => {
+			const id = notificationIdRef.current++
+			setNotifications(prev => [...prev, { id, message, type }])
+			const timeoutId = setTimeout(() => {
+				removeNotification(id)
+			}, 5000)
+			notificationTimeouts.current.set(id, timeoutId)
+		},
+		[removeNotification]
+	)
+
 	// Initialize expanded categories when components are loaded
 	const [state, setState] = useState<InfrastructureBuilderState>(() => {
 		const decodedBlueprintData = getBlueprintDataFromUrl()
@@ -146,7 +187,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			generatedPlan: '',
 			configName: decodedBlueprintData?.name || searchParams.get('name') || '',
 			configDescription: decodedBlueprintData?.description || searchParams.get('description') || '',
-			blueprintId: decodedBlueprintData?.id?.toString() || searchParams.get('blueprintId') || '0',
+			blueprintId: decodedBlueprintData?.id?.toString() || searchParams.get('blueprintId') || '',
 			isSaving: false,
 		}
 	})
@@ -162,6 +203,13 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 		const value = Number(state.blueprintId)
 		return Number.isFinite(value) ? value : 0
 	}, [state.blueprintId])
+
+	useEffect(() => {
+		return () => {
+			notificationTimeouts.current.forEach(timeoutId => clearTimeout(timeoutId))
+			notificationTimeouts.current.clear()
+		}
+	}, [])
 
 	const refreshPlanStatus = useCallback(async () => {
 		if (!Number.isFinite(blueprintNumericId) || blueprintNumericId <= 0) {
@@ -532,7 +580,9 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 	// Configuration management handlers
 	const handleSaveConfiguration = useCallback(async () => {
 		if (nodes.length === 0) {
-			alert('Please add some components to your configuration before saving.')
+			showNotification(
+				'Please add some components to your configuration before saving.', 'error'
+			)
 			return
 		}
 
@@ -614,14 +664,24 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 				blueprintId: blueprintId.toString()
 			}))
 
-			alert(`Configuration "${configName}" saved successfully!`)
+			showNotification(`Configuration "${configName}" saved successfully!`, 'success')
 		} catch (error) {
 			console.error('Failed to save configuration:', error)
-			alert('Failed to save configuration. Please try again.')
+			showNotification('Failed to save configuration. Please try again.', 'error')
 		} finally {
 			setState(prev => ({ ...prev, isSaving: false }))
 		}
-	}, [nodes, edges, state.configName, state.configDescription, state.blueprintId, createBlueprint, updateBlueprint, updateBlueprintComponents, components])
+	}, [
+		nodes,
+		state.configName,
+		state.configDescription,
+		state.blueprintId,
+		createBlueprint,
+		updateBlueprint,
+		updateBlueprintComponents,
+		components,
+		showNotification,
+	])
 
 	const handleClearCanvas = useCallback(() => {
 		if (nodes.length === 0 && edges.length === 0) return
@@ -639,7 +699,9 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 
 	const handleViewPlan = useCallback(() => {
 		if (nodes.length === 0) {
-			alert('Please add some components to generate a deployment plan.')
+			showNotification(
+				'Please add some components to generate a deployment plan.', 'error'
+			)
 			return
 		}
 		setState(prev => ({
@@ -647,7 +709,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			generatedPlan: "Plan generated",
 			isViewPlanOpen: true,
 		}))
-	}, [nodes, edges, state.configName])
+	}, [nodes, edges, state.configName, showNotification])
 
 	const handleClosePlanModal = useCallback(() => {
 		setState(prev => ({ ...prev, isViewPlanOpen: false }))
@@ -655,11 +717,11 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 
 	const handleConfigUpdate = useCallback(async (data: { name: string; description?: string }) => {
 		try {
-			const isEditing = state.blueprintId !== '0'
+			const isEditing = blueprintNumericId > 0
 			
 			if (isEditing) {
 				// Update existing blueprint
-				const response = await updateBlueprint(parseInt(state.blueprintId), {
+				const response = await updateBlueprint(blueprintNumericId, {
 					name: data.name,
 					description: data.description || ''
 				})
@@ -690,7 +752,7 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 			// You might want to show a toast notification here
 			throw error
 		}
-	}, [state.blueprintId, createBlueprint, updateBlueprint])
+	}, [blueprintNumericId, createBlueprint, updateBlueprint])
 
 	// Show loading state
 	if (isLoading) {
@@ -734,11 +796,12 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 				planDeploymentId={planDeploymentId}
 				isCheckingPlanStatus={isPlanStatusLoading && blueprintNumericId > 0}
 				onRefreshPlanStatus={refreshPlanStatus}
+				onShowNotification={showNotification}
 				configModalTrigger={
 					<BlueprintMetadataModal
 						onSave={handleConfigUpdate}
 						initialData={
-							state.blueprintId !== '0'
+							blueprintNumericId > 0
 								? { name: state.configName, description: state.configDescription }
 								: undefined
 						}
@@ -898,6 +961,30 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 				</div>
 			</div>
 			<DashboardFooter />
+
+			{/* Notifications */}
+			<div className='fixed bottom-6 right-6 z-50 flex w-80 max-w-full flex-col gap-2 pointer-events-none'>
+				{notifications.map(notification => (
+					<div
+						key={notification.id}
+						className={`pointer-events-auto rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-md ${notificationStyleMap[notification.type]}`}
+						role='status'
+						aria-live='polite'
+					>
+						<div className='flex items-start gap-3'>
+							<span className='flex-1 leading-snug'>{notification.message}</span>
+							<button
+								type='button'
+								onClick={() => removeNotification(notification.id)}
+								className='text-white/70 transition-colors hover:text-white'
+								aria-label='Dismiss notification'
+							>
+								×
+							</button>
+						</div>
+					</div>
+				))}
+			</div>
 
 			{/* View Plan Modal */}
 			<ViewPlanModal
