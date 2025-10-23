@@ -673,7 +673,6 @@ function InfrastructureBuilder({ searchParams }: { searchParams: URLSearchParams
 		}
 	}, [
 		nodes,
-		edges,
 		state.configName,
 		state.configDescription,
 		state.blueprintId,
