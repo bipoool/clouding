@@ -1,0 +1,7 @@
+---
+# Map of OpenJDK package names on Debian/Ubuntu
+java_package_map:
+  8:  openjdk-8-jdk
+  11: openjdk-11-jdk
+  17: openjdk-17-jdk
+  21: openjdk-21-jdk

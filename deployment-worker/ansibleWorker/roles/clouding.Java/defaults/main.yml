@@ -1,0 +1,6 @@
+---
+# Default Java version
+java_version: 8
+
+# Set to "present" or "latest"
+java_package_state: present

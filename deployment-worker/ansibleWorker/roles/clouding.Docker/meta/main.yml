@@ -9,6 +9,4 @@ galaxy_info:
       versions:
         - all
 
-dependencies:
-  - name: community.general
-  - name: community.docker
+dependencies: []

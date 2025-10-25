@@ -1,0 +1,37 @@
+---
+- name: "Select OS-specific package map"
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+
+- name: "Fail if requested java_version is not supported for this OS family"
+  ansible.builtin.fail:
+    msg: >-
+      java_version='{{ java_version }}' is not mapped for {{ ansible_os_family }}.
+      Supported: {{ java_package_map.keys() | list | sort }}
+  when: java_version | int not in java_package_map
+
+- name: "Set target package name"
+  ansible.builtin.set_fact:
+    java_pkg_name: "{{ java_package_map[java_version | int] }}"
+
+# Cache updates are skipped in --check to avoid side effects.
+- name: "Update apt cache (Debian/Ubuntu)"
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when:
+    - ansible_os_family == "Debian"
+
+- name: "Make sure dnf/yum metadata is fresh (RHEL family)"
+  ansible.builtin.package:
+    name: "*"
+    state: latest
+  when:
+    - ansible_os_family == "RedHat"
+    - not ansible_check_mode
+  tags: [skip_in_check]
+
+- name: "Install OpenJDK {{ java_version }}"
+  ansible.builtin.package:
+    name: "{{ java_pkg_name }}"
+    state: "{{ java_package_state }}"
+  when: not ansible_check_mode
