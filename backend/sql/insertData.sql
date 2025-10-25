@@ -187,3 +187,53 @@ VALUES (
     }
   ]'::jsonb
 );
+
+INSERT INTO components (
+  name, display_name, description, label, ansible_role, parameters
+)
+VALUES (
+  'deploy_docker_compose_file',
+  'Deploy Docker Compose File',
+  'Deploy any docker compose file using github url',
+  'Container',
+  'clouding.GithubDockerCompose',
+  '[
+    {
+      "id": "b55767d7-47c1-486a-b227-0eb322ac5e20",
+      "name": "github_url",
+      "valueType": "string",
+      "uiType": "select",
+      "rules": { "required": true },
+      "description": "Github URL"
+    }
+  ]'::jsonb
+);
+
+INSERT INTO components (
+  name, display_name, description, label, ansible_role, parameters
+)
+VALUES (
+  'add_nginx_site',
+  'Add Nginx Site',
+  'Add site config to Nginx',
+  'Web Server',
+  'clouding.AddNginxSite',
+  '[
+    {
+      "id": "e21ba779-90d3-404b-b7c5-328552a214c8",
+      "name": "site_name",
+      "valueType": "string",
+      "uiType": "select",
+      "rules": { "required": true },
+      "description": "Site Name"
+    },
+    {
+      "id": "949ad31f-06a9-4864-a9a6-b75b8393685b",
+      "name": "site_content",
+      "valueType": "string",
+      "uiType": "textarea",
+      "rules": { "required": true },
+      "description": "Site Config"
+    }
+  ]'::jsonb
+);
