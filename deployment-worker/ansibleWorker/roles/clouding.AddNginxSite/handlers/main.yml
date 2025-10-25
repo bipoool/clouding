@@ -3,3 +3,4 @@
   ansible.builtin.service:
     name: "{{ nginx_service_name }}"
     state: restarted
+  when: not ansible_check_mode
