@@ -1,0 +1,5 @@
+---
+# REQUIRED: Public GitHub URL of the repo to clone
+github_url: ""
+
+repo_parent_dir: "/opt"

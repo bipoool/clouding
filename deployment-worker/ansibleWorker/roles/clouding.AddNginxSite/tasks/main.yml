@@ -1,0 +1,50 @@
+---
+- name: "Check if nginx is installed"
+  ansible.builtin.command: "nginx -v"
+  register: nginx_check
+  changed_when: false
+  failed_when: nginx_check.rc != 0
+
+- name: "Check required vars"
+  ansible.builtin.assert:
+    that:
+      - site_name | length > 0
+      - site_content | length > 0
+    fail_msg: "site_name and site_content must be provided."
+
+- name: "Normalize site filename (append .conf if omitted)"
+  ansible.builtin.set_fact:
+    _site_filename: "{{ site_name if site_name | regex_search('\\.conf$') else site_name ~ '.conf' }}"
+
+- name: "Ensure sites-available directory exists"
+  ansible.builtin.file:
+    path: "{{ nginx_sites_available }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Ensure sites-enabled directory exists"
+  ansible.builtin.file:
+    path: "{{ nginx_sites_enabled }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Write site file to sites-available/{{ _site_filename }}"
+  ansible.builtin.copy:
+    dest: "{{ nginx_sites_available }}/{{ _site_filename }}"
+    content: "{{ site_content }}"
+    owner: "{{ site_file_owner }}"
+    group: "{{ site_file_group }}"
+    mode:  "{{ site_file_mode }}"
+  notify: Restart nginx
+
+- name: "Link into sites-enabled/{{ _site_filename }}"
+  ansible.builtin.file:
+    src: "{{ nginx_sites_available }}/{{ _site_filename }}"
+    dest: "{{ nginx_sites_enabled }}/{{ _site_filename }}"
+    state: link
+    force: yes
+  notify: Restart nginx

@@ -1,0 +1,16 @@
+---
+# Required inputs
+site_name: ""          
+site_content: "" 
+
+# Paths (Debian/Ubuntu style). Override if needed.
+nginx_sites_available: "/etc/nginx/sites-available"
+nginx_sites_enabled: "/etc/nginx/sites-enabled"
+
+# Service name
+nginx_service_name: "nginx"
+
+# File mode/owner
+site_file_mode: "0644"
+site_file_owner: "root"
+site_file_group: "root"
