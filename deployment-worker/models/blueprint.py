@@ -13,10 +13,10 @@ class ComponentParameter:
     id: str
     name: str
     valueType: str
-    default: Any
-    description: str
     rules: Dict[str, Any]
     uiType: str
+    default: Any = None
+    description: str = ""
     options: List[str] = field(default_factory=list)
 
 @dataclass
