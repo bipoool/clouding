@@ -15,6 +15,7 @@ ROLE_DISPATCH = {
     "clouding.OpenPort": cloudingOpenPort.buildCloudingOpenPortRole,
     "clouding.Nginx": cloudingNginx.buildCloudingNginxRole,
     "clouding.Docker": cloudingDocker.buildCloudingDockerRole,
+    "clouding.Java": cloudingDocker.buildCloudingDockerRole,
 }
 
 PLAYBOOK_BASE_PATH = "runs"
