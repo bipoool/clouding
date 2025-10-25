@@ -192,8 +192,8 @@ INSERT INTO components (
   name, display_name, description, label, ansible_role, parameters
 )
 VALUES (
-  'deploy_docker_compose_file',
-  'Deploy Docker Compose File',
+  'deploy_docker_compose',
+  'Deploy Docker Compose',
   'Deploy any docker compose file using github url',
   'Container',
   'clouding.GithubDockerCompose',
@@ -202,7 +202,7 @@ VALUES (
       "id": "b55767d7-47c1-486a-b227-0eb322ac5e20",
       "name": "github_url",
       "valueType": "string",
-      "uiType": "select",
+      "uiType": "text",
       "rules": { "required": true },
       "description": "Github URL"
     }
@@ -223,7 +223,7 @@ VALUES (
       "id": "e21ba779-90d3-404b-b7c5-328552a214c8",
       "name": "site_name",
       "valueType": "string",
-      "uiType": "select",
+      "uiType": "text",
       "rules": { "required": true },
       "description": "Site Name"
     },
