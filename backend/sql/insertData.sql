@@ -164,3 +164,26 @@ VALUES (
     }
   ]'::jsonb
 );
+
+INSERT INTO components (
+  name, display_name, description, label, ansible_role, parameters
+)
+VALUES (
+  'install_java',
+  'Install Java',
+  'Install Java',
+  'Programming Language',
+  'clouding.Java',
+  '[
+    {
+      "id": "36275565-f870-48be-995d-d99317d39d32",
+      "name": "java_version",
+      "valueType": "string",
+      "uiType": "select",
+      "rules": { "required": false },
+      "default": "8",
+      "description": "Java Version",
+      "options": ["8", "11", "17", "21"]
+    }
+  ]'::jsonb
+);
