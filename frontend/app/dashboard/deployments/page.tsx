@@ -61,8 +61,8 @@ function DeploymentsList({
 						>
 							{statusMeta[item.status].label}
 						</Badge>{' '}
-						• Updated{' '}
-						{new Date(item.updatedAt).toLocaleString()}
+						• Deployed{' '}
+						{new Date(item.createdAt).toLocaleString()}
 					</div>
 				</li>
 			))}
