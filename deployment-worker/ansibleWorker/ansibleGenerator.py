@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from models.host import Host
 from models.credential import Credential
 
-from handlers import docker, nginx, cloudingNginx, cloudingOpenPort, cloudingDocker
+from handlers import cloudingNginx, cloudingOpenPort, cloudingDocker, cloudingJava
 from models import deployment
 from models.playbook import PlaybookInfo
 from repositories import blueprint as blueprintRepository
@@ -15,7 +15,7 @@ ROLE_DISPATCH = {
     "clouding.OpenPort": cloudingOpenPort.buildCloudingOpenPortRole,
     "clouding.Nginx": cloudingNginx.buildCloudingNginxRole,
     "clouding.Docker": cloudingDocker.buildCloudingDockerRole,
-    "clouding.Java": cloudingDocker.buildCloudingDockerRole,
+    "clouding.Java": cloudingJava.buildCloudingJavaRole,
 }
 
 PLAYBOOK_BASE_PATH = "runs"
