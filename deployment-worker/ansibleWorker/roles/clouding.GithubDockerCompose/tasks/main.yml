@@ -1,0 +1,46 @@
+---
+- name: "Validate input: github_url is required"
+  ansible.builtin.assert:
+    that:
+      - github_url is string
+      - github_url | length > 0
+    fail_msg: "You must provide github_url (e.g., https://github.com/org/repo.git)"
+
+- name: "Ensure git is installed"
+  ansible.builtin.package:
+    name: git
+    state: present
+
+- name: "Derive repo name from github_url"
+  ansible.builtin.set_fact:
+    repo_name: >-
+      {{ (github_url | regex_replace('.*/', ''))
+         | regex_replace('\\.git$', '') }}
+
+- name: "Set destination path"
+  ansible.builtin.set_fact:
+    repo_dest: "{{ repo_parent_dir }}/{{ repo_name }}"
+
+- name: "Create parent directory {{ repo_parent_dir }}"
+  ansible.builtin.file:
+    path: "{{ repo_parent_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Clone/Update repository {{ github_url }}"
+  ansible.builtin.git:
+    repo: "{{ github_url }}"
+    dest: "{{ repo_dest }}"
+    version: "HEAD"
+    update: yes
+    force: no
+
+- name: "Bring up services with community.docker.docker_compose_v2"
+  community.docker.docker_compose_v2:
+    project_src: "{{ repo_dest }}"
+    state: present
+    pull: always       
+  when:
+    - not ansible_check_mode

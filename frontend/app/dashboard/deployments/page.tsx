@@ -1,12 +1,14 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard-layout'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
 	useDeploymentsByType,
 	type Deployment,
 } from '@/hooks/useDeployments'
-import { Layers, Loader2, TrendingUp } from 'lucide-react'
+import { Layers, Loader2, TrendingUp, ArrowLeft } from 'lucide-react'
 
 function DeploymentsList({
 	items,
@@ -61,8 +63,8 @@ function DeploymentsList({
 						>
 							{statusMeta[item.status].label}
 						</Badge>{' '}
-						• Updated{' '}
-						{new Date(item.updatedAt).toLocaleString()}
+						• Deployed{' '}
+						{new Date(item.createdAt).toLocaleString()}
 					</div>
 				</li>
 			))}
@@ -86,6 +88,13 @@ export default function DeploymentsPage() {
 	return (
 		<DashboardLayout>
 			<div className='space-y-8'>
+				{/* Header */}
+				<Link href='/dashboard' className='interactive-element'>
+					<Button variant='ghost' size='sm' className='glass-btn'>
+						<ArrowLeft className='h-4 w-4 mr-2' />
+						Back to Dashboard
+					</Button>
+				</Link>
 				<div className='glass-card'>
 					<h1 className='text-3xl md:text-4xl font-bold text-primary mb-3 font-jetbrains'>
 						Deployments
