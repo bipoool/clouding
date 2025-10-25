@@ -41,6 +41,5 @@
   community.docker.docker_compose_v2:
     project_src: "{{ repo_dest }}"
     state: present
-    pull: always       
-  when:
-    - not ansible_check_mode
+    pull: always
+  when: not ansible_check_mode
