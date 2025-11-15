@@ -59,7 +59,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
         if (!host) return
 
         // Use 'Others' if role is null/undefined/empty
-        const roleKey = (role && role.trim() !== '') ? role : 'Other Logs'
+        const roleKey = (role && role.trim() !== '') ? role : 'Others'
 
         if (!hostMap[host]) {
           hostMap[host] = {}
