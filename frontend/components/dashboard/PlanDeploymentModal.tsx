@@ -401,7 +401,7 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
                     className='flex-1 gradient-border-btn'
                     disabled={!isPlanSuccessful || isDeploying || isWaiting}
                   >
-                    {isDeploying ? 'Deploying...' : 'Deploy'}
+                    {isDeploying ? 'Deploying...' : (deployment?.type === 'deploy' && deployment?.status === 'completed' ? 'Re-Deploy' : 'Deploy')}
                   </Button>
                 )}
               </>
