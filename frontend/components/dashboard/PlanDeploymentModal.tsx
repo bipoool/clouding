@@ -176,8 +176,12 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
             const hostFailures = failures?.[hostId] || 0
             if (hostFailures > 0) {
               status[hostId].roles['Results'].hasError = true
+              // Also update host-level status to reflect final stats
+              status[hostId].hasError = true
             } else {
               status[hostId].roles['Results'].hasSuccess = true
+              // Also update host-level status to reflect final stats
+              status[hostId].hasSuccess = true
             }
           })
 
