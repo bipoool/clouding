@@ -54,22 +54,76 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
     logs.forEach(log => {
       try {
         const entry = JSON.parse(log)
-        const { host, role, task, res, error, duration, event } = entry.data || {}
+        const { host, role, task, res, error, duration, event, changed, failures, ignored, ok, processed, skipped } = entry.data || {}
 
-        if (!host) return
+        // Handle playbook_on_stats event specially
+        if (event === 'playbook_on_stats') {
+          // Create Results for each host that has stats
+          const allHostIds = new Set([
+            ...Object.keys(changed || {}),
+            ...Object.keys(failures || {}),
+            ...Object.keys(ignored || {}),
+            ...Object.keys(ok || {}),
+            ...Object.keys(processed || {}),
+            ...Object.keys(skipped || {})
+          ])
+
+          allHostIds.forEach(hostId => {
+            if (!hostMap[hostId]) {
+              hostMap[hostId] = {}
+            }
+
+            if (!hostMap[hostId]['Results']) {
+              hostMap[hostId]['Results'] = []
+            }
+
+            // Format stats message
+            const stats = {
+              ok: ok?.[hostId] || 0,
+              changed: changed?.[hostId] || 0,
+              failures: failures?.[hostId] || 0,
+              skipped: skipped?.[hostId] || 0,
+              ignored: ignored?.[hostId] || 0,
+              processed: processed?.[hostId] || 0
+            }
+
+            const statsMsg = [
+              `Success: ${stats.ok}`,
+              `Changed: ${stats.changed}`,
+              `Failures: ${stats.failures}`,
+              `Skipped: ${stats.skipped}`,
+              `Ignored: ${stats.ignored}`,
+              `Total Processed: ${stats.processed}`
+            ].join('\n')
+
+            hostMap[hostId]['Results'].push({
+              task: 'Playbook Statistics',
+              msg: statsMsg,
+              error: '',
+              duration: duration || 0,
+              changed: false,
+              event: event || ''
+            })
+          })
+
+          return
+        }
+
+        // Use 'common-logs' if host is null/undefined/empty
+        const hostKey = (host && host.trim() !== '') ? host : 'common-logs'
 
         // Use 'Others' if role is null/undefined/empty
         const roleKey = (role && role.trim() !== '') ? role : 'Others'
 
-        if (!hostMap[host]) {
-          hostMap[host] = {}
+        if (!hostMap[hostKey]) {
+          hostMap[hostKey] = {}
         }
 
-        if (!hostMap[host][roleKey]) {
-          hostMap[host][roleKey] = []
+        if (!hostMap[hostKey][roleKey]) {
+          hostMap[hostKey][roleKey] = []
         }
 
-        hostMap[host][roleKey].push({
+        hostMap[hostKey][roleKey].push({
           task: task || '',
           msg: res?.msg || '',
           error: error || '',
@@ -96,12 +150,49 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
     logs.forEach(log => {
       try {
         const entry = JSON.parse(log)
-        const { host, role, error, event, failures } = entry.data || {}
+        const { host, role, error, event, failures, changed, ignored, ok, processed, skipped } = entry.data || {}
 
-        if (!host) return
+        // Handle playbook_on_stats event specially
+        if (event === 'playbook_on_stats') {
+          const allHostIds = new Set([
+            ...Object.keys(changed || {}),
+            ...Object.keys(failures || {}),
+            ...Object.keys(ignored || {}),
+            ...Object.keys(ok || {}),
+            ...Object.keys(processed || {}),
+            ...Object.keys(skipped || {})
+          ])
 
-        if (!status[host]) {
-          status[host] = { hasError: false, hasSuccess: false, roles: {} }
+          allHostIds.forEach(hostId => {
+            if (!status[hostId]) {
+              status[hostId] = { hasError: false, hasSuccess: false, roles: {} }
+            }
+
+            if (!status[hostId].roles['Results']) {
+              status[hostId].roles['Results'] = { hasError: false, hasSuccess: false }
+            }
+
+            // Check if there were failures
+            const hostFailures = failures?.[hostId] || 0
+            if (hostFailures > 0) {
+              status[hostId].roles['Results'].hasError = true
+              // Also update host-level status to reflect final stats
+              status[hostId].hasError = true
+            } else {
+              status[hostId].roles['Results'].hasSuccess = true
+              // Also update host-level status to reflect final stats
+              status[hostId].hasSuccess = true
+            }
+          })
+
+          return
+        }
+
+        // Use 'common-logs' if host is null/undefined/empty
+        const hostKey = (host && host.trim() !== '') ? host : 'common-logs'
+
+        if (!status[hostKey]) {
+          status[hostKey] = { hasError: false, hasSuccess: false, roles: {} }
         }
 
         // Check for errors in this log entry
@@ -111,24 +202,24 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
         const isSuccess = event?.includes('ok') && !hasError
 
         if (hasError) {
-          status[host].hasError = true
+          status[hostKey].hasError = true
         }
         if (isSuccess) {
-          status[host].hasSuccess = true
+          status[hostKey].hasSuccess = true
         }
 
         // Use 'Others' if role is null/undefined/empty
         const roleKey = (role && role.trim() !== '') ? role : 'Others'
 
-        if (!status[host].roles[roleKey]) {
-          status[host].roles[roleKey] = { hasError: false, hasSuccess: false }
+        if (!status[hostKey].roles[roleKey]) {
+          status[hostKey].roles[roleKey] = { hasError: false, hasSuccess: false }
         }
 
         if (hasError) {
-          status[host].roles[roleKey].hasError = true
+          status[hostKey].roles[roleKey].hasError = true
         }
         if (isSuccess) {
-          status[host].roles[roleKey].hasSuccess = true
+          status[hostKey].roles[roleKey].hasSuccess = true
         }
 
         // Check failures object from stats event
@@ -181,11 +272,25 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
   }, [parsedLogs, selectedHost, selectedRole])
 
   // Helper functions to get display names
-  const getHostName = (hostId: string) => hostIdToName[hostId] || `Host ${hostId}`
+  const getHostName = (hostId: string) => {
+    if (hostId === 'common-logs') return 'Common Logs'
+    return hostIdToName[hostId] || `Host ${hostId}`
+  }
   const getRoleDisplayName = (role: string) => {
     if (role === 'Others') return 'Others'
+    if (role === 'Results') return 'Results'
     return roleToDisplayName[role] || role
   }
+
+  // Auto-select Results when it becomes available
+  useEffect(() => {
+    if (!selectedHost || selectedRole) return
+
+    const rolesForHost = Object.keys(parsedLogs[selectedHost] || {})
+    if (rolesForHost.includes('Results')) {
+      setSelectedRole('Results')
+    }
+  }, [selectedHost, parsedLogs, selectedRole])
 
   // Helper functions to get status colors
   const getHostStatusColor = (hostId: string) => {
@@ -681,10 +786,23 @@ export function PlanDeploymentModal({ open, onOpenChange, blueprintId }: PlanDep
                         {selectedRole ? `${getRoleDisplayName(selectedRole)} Tasks` : 'Deployment Logs'}
                       </span>
                     </div>
-                    <div className='text-xs text-gray-400'>
-                      ID: {activeDeploymentId ?? 'N/A'}
-                      <span className='mx-2'>•</span>
-                      Status: <span className='capitalize'>{deployment?.status}</span>
+                    <div className='flex items-center gap-3 text-xs'>
+                      <span className='text-gray-400'>ID: {activeDeploymentId ?? 'N/A'}</span>
+                      {deployment?.status && (
+                        <span
+                          className={`px-2 py-0.5 rounded-full font-medium capitalize ${
+                            deployment.status === 'completed'
+                              ? 'bg-green-400/20 text-green-400 border border-green-400/50'
+                              : deployment.status === 'failed'
+                              ? 'bg-red-400/20 text-red-400 border border-red-400/50'
+                              : deployment.status === 'started'
+                              ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/50'
+                              : 'bg-blue-400/20 text-blue-400 border border-blue-400/50'
+                          }`}
+                        >
+                          {deployment.status}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <ScrollArea className='flex-1'>

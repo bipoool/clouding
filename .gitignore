@@ -6,3 +6,4 @@ frontend/.next
 frontend/tsconfig.tsbuildinfo
 
 .cursor
+*.env

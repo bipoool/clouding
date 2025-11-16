@@ -97,6 +97,7 @@ class AnsibleRunner:
             "streams": [
                 {
                     "stream": {
+                        "job": "ansible",
                         "jobId": self.jobId
                     },
                     "values": [
