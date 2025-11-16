@@ -1,0 +1,54 @@
+{
+  "title": "Ansible Runner Events",
+  "uid": "ansible-events",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "panels": [
+    {
+      "type": "logs",
+      "title": "Ansible Events",
+      "id": 1,
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 16 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "showLabels": true,
+        "showTime": true,
+        "dedupStrategy": "none",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{job=\"ansible\"}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total Events",
+      "id": 2,
+      "gridPos": { "x": 0, "y": 16, "w": 6, "h": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "count_over_time({job=\"ansible\"}[1h])",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Event Volume Over Time",
+      "id": 3,
+      "gridPos": { "x": 6, "y": 16, "w": 18, "h": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "rate({job=\"ansible\"}[5m])",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
